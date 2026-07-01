@@ -52,17 +52,17 @@ When you pick a provider, your outgoing email (recipients, subject, body, header
 
 You choose a single provider. Generic SMTP talks only to the server you configure. For the others, please review their terms and privacy policy:
 
-* Mailgun: https://www.mailgun.com/legal/terms/ , https://www.mailgun.com/legal/privacy-policy/
-* Brevo: https://www.brevo.com/legal/termsofuse/ , https://www.brevo.com/legal/privacypolicy/
-* SendGrid: https://www.twilio.com/en-us/legal/tos , https://www.twilio.com/en-us/legal/privacy
-* Amazon SES: https://aws.amazon.com/service-terms/ , https://aws.amazon.com/privacy/
-* Postmark: https://postmarkapp.com/terms-of-service , https://postmarkapp.com/privacy-policy
-* SMTP2GO: https://www.smtp2go.com/terms/ , https://www.smtp2go.com/privacy/
-* Mailjet: https://www.mailjet.com/legal/terms/ , https://www.mailjet.com/legal/privacy-policy/
-* Resend: https://resend.com/legal/terms-of-service , https://resend.com/legal/privacy-policy
-* MailerSend: https://www.mailersend.com/legal , https://www.mailersend.com/legal/privacy-policy
-* Gmail: https://policies.google.com/terms , https://policies.google.com/privacy
-* Microsoft 365: https://www.microsoft.com/en-us/servicesagreement , https://privacy.microsoft.com/en-us/privacystatement
+* Mailgun: [terms](https://www.mailgun.com/legal/terms/), [privacy](https://www.mailgun.com/legal/privacy-policy/)
+* Brevo: [terms](https://www.brevo.com/legal/termsofuse/), [privacy](https://www.brevo.com/legal/privacypolicy/)
+* SendGrid: [terms](https://www.twilio.com/en-us/legal/tos), [privacy](https://www.twilio.com/en-us/legal/privacy)
+* Amazon SES: [terms](https://aws.amazon.com/service-terms/), [privacy](https://aws.amazon.com/privacy/)
+* Postmark: [terms](https://postmarkapp.com/terms-of-service), [privacy](https://postmarkapp.com/privacy-policy)
+* SMTP2GO: [terms](https://www.smtp2go.com/terms/), [privacy](https://www.smtp2go.com/privacy/)
+* Mailjet: [terms](https://www.mailjet.com/legal/terms/), [privacy](https://www.mailjet.com/legal/privacy-policy/)
+* Resend: [terms](https://resend.com/legal/terms-of-service), [privacy](https://resend.com/legal/privacy-policy)
+* MailerSend: [terms and privacy](https://www.mailersend.com/legal)
+* Gmail: [terms](https://policies.google.com/terms), [privacy](https://policies.google.com/privacy)
+* Microsoft 365: [terms](https://www.microsoft.com/en-us/servicesagreement), [privacy](https://privacy.microsoft.com/en-us/privacystatement)
 
 == Frequently Asked Questions ==
 
@@ -92,7 +92,7 @@ Both use OAuth 2.0, so no password is stored. Create an OAuth app (Google Cloud 
 
 == Development ==
 
-Meow Mailer is open source. The full source, including the React code used to build the admin interface, lives on GitHub: https://github.com/jordymeow/meow-mailer
+Meow Mailer is open source. The full source, including the React code used to build the admin interface, lives [on GitHub](https://github.com/jordymeow/meow-mailer).
 
 == Changelog ==
 
