@@ -1,0 +1,172 @@
+# Copyright (C) 2026 Jordy Meow
+# This file is distributed under the GPLv2 or later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Meow Mailer 0.1.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/meow-mailer\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-06-27T10:28:38+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: meow-mailer\n"
+
+#. Plugin Name of the plugin
+#: meow-mailer.php
+msgid "Meow Mailer"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: meow-mailer.php
+msgid "https://meowapps.com/meow-mailer"
+msgstr ""
+
+#. Description of the plugin
+#: meow-mailer.php
+msgid "Simple, reliable SMTP & email provider connector for WordPress, with a beautiful email log, offline mode, and one-click resend. Pick one provider, set it up once, and stop worrying about deliverability."
+msgstr ""
+
+#. Author of the plugin
+#: meow-mailer.php
+msgid "Jordy Meow"
+msgstr ""
+
+#. Author URI of the plugin
+#: meow-mailer.php
+msgid "https://meowapps.com"
+msgstr ""
+
+#. translators: %d: number of emails that failed to send in the last 24 hours.
+#: classes/admin.php:47
+#, php-format
+msgid "%d email failed to send in the last 24 hours."
+msgid_plural "%d emails failed to send in the last 24 hours."
+msgstr[0] ""
+msgstr[1] ""
+
+#: classes/admin.php:49
+msgid "View logs"
+msgstr ""
+
+#: classes/mailers/brevo.php:10
+msgid "Brevo API key is required."
+msgstr ""
+
+#: classes/mailers/gmail.php:51
+msgid "Gmail is not connected. Please authorize it in the settings."
+msgstr ""
+
+#: classes/mailers/gmail.php:73
+msgid "Could not refresh the Gmail access token."
+msgstr ""
+
+#: classes/mailers/mailersend.php:10
+msgid "MailerSend API key is required."
+msgstr ""
+
+#: classes/mailers/mailgun.php:11
+msgid "Mailgun API key and domain are required."
+msgstr ""
+
+#: classes/mailers/mailjet.php:11
+msgid "Mailjet API key and secret key are required."
+msgstr ""
+
+#: classes/mailers/outlook.php:73
+msgid "Outlook is not connected. Please authorize it in the settings."
+msgstr ""
+
+#: classes/mailers/outlook.php:97
+msgid "Could not refresh the Outlook access token."
+msgstr ""
+
+#: classes/mailers/postmark.php:10
+msgid "Postmark server token is required."
+msgstr ""
+
+#: classes/mailers/resend.php:10
+msgid "Resend API key is required."
+msgstr ""
+
+#: classes/mailers/sendgrid.php:10
+msgid "SendGrid API key is required."
+msgstr ""
+
+#: classes/mailers/ses.php:16
+msgid "Amazon SES access key and secret key are required."
+msgstr ""
+
+#: classes/mailers/smtp.php:10
+msgid "SMTP host is not configured."
+msgstr ""
+
+#: classes/mailers/smtp2go.php:10
+msgid "SMTP2GO API key is required."
+msgstr ""
+
+#: classes/modules/logs.php:36
+#: classes/modules/logs.php:83
+msgid "Could not access the database."
+msgstr ""
+
+#. translators: %s: the provider key/slug that was not recognised.
+#: classes/modules/mailer.php:158
+#, php-format
+msgid "Unknown email provider: %s"
+msgstr ""
+
+#: classes/rest.php:81
+#: classes/rest.php:127
+msgid "Log entry not found."
+msgstr ""
+
+#: classes/rest.php:131
+msgid "Provider is set to None. Choose a provider before resending."
+msgstr ""
+
+#: classes/rest.php:160
+msgid "Please provide a valid email address."
+msgstr ""
+
+#: classes/rest.php:164
+msgid "Provider is set to None. Choose a provider (or Offline) to send a test."
+msgstr ""
+
+#: classes/rest.php:168
+msgid "Meow Mailer — Plain Text Test"
+msgstr ""
+
+#: classes/rest.php:169
+msgid ""
+"This is a plain-text test email from Meow Mailer.\n"
+"\n"
+"If you received it, your provider is configured correctly. 🐱"
+msgstr ""
+
+#: classes/rest.php:172
+msgid "Meow Mailer — HTML Test"
+msgstr ""
+
+#: classes/rest.php:173
+msgid "It works! 🐱"
+msgstr ""
+
+#: classes/rest.php:174
+msgid "This is an HTML test email from Meow Mailer. If you can read this with formatting, your provider is configured correctly."
+msgstr ""
+
+#: classes/rest.php:189
+msgid "Test email sent."
+msgstr ""
+
+#: classes/rest.php:196
+#: classes/rest.php:220
+msgid "Unknown OAuth provider."
+msgstr ""
+
+#: classes/rest.php:201
+msgid "Enter your Client ID and Secret first, and Save."
+msgstr ""

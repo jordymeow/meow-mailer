@@ -1,0 +1,22 @@
+.babelrc export-ignore
+.eslintrc.json export-ignore
+.gitattributes export-ignore
+.gitignore export-ignore
+.svnignore export-ignore
+package.json export-ignore
+webpack.config.js export-ignore
+yarn.lock export-ignore
+pnpm-lock.yaml export-ignore
+package-lock.json export-ignore
+/app/*/ export-ignore
+/common/js/ export-ignore
+
+# Auto-added by nekofy - export-ignore entries
+common/piracy.md export-ignore
+common/checksum.sh export-ignore
+common/js/ export-ignore
+CLAUDE.md export-ignore
+dev-notes.md export-ignore
+AGENTS.md export-ignore
+nekofy.conf export-ignore
+jsconfig.json export-ignore
