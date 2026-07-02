@@ -2,7 +2,7 @@
 /*
 Plugin Name: Meow Mailer
 Description: Simple, reliable SMTP & email provider connector for WordPress, with a beautiful email log, offline mode, and one-click resend. Pick one provider, set it up once, and stop worrying about deliverability.
-Version: 0.1.2
+Version: 0.1.3
 Author: Jordy Meow
 Author URI: https://meowapps.com
 Text Domain: meow-mailer
@@ -19,7 +19,7 @@ http://www.gnu.org/licenses/gpl.html
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-define( 'MWMAIL_VERSION', '0.1.2' );
+define( 'MWMAIL_VERSION', '0.1.3' );
 define( 'MWMAIL_PREFIX', 'mwmail' );
 define( 'MWMAIL_DOMAIN', 'meow-mailer' );
 define( 'MWMAIL_ENTRY', __FILE__ );

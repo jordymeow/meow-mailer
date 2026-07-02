@@ -4,7 +4,7 @@ Tags: smtp, email, mailer, email log, deliverability
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.1.2
+Stable tag: 0.1.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -100,6 +100,10 @@ Both use OAuth 2.0, so no password is stored. Create an OAuth app (Google Cloud 
 Meow Mailer is open source. The full source, including the React code used to build the admin interface, lives [on GitHub](https://github.com/jordymeow/meow-mailer).
 
 == Changelog ==
+
+= 0.1.3 (2026/07/02) =
+* Update: Renamed the menu item to "Mailer".
+* Add: Dismissable message inviting users to provide feedback on the forums.
 
 = 0.1.2 (2026/07/02) =
 * Add: Integrated Meow Mailer into the Meow Apps menu alongside other Meow plugins.
