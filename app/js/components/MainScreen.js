@@ -16,6 +16,15 @@ const MainScreen = () => {
   const [openLogId, setOpenLogId] = useState(null);
   const [reloadSignal, setReloadSignal] = useState(0);
 
+  // One-time, dismissable feedback invitation (persisted per browser).
+  const [feedbackDismissed, setFeedbackDismissed] = useState(() => {
+    try { return localStorage.getItem('mwmail_feedback_dismissed') === '1'; } catch (e) { return false; }
+  });
+  const dismissFeedback = () => {
+    try { localStorage.setItem('mwmail_feedback_dismissed', '1'); } catch (e) {}
+    setFeedbackDismissed(true);
+  };
+
   // A welcome / status banner at the top, like our other plugins.
   let banner = null;
   if (provider === 'none') {
@@ -29,6 +38,19 @@ const MainScreen = () => {
       <NekoHeader title="Meow Mailer" subtitle={t('By Meow Apps')} />
       <NekoWrapper>
         <NekoColumn fullWidth>
+          {!feedbackDismissed && <>
+            <NekoMessage variant="success">
+              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                <span>
+                  {t('Meow Mailer is brand new, and your feedback shapes it. Tell us what you need on the')}{' '}
+                  <a href="https://wordpress.org/support/plugin/meow-mailer/" target="_blank" rel="noopener noreferrer">{t('WordPress support forum')}</a>
+                  {' '}{t('— what is missing, what you wish it did — and we will make it perfect for you. 💕')}
+                </span>
+                <a href="#" onClick={(e) => { e.preventDefault(); dismissFeedback(); }} style={{ whiteSpace: 'nowrap' }}>{t('Dismiss')}</a>
+              </span>
+            </NekoMessage>
+            <NekoSpacer />
+          </>}
           {banner && <><NekoMessage variant={banner.variant}>{banner.text}</NekoMessage><NekoSpacer /></>}
           <NekoTabs keepTabOnReload={true}>
             <NekoTab key="logs" title={t('Logs')}>

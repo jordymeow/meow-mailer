@@ -90,6 +90,11 @@ When enabled, the page is returned to your visitor immediately and the email is 
 
 Both use OAuth 2.0, so no password is stored. Create an OAuth app (Google Cloud Console for Gmail, Azure Portal for Microsoft 365), paste the Client ID and Secret into the provider settings, add the shown redirect URI to your OAuth app, then click Connect.
 
+== Screenshots ==
+
+1. The email log: every message with recipient, subject, provider and status. Search, filter by status or provider, and export to CSV.
+2. Settings: pick one provider and set it up once, with sender options, delivery controls, and a test email.
+
 == Development ==
 
 Meow Mailer is open source. The full source, including the React code used to build the admin interface, lives [on GitHub](https://github.com/jordymeow/meow-mailer).

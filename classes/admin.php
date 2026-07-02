@@ -51,7 +51,7 @@ class Meow_MWMAIL_Admin extends MeowKit_MWMAIL_Admin {
   }
 
   public function app_menu() {
-    add_submenu_page( 'meowapps-main-menu', 'Meow Mailer', 'Meow Mailer', 'manage_options',
+    add_submenu_page( 'meowapps-main-menu', 'Meow Mailer', 'Mailer', 'manage_options',
       'mwmail_settings', [ $this, 'admin_settings' ] );
   }
 

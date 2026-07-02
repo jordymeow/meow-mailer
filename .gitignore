@@ -4,3 +4,4 @@ node_modules/
 common/premium/
 .DS_Store
 *.log
+.svn
