@@ -1,7 +1,7 @@
 === Meow Mailer ===
 Contributors: TigrouMeow
 Tags: smtp, email, mailer, email log, deliverability
-Requires at least: 6.5
+Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4
 Stable tag: 0.1.1
@@ -41,7 +41,7 @@ Meow Mailer is part of the Meow Apps family of plugins, focused on doing one thi
 
 1. Upload the `meow-mailer` folder to `/wp-content/plugins/`, or install it from the Plugins screen.
 2. Activate the plugin.
-3. Open the **Meow Mailer** menu in your WordPress admin, go to the **Settings** tab, choose your provider and enter its credentials.
+3. Go to **Meow Apps > Meow Mailer**, open the **Settings** tab, choose your provider and enter its credentials.
 4. Send a test email to confirm everything works. Watch the **Logs** tab.
 
 == External services ==

@@ -8,6 +8,7 @@ class Meow_MWMAIL_Core {
   public $rest = null;
   public $logs = null;
   public $mailer = null;
+  public $is_rest = false;
 
   private $option_name = 'mwmail_options';
 
@@ -16,6 +17,8 @@ class Meow_MWMAIL_Core {
   const SECRET_MASK = '••••••••';
 
   public function __construct() {
+    $this->is_rest = MeowKit_MWMAIL_Helpers::is_rest();
+
     // The logs module and the mailer dispatcher must exist on every request so that
     // wp_mail() is intercepted wherever it is called.
     $this->logs   = new Meow_MWMAIL_Modules_Logs( $this );
@@ -34,9 +37,9 @@ class Meow_MWMAIL_Core {
     if ( is_admin() ) {
       $this->admin = new Meow_MWMAIL_Admin( $this );
     }
-    // The REST controller only registers routes on `rest_api_init`, so creating it
-    // on every request is cheap and guarantees the endpoints exist when needed.
-    $this->rest = new Meow_MWMAIL_Rest( $this );
+    if ( $this->is_rest ) {
+      $this->rest = new Meow_MWMAIL_Rest( $this );
+    }
   }
 
   #region Access & Security

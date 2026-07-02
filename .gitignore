@@ -1,4 +1,6 @@
 node_modules/
-common/
+
+# Premium features (free version only)
+common/premium/
 .DS_Store
 *.log

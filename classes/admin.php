@@ -2,12 +2,13 @@
 
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
-class Meow_MWMAIL_Admin {
+class Meow_MWMAIL_Admin extends MeowKit_MWMAIL_Admin {
 
   public $core;
 
   public function __construct( $core ) {
     $this->core = $core;
+    parent::__construct( MWMAIL_PREFIX, MWMAIL_ENTRY, MWMAIL_DOMAIN, false, false, true );
 
     if ( is_admin() ) {
       add_action( 'admin_menu', [ $this, 'app_menu' ] );
@@ -50,8 +51,8 @@ class Meow_MWMAIL_Admin {
   }
 
   public function app_menu() {
-    add_menu_page( 'Meow Mailer', 'Meow Mailer', 'manage_options',
-      'mwmail_settings', [ $this, 'admin_settings' ], 'dashicons-email-alt', 81 );
+    add_submenu_page( 'meowapps-main-menu', 'Meow Mailer', 'Meow Mailer', 'manage_options',
+      'mwmail_settings', [ $this, 'admin_settings' ] );
   }
 
   public function admin_settings() {

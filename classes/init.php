@@ -10,6 +10,8 @@ spl_autoload_register( function ( $class ) {
     $file = MWMAIL_PATH . '/classes/mailers/' . str_replace( 'meow_mwmail_mailers_', '', strtolower( $class ) ) . '.php';
   } else if ( strpos( $class, 'Meow_MWMAIL_' ) !== false ) {
     $file = MWMAIL_PATH . '/classes/' . str_replace( 'meow_mwmail_', '', strtolower( $class ) ) . '.php';
+  } else if ( strpos( $class, 'MeowKit_MWMAIL_' ) !== false ) {
+    $file = MWMAIL_PATH . '/common/' . str_replace( 'meowkit_mwmail_', '', strtolower( $class ) ) . '.php';
   }
   if ( $file && file_exists( $file ) ) {
     require( $file );

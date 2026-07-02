@@ -20,3 +20,11 @@ dev-notes.md export-ignore
 AGENTS.md export-ignore
 nekofy.conf export-ignore
 jsconfig.json export-ignore
+api.md export-ignore
+how-it-works.txt export-ignore
+blueprint.json export-ignore
+.eslintrc.js export-ignore
+.editorconfig export-ignore
+.php-cs-fixer.php export-ignore
+composer.json export-ignore
+composer.lock export-ignore
