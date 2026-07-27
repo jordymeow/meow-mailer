@@ -1,11 +1,11 @@
 // Declarative description of every supported provider and its credential fields.
-// `one active at a time` — the user picks one in Settings.
+// `one active at a time`: the user picks one in Settings.
 
 export const PROVIDERS = [
   {
     key: 'none',
     label: 'None',
-    description: 'Meow Mailer stays out of the way — WordPress sends email as usual and nothing is logged. Pick a provider below to take over.',
+    description: 'Meow Mailer stays out of the way. WordPress sends email as usual and nothing is logged. Pick a provider below to take over.',
     fields: [],
   },
   {

@@ -44,7 +44,7 @@ export const CoreContextProvider = ({ children }) => {
 
   const updateOption = useCallback((value, name) => {
     if (options[name] === value) {
-      return; // no change — don't trigger a redundant save on blur
+      return; // no change, so don't trigger a redundant save on blur
     }
     return saveOptions({ ...options, [name]: value }, options);
   }, [options, saveOptions]);

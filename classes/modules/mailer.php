@@ -29,7 +29,7 @@ class Meow_MWMAIL_Modules_Mailer {
       return $short_circuit;
     }
 
-    // Provider "none": stay completely out of the way — let WordPress send as
+    // Provider "none": stay completely out of the way and let WordPress send as
     // usual and don't log. This is the default so activating doesn't hijack mail.
     if ( ( $this->core->get_option( 'provider', 'none' ) ) === 'none' ) {
       return $short_circuit;

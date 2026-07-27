@@ -49,8 +49,8 @@ const LogModal = ({ id, onClose, onResent }) => {
     <div>
       <Row label={t('Date')} value={log.created} />
       <Row label={t('Status')} value={<NekoStatus status={st.type}>{st.label}</NekoStatus>} />
-      <Row label={t('Provider')} value={PROVIDER_LABELS[log.provider] || log.provider || '—'} />
-      <Row label={t('From')} value={log.email_from || '—'} />
+      <Row label={t('Provider')} value={PROVIDER_LABELS[log.provider] || log.provider || '-'} />
+      <Row label={t('From')} value={log.email_from || '-'} />
       <Row label={t('To')} value={log.email_to} />
       <Row label={t('Subject')} value={log.subject} />
       {log.attachments ? <Row label={t('Attachments')} value={log.attachments} /> : null}

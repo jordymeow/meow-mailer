@@ -1,13 +1,14 @@
 const { useState, useEffect, useCallback } = wp.element;
 
 import {
-  NekoBlock, NekoTable, NekoPaging, NekoToolbar, NekoSelect, NekoOption,
+  NekoWrapper, NekoColumn, NekoBlock, NekoTable, NekoPaging, NekoToolbar, NekoSelect, NekoOption,
   NekoInput, NekoButton, NekoStatus, NekoSpacer, NekoEmpty,
 } from '@neko-ui';
 
 import { useCoreContext } from '@app/contexts/core';
 import { fetchLogs, deleteLogs, clearLogs, exportLogs } from '@app/requests';
 import { PROVIDERS, PROVIDER_LABELS } from '@app/providers';
+import { wrapperBody } from '@app/layout';
 import { t } from '@app/i18n';
 
 const LIMIT = 20;
@@ -22,7 +23,7 @@ export const statusOf = (status) => {
     case 'failed':  return { type: 'error', label: t('Failed') };
     case 'offline': return { type: 'paused', label: t('Offline') };
     case 'pending': return { type: 'pending', label: t('Pending') };
-    default:        return { type: 'info', label: status || '—' };
+    default:        return { type: 'info', label: status || '-' };
   }
 };
 
@@ -35,9 +36,10 @@ const COLUMNS = [
   { accessor: 'actions', title: '', width: '90px' },
 ];
 
-const LogsScreen = ({ onView, reloadSignal }) => {
-  const { actions } = useCoreContext();
+const LogsScreen = ({ onView, reloadSignal, onChanged = () => {} }) => {
+  const { state, actions } = useCoreContext();
   const { setError } = actions;
+  const loggingOff = !state.options.logs_enabled;
 
   const [page, setPage] = useState(viewState.page);
   const [filters, setFilters] = useState({ status: viewState.status, provider: viewState.provider, search: viewState.search });
@@ -87,6 +89,7 @@ const LogsScreen = ({ onView, reloadSignal }) => {
       await deleteLogs(selected);
       setSelected([]);
       load();
+      onChanged();
     } catch (err) {
       setError(err.message);
     }
@@ -99,6 +102,7 @@ const LogsScreen = ({ onView, reloadSignal }) => {
       setSelected([]);
       setPage(1);
       load();
+      onChanged();
     } catch (err) {
       setError(err.message);
     }
@@ -120,6 +124,30 @@ const LogsScreen = ({ onView, reloadSignal }) => {
     }
   };
 
+  const hasFilters = !!(filters.status || filters.provider || filters.search);
+  const clearFilters = () => {
+    setPage(1);
+    setSearchInput('');
+    setFilters({ status: '', provider: '', search: '' });
+  };
+
+  // Filters first: with logging off but older emails still on record, blaming the
+  // setting would be wrong, because the rows exist and simply don't match.
+  let empty;
+  if (hasFilters) {
+    empty = <NekoEmpty inline icon="filter" title={t('Nothing matches these filters')}
+      subtitle={t('Try another status, provider or search term.')}
+      action={<NekoButton className="secondary" onClick={clearFilters}>{t('Clear filters')}</NekoButton>} />;
+  }
+  else if (loggingOff) {
+    empty = <NekoEmpty inline icon="eye-off" title={t('Logging is turned off')}
+      subtitle={t('Emails are still sent, they are just not recorded. Turn Enable Logging back on in the Settings.')} />;
+  }
+  else {
+    empty = <NekoEmpty inline icon="mail" title={t('No emails yet')}
+      subtitle={t('Once WordPress sends an email, it will show up here.')} />;
+  }
+
   const data = rows.map((row) => {
     const st = statusOf(row.status);
     return {
@@ -127,7 +155,7 @@ const LogsScreen = ({ onView, reloadSignal }) => {
       created: row.created,
       to: row.email_to,
       subject: row.subject || <em style={{ opacity: 0.5 }}>{t('(no subject)')}</em>,
-      provider: PROVIDER_LABELS[row.provider] || row.provider || '—',
+      provider: PROVIDER_LABELS[row.provider] || row.provider || '-',
       status: <NekoStatus status={st.type}>{st.label}</NekoStatus>,
       actions: (
         <NekoButton rounded icon="search" className="primary" title={t('View')} aria-label={t('View email')}
@@ -137,7 +165,9 @@ const LogsScreen = ({ onView, reloadSignal }) => {
   });
 
   return (
-    <NekoBlock className="primary" title={t('Email Logs')}
+    <NekoWrapper style={wrapperBody}>
+    <NekoColumn minimal fullWidth>
+    <NekoBlock title={t('Email Logs')}
       action={<NekoButton className="primary" icon="refresh" busy={busy} onClick={load}>{t('Refresh')}</NekoButton>}>
 
       <NekoToolbar>
@@ -159,6 +189,7 @@ const LogsScreen = ({ onView, reloadSignal }) => {
       <NekoSpacer />
 
       <NekoTable
+        variant="raw"
         busy={busy}
         columns={COLUMNS}
         data={data}
@@ -167,8 +198,7 @@ const LogsScreen = ({ onView, reloadSignal }) => {
         selectedItems={selected}
         onSelect={(ids) => setSelected(Array.from(new Set([...selected, ...ids])))}
         onUnselect={(ids) => setSelected(selected.filter((x) => !ids.includes(x)))}
-        emptyMessage={<NekoEmpty inline icon="mail" title={t('No emails yet')}
-          subtitle={t('Once WordPress sends an email, it will show up here.')} />}
+        emptyMessage={empty}
       />
 
       <NekoSpacer />
@@ -183,6 +213,8 @@ const LogsScreen = ({ onView, reloadSignal }) => {
         <NekoPaging currentPage={page} limit={LIMIT} total={total} onClick={setPage} />
       </div>
     </NekoBlock>
+    </NekoColumn>
+    </NekoWrapper>
   );
 };
 

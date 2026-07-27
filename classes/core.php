@@ -13,7 +13,7 @@ class Meow_MWMAIL_Core {
   private $option_name = 'mwmail_options';
 
   // The network-mode flag. It decides *where* the options are stored, so it can
-  // never live inside the options themselves — always at network level.
+  // never live inside the options themselves, always at network level.
   private $network_option = 'mwmail_network';
 
   // Sent to the browser in place of a stored secret; on save, this value means
@@ -66,19 +66,11 @@ class Meow_MWMAIL_Core {
       return true; // the site owns this group outright
     }
     // A shared group belongs to the network, and the network is configured from
-    // the main site — even a super admin does not edit it from a subsite, where
+    // the main site. Even a super admin does not edit it from a subsite, where
     // it would look like a local change but affect everyone.
     return is_super_admin() && is_main_site();
   }
 
-  /**
-   * Whether a group appears on this site at all. Shared groups are simply not
-   * part of a subsite's settings: they are not its business, and showing them
-   * read-only only invites confusion about where they are managed.
-   */
-  public function is_group_visible( $group ) {
-    return ! $this->is_group_shared( $group ) || is_main_site();
-  }
 
   #endregion
 
@@ -86,7 +78,7 @@ class Meow_MWMAIL_Core {
 
   /**
    * The option groups that can be shared network-wide. 'provider' is what shared
-   * settings *means* — set the provider up once for the whole network — so it is
+   * settings *means*, that is, set the provider up once for the whole network, so it is
    * always shared once the mode is on. The other two are opt-in: a network often
    * wants one mail account but a different sender per site.
    *
@@ -134,20 +126,18 @@ class Meow_MWMAIL_Core {
   public function network_state() {
     $shared = [];
     $can_edit = [];
-    $visible = [];
     foreach ( array_keys( self::NETWORK_GROUPS ) as $group ) {
       $shared[ $group ]   = $this->is_group_shared( $group );
       $can_edit[ $group ] = $this->can_edit_group( $group );
-      $visible[ $group ]  = $this->is_group_visible( $group );
     }
     return [
       'is_multisite'   => is_multisite(),
       'is_super_admin' => is_super_admin(),
       'is_main_site'   => is_main_site(),
+      'site_count'     => is_multisite() ? (int) get_blog_count() : 1,
       'enabled'        => $this->is_network_mode(),
       'shared'         => $shared,
       'can_edit'       => $can_edit,
-      'visible'        => $visible,
       // Where the shared configuration actually lives, for the "managed there" link.
       'config_url'     => is_multisite()
         ? get_admin_url( get_main_site_id(), 'admin.php?page=mwmail_settings' ) : '',
@@ -436,7 +426,7 @@ class Meow_MWMAIL_Core {
 
   public function log( $message ) {
     if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-      // Intentional, and only when WP_DEBUG is on — helps diagnose delivery issues.
+      // Intentional, and only when WP_DEBUG is on. Helps diagnose delivery issues.
       // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_print_r
       error_log( '[Meow Mailer] ' . ( is_string( $message ) ? $message : print_r( $message, true ) ) );
     }

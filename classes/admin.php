@@ -21,7 +21,7 @@ class Meow_MWMAIL_Admin extends MeowKit_MWMAIL_Admin {
   }
 
   /**
-   * Make silent failures visible — a dashboard warning when recent sends failed.
+   * Make silent failures visible with a dashboard warning when recent sends failed.
    */
   public function failure_notice() {
     if ( ! current_user_can( 'manage_options' ) ) {
@@ -30,7 +30,7 @@ class Meow_MWMAIL_Admin extends MeowKit_MWMAIL_Admin {
     if ( $this->core->get_option( 'provider', 'none' ) === 'none' ) {
       return;
     }
-    // Don't nag on our own screen — the log is right there. Read-only display
+    // Don't nag on our own screen, the log is right there. Read-only display
     // check, no form is processed here.
     // phpcs:ignore WordPress.Security.NonceVerification.Recommended
     if ( sanitize_text_field( wp_unslash( $_GET['page'] ?? '' ) ) === 'mwmail_settings' ) {

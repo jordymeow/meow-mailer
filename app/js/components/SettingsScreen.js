@@ -2,43 +2,47 @@ const { useState, useEffect } = wp.element;
 
 import {
   NekoWrapper, NekoColumn, NekoBlock, NekoSettings, NekoInput, NekoSelect, NekoOption,
-  NekoSwitch, NekoButton, NekoSpacer, NekoMessage, NekoStatus, NekoToolbar,
+  NekoSwitch, NekoButton, NekoSpacer, NekoMessage, NekoToolbar, NekoEmpty,
 } from '@neko-ui';
 
 import { useCoreContext } from '@app/contexts/core';
-import { PROVIDERS, PROVIDER_LABELS, isProviderConfigured } from '@app/providers';
+import { PROVIDERS } from '@app/providers';
 import ProviderFields from './ProviderFields';
-import { sendTestEmail, fetchLogs, setNetworkMode } from '@app/requests';
+import ProviderPicker from './ProviderPicker';
+import SwitchSetting from './SwitchSetting';
+import { sendTestEmail, setNetworkMode } from '@app/requests';
 import { network } from '@app/settings';
-import { t, sprintf } from '@app/i18n';
+import { wrapperBody } from '@app/layout';
+import { t } from '@app/i18n';
 
 // A group is read-only when it is shared network-wide and we are not a network
-// admin. The REST routes enforce this too — this only keeps the UI honest.
+// admin. The REST routes enforce this too, so this only keeps the UI honest.
 const canEditGroup = network.can_edit || {};
-const visibleGroup = network.visible || {};
 const lockedProvider = canEditGroup.provider === false;
 const lockedSender   = canEditGroup.sender === false;
 const lockedDelivery = canEditGroup.delivery === false;
-const anyLocked = lockedProvider || lockedSender || lockedDelivery;
 
-// Shared groups belong to the network and are configured on the main site, so
-// they are not rendered at all elsewhere.
-const showProvider = visibleGroup.provider !== false;
-const showSender   = visibleGroup.sender   !== false;
-const showDelivery = visibleGroup.delivery !== false;
-const hidingShared = !showProvider || !showSender || !showDelivery;
+// A section the network owns keeps its place on the page, but shows nothing of
+// its contents: a half-visible form behind a veil reads as broken, and the values
+// are not this site's business anyway. Just the title and where it is managed.
+const LockedBlock = ({ title }) => (
+  <NekoBlock title={title}>
+    <NekoEmpty icon="lock" title={t('Network setting')}
+      subtitle={network.is_main_site
+        ? t('This is managed by the network administrator.')
+        : t('This is managed on the main site of the network.')}
+      action={!network.is_main_site && !!network.is_super_admin && !!network.config_url
+        ? <NekoButton className="secondary" onClick={() => { window.location.href = network.config_url; }}>
+            {t('Open the main site')}
+          </NekoButton>
+        : null} />
+  </NekoBlock>
+);
 
 // The shared configuration is managed from the main site only.
 const showNetworkBlock = !!network.is_multisite && !!network.is_super_admin && !!network.is_main_site;
 
-const StatCard = ({ label, value, color }) => (
-  <div style={{ flex: 1, textAlign: 'center', padding: '10px 6px', background: 'var(--neko-gray-98)', borderRadius: 8 }}>
-    <div style={{ fontSize: 22, fontWeight: 700, color }}>{value}</div>
-    <div style={{ fontSize: 11, color: 'var(--neko-gray-50)', textTransform: 'uppercase', letterSpacing: 0.3 }}>{label}</div>
-  </div>
-);
-
-const SettingsScreen = () => {
+const SettingsScreen = ({ onChanged = () => {} }) => {
   const { state, actions } = useCoreContext();
   const { options, busy } = state;
   const { updateOption } = actions;
@@ -47,7 +51,6 @@ const SettingsScreen = () => {
   const [testFormat, setTestFormat] = useState('html');
   const [testBusy, setTestBusy] = useState(false);
   const [notice, setNotice] = useState(null);
-  const [stats, setStats] = useState({});
   const [shared, setShared] = useState(!!network.enabled);
   const [sharedGroups, setSharedGroups] = useState({
     sender: !!(network.shared || {}).sender,
@@ -55,14 +58,7 @@ const SettingsScreen = () => {
   });
   const [sharedBusy, setSharedBusy] = useState(false);
 
-  const loadStats = () => {
-    fetchLogs({ page: 1, limit: 1, filters: {}, sort: { accessor: 'created', by: 'desc' } })
-      .then((res) => setStats(res.stats || {}))
-      .catch(() => {});
-  };
-
   useEffect(() => {
-    loadStats();
     const params = new URLSearchParams(window.location.search);
     const result = params.get('mwmail_oauth');
     if (result === 'connected') {
@@ -78,8 +74,8 @@ const SettingsScreen = () => {
     setNotice(null);
     try {
       await sendTestEmail(testTo, testFormat);
-      setNotice({ variant: 'success', text: t('Test email sent. Check the Logs tab for the result.') });
-      loadStats();
+      setNotice({ variant: 'success', text: t('Test email sent. Open the Logs to see the result.') });
+      onChanged();
     } catch (err) {
       setNotice({ variant: 'danger', text: err.message });
     } finally {
@@ -104,79 +100,74 @@ const SettingsScreen = () => {
     }
   };
 
-  // Named from live state so the notice updates the moment a group is toggled.
-  const sharedNames = shared ? [
-    t('Email Provider'),
-    sharedGroups.sender && t('Sender'),
-    sharedGroups.delivery && t('Delivery & Logs'),
-  ].filter(Boolean) : [];
-
   const toggleShared = (value) => applyNetwork(value, sharedGroups);
   const toggleGroup = (group, value) => applyNetwork(shared, { ...sharedGroups, [group]: value });
 
   const provider = options.provider;
-  const configured = isProviderConfigured(provider, options.providers[provider]);
 
-  let modeStatus, modeLabel;
-  if (provider === 'none') {
-    modeStatus = 'paused'; modeLabel = t('Inactive');
-  } else if (provider === 'offline') {
-    modeStatus = 'paused'; modeLabel = t('Offline');
-  } else if (configured) {
-    modeStatus = 'ok'; modeLabel = t('Sending');
-  } else {
-    modeStatus = 'warning'; modeLabel = t('Not configured');
-  }
+  // Nothing chosen yet: the dropdown is a poor first impression, so the block
+  // shows a picker instead until there is something to configure.
+  const firstRun = provider === 'none' && !lockedProvider;
+
+  // The test bar normally rides along with the provider, but a locked provider
+  // block is inert, so when it's locked the bar moves to the sidebar, where this
+  // site's admin can still check that their own delivery works.
+  const testInSidebar = lockedProvider;
+
+  // The select and the button keep their width, so without a floor the address
+  // field collapses to nothing in a narrow column. Let the row wrap instead.
+  const testEmailBar = (
+    <NekoToolbar style={{ flexWrap: 'wrap' }}>
+      <NekoInput name="test_to" value={testTo} placeholder={t('Send a test email to…')} onChange={setTestTo} onEnter={sendTest} style={{ flex: 1, minWidth: 170 }} />
+      <NekoSelect scrolldown name="test_format" value={testFormat} onChange={setTestFormat} style={{ width: 100 }}>
+        <NekoOption value="html" label={t('HTML')} />
+        <NekoOption value="plain" label={t('Plain')} />
+      </NekoSelect>
+      <NekoButton className="secondary" icon="mail" disabled={testBusy || !testTo || provider === 'none'} onClick={sendTest}>{t('Send Test')}</NekoButton>
+    </NekoToolbar>
+  );
 
   return (
-    <NekoWrapper>
+    <NekoWrapper style={wrapperBody}>
 
-      {/* Left column — the configuration form */}
-      <NekoColumn minimal size="3/5">
+      {/* Main column: set the provider up, then prove it works */}
+      <NekoColumn minimal size="1/2">
 
         {notice && <><NekoMessage variant={notice.variant}>{notice.text}</NekoMessage><NekoSpacer /></>}
 
-        {hidingShared && <><NekoMessage variant="info">
-          {t('Email delivery for this network is configured on the main site. This site keeps its own email logs.')}
-          {!!network.is_super_admin && !!network.config_url && <> <a href={network.config_url}>{t('Open the network settings')}</a></>}
-        </NekoMessage><NekoSpacer /></>}
+        {lockedProvider ? <LockedBlock title={t('Email Provider')} /> : (
+          <NekoBlock title={t('Email Provider')} busy={busy}>
+            {firstRun ? <ProviderPicker onPick={(v) => updateOption(v, 'provider')} /> : <>
+              <NekoSettings title={t('Provider')}>
+                <NekoSelect scrolldown name="provider" value={provider} onChange={(v) => updateOption(v, 'provider')}
+                  description={t('Pick one provider. Set it up once and Meow Mailer routes all WordPress email through it.')}>
+                  {PROVIDERS.map((p) => <NekoOption key={p.key} value={p.key} label={t(p.label)} />)}
+                </NekoSelect>
+              </NekoSettings>
+              <ProviderFields providerKey={provider} />
 
-        {!hidingShared && sharedNames.length > 0 && <><NekoMessage variant={anyLocked ? 'info' : 'warning'}>
-          {anyLocked
-            /* translators: %s: list of shared setting groups, e.g. "Email Provider, Sender". */
-            ? sprintf( t('%s are shared by every site of the network and managed by the network administrator. Everything else, including your email logs, is your own.'), sharedNames.join(', ') )
-            /* translators: %s: list of shared setting groups, e.g. "Email Provider, Sender". */
-            : sprintf( t('%s are shared with every site of the network — editing them here changes them everywhere. Your email logs stay per-site.'), sharedNames.join(', ') )}
-        </NekoMessage><NekoSpacer /></>}
-
-        {showProvider && (
-          <NekoBlock className="primary" title={t('Email Provider')} busy={busy}>
-            <NekoSettings title={t('Provider')}>
-              <NekoSelect scrolldown name="provider" value={provider} onChange={(v) => updateOption(v, 'provider')} disabled={lockedProvider}
-                description={t('Pick one provider. Set it up once and Meow Mailer routes all WordPress email through it.')}>
-                {PROVIDERS.map((p) => <NekoOption key={p.key} value={p.key} label={t(p.label)} />)}
-              </NekoSelect>
-            </NekoSettings>
-            <ProviderFields providerKey={provider} />
+              {/* Sending a test is the last step of setting a provider up, so it
+                  lives here rather than in a block of its own. */}
+              {!testInSidebar && <><NekoSpacer />{testEmailBar}</>}
+            </>}
           </NekoBlock>
         )}
 
-        {showSender && (
-          <NekoBlock className="primary" title={t('Sender')} busy={busy}>
+        {lockedSender ? <LockedBlock title={t('Sender')} /> : (
+          <NekoBlock title={t('Sender')} busy={busy}>
             <NekoSettings title={t('From Email')}>
-              <NekoInput name="from_email" value={options.from_email} placeholder="you@example.com" onBlur={updateOption} onEnter={updateOption} readOnly={lockedSender}
+              <NekoInput name="from_email" value={options.from_email} placeholder="you@example.com" onBlur={updateOption} onEnter={updateOption}
                 description={t('The address your emails are sent from. Use one at your own domain for the best deliverability. Leave empty to keep what WordPress uses.')} />
             </NekoSettings>
             <NekoSettings title={t('From Name')}>
-              <NekoInput name="from_name" value={options.from_name} placeholder="My Website" onBlur={updateOption} onEnter={updateOption} readOnly={lockedSender}
+              <NekoInput name="from_name" value={options.from_name} placeholder="My Website" onBlur={updateOption} onEnter={updateOption}
                 description={t('The sender name recipients see in their inbox (usually your site name).')} />
             </NekoSettings>
-            <NekoSettings title={t('Force From')}>
-              <NekoSwitch name="force_from" checked={!!options.force_from} onChange={(v) => updateOption(v, 'force_from')} onValue={true} offValue={false} disabled={lockedSender}
-                description={t('Apply the From above to every email, overriding any From set by other plugins. Recommended for consistent deliverability.')} />
-            </NekoSettings>
+            <SwitchSetting title={t('Force From')} name="force_from" checked={options.force_from}
+              onChange={(v) => updateOption(v, 'force_from')}
+              description={t('Use the address above for every email, even when another plugin sets its own. Recommended, because providers reject mail sent from addresses you do not own.')} />
             <NekoSettings title={t('Reply-To')}>
-              <NekoInput name="reply_to" value={options.reply_to} placeholder={t('(optional)')} onBlur={updateOption} onEnter={updateOption} readOnly={lockedSender}
+              <NekoInput name="reply_to" value={options.reply_to} placeholder={t('(optional)')} onBlur={updateOption} onEnter={updateOption}
                 description={t('Where replies should go, if different from the From address.')} />
             </NekoSettings>
           </NekoBlock>
@@ -184,41 +175,30 @@ const SettingsScreen = () => {
 
       </NekoColumn>
 
-      {/* Right column — status, delivery options, tools */}
-      <NekoColumn minimal size="2/5">
+      {/* Sidebar: the options you set once and forget */}
+      <NekoColumn minimal size="1/2">
 
-        <NekoBlock className="primary" title={t('Status')} busy={busy}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0' }}>
-            <span style={{ color: 'var(--neko-gray-50)' }}>{t('Provider')}</span>
-            <strong>{PROVIDER_LABELS[provider]}</strong>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0' }}>
-            <span style={{ color: 'var(--neko-gray-50)' }}>{t('Delivery')}</span>
-            <NekoStatus status={modeStatus}>{modeLabel}</NekoStatus>
-          </div>
-          <NekoSpacer />
-          <div style={{ display: 'flex', gap: 8 }}>
-            <StatCard label={t('Sent')} value={stats.sent || 0} color="var(--neko-green)" />
-            <StatCard label={t('Failed')} value={stats.failed || 0} color="var(--neko-red)" />
-            <StatCard label={t('Offline')} value={stats.offline || 0} color="var(--neko-gray-50)" />
-          </div>
-        </NekoBlock>
+        {testInSidebar && (
+          <NekoBlock title={t('Test Email')} busy={busy}>
+            {testEmailBar}
+          </NekoBlock>
+        )}
 
-        {showDelivery && (
-          <NekoBlock className="primary" title={t('Delivery & Logs')} busy={busy}>
-            <NekoSettings title={t('Background Send')}>
-              <NekoSwitch name="send_in_background" checked={!!options.send_in_background} onChange={(v) => updateOption(v, 'send_in_background')} onValue={true} offValue={false} disabled={lockedDelivery}
-                description={t('Send emails after the page has loaded, so visitors never wait on the mail server. Recommended.')} />
-            </NekoSettings>
-            <NekoSettings title={t('Enable Logging')}>
-              <NekoSwitch name="logs_enabled" checked={!!options.logs_enabled} onChange={(v) => updateOption(v, 'logs_enabled')} onValue={true} offValue={false} disabled={lockedDelivery} />
-            </NekoSettings>
-            <NekoSettings title={t('Store Body')}>
-              <NekoSwitch name="log_body" checked={!!options.log_body} onChange={(v) => updateOption(v, 'log_body')} onValue={true} offValue={false} disabled={lockedDelivery}
-                description={t('Store the full content so you can preview and resend. Turn off to save space.')} />
-            </NekoSettings>
+        {lockedDelivery ? <LockedBlock title={t('Delivery & Logs')} /> : (
+          <NekoBlock title={t('Delivery & Logs')} busy={busy}
+            subtitle={t('What happens once WordPress hands an email over to Meow Mailer.')}>
+            <SwitchSetting title={t('Background Send')} name="send_in_background" checked={options.send_in_background}
+              onChange={(v) => updateOption(v, 'send_in_background')}
+              description={t('Deliver the email after the page has finished loading instead of during it. Whoever triggered it, such as a customer checking out or a user resetting a password, no longer waits for the mail server to answer. Recommended.')} />
+            <SwitchSetting title={t('Enable Logging')} name="logs_enabled" checked={options.logs_enabled}
+              onChange={(v) => updateOption(v, 'logs_enabled')}
+              description={t('Keep a record of every email in the Logs, with whether it was delivered or failed. This is how you find out an email never arrived.')} />
+            <SwitchSetting title={t('Store Body')} name="log_body" checked={options.log_body}
+              onChange={(v) => updateOption(v, 'log_body')}
+              description={t('Also keep the message itself, so you can read it back and resend it. Turn off if you would rather not keep email content in your database.')} />
             <NekoSettings title={t('Keep Logs For')}>
-              <NekoSelect scrolldown name="log_retention_days" value={String(options.log_retention_days)} onChange={(v) => updateOption(parseInt(v, 10), 'log_retention_days')} disabled={lockedDelivery}>
+              <NekoSelect scrolldown name="log_retention_days" value={String(options.log_retention_days)} onChange={(v) => updateOption(parseInt(v, 10), 'log_retention_days')}
+                description={t('Older entries are deleted automatically once a day.')}>
                 <NekoOption value="0" label={t('Forever')} />
                 <NekoOption value="7" label={t('7 days')} />
                 <NekoOption value="30" label={t('30 days')} />
@@ -229,34 +209,20 @@ const SettingsScreen = () => {
         )}
 
         {showNetworkBlock && (
-          <NekoBlock className="primary" title={t('Multisite')} busy={sharedBusy}>
-            <NekoSettings title={t('Shared Settings')}>
-              <NekoSwitch name="network_mode" checked={shared} onChange={toggleShared} onValue={true} offValue={false}
-                description={t('Set the email provider up once and use it on every site of the network. Email logs always stay per-site.')} />
-            </NekoSettings>
+          <NekoBlock title={t('Multisite')} busy={sharedBusy}
+            subtitle={t('This network has %d sites. Choose what they configure themselves, and what they inherit from here.').replace('%d', String(network.site_count || 1))}>
+            <SwitchSetting title={t('Shared Settings')} name="network_mode" checked={shared} onChange={toggleShared}
+              description={t('Set the email provider up once, here on the main site, and every site of the network sends through it. Their own Email Provider section becomes read-only. Email logs are never shared, so each site only ever sees its own.')} />
             {shared && <>
-              <NekoSettings title={t('Also Share Sender')}>
-                <NekoSwitch name="share_sender" checked={sharedGroups.sender} onChange={(v) => toggleGroup('sender', v)} onValue={true} offValue={false}
-                  description={t('Share the From address, name and Reply-To too. Leave off to let each site have its own sender.')} />
-              </NekoSettings>
-              <NekoSettings title={t('Also Share Delivery')}>
-                <NekoSwitch name="share_delivery" checked={sharedGroups.delivery} onChange={(v) => toggleGroup('delivery', v)} onValue={true} offValue={false}
-                  description={t('Share the background send, logging and retention options too.')} />
-              </NekoSettings>
+              <SwitchSetting title={t('Also Share Sender')} name="share_sender" checked={sharedGroups.sender}
+                onChange={(v) => toggleGroup('sender', v)}
+                description={t('Share the From address, name and Reply-To as well. Usually best left off: each site has its own domain, and mail is more trusted when it comes from that domain.')} />
+              <SwitchSetting title={t('Also Share Delivery')} name="share_delivery" checked={sharedGroups.delivery}
+                onChange={(v) => toggleGroup('delivery', v)}
+                description={t('Share the logging, body-storage and retention options as well, so every site keeps records the same way.')} />
             </>}
           </NekoBlock>
         )}
-
-        <NekoBlock className="primary" title={t('Test Email')} busy={busy}>
-          <NekoToolbar>
-            <NekoInput name="test_to" value={testTo} placeholder={t('recipient@example.com')} onChange={setTestTo} onEnter={sendTest} style={{ flex: 1 }} />
-            <NekoSelect scrolldown name="test_format" value={testFormat} onChange={setTestFormat} style={{ width: 100 }}>
-              <NekoOption value="html" label={t('HTML')} />
-              <NekoOption value="plain" label={t('Plain')} />
-            </NekoSelect>
-            <NekoButton className="secondary" icon="mail" disabled={testBusy || !testTo || provider === 'none'} onClick={sendTest}>{t('Send Test')}</NekoButton>
-          </NekoToolbar>
-        </NekoBlock>
 
       </NekoColumn>
 

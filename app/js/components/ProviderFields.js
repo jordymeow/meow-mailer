@@ -5,30 +5,25 @@ import { NekoSettings, NekoInput, NekoSelect, NekoOption, NekoSwitch, NekoButton
 import { useCoreContext } from '@app/contexts/core';
 import { getProvider } from '@app/providers';
 import { getOAuthUrl, disconnectOAuth } from '@app/requests';
-import { network } from '@app/settings';
 import { t } from '@app/i18n';
-
-// Read-only when the provider is shared network-wide and we are not a network
-// admin. The REST routes enforce this too — this only keeps the UI honest.
-const locked = network.can_edit ? !network.can_edit.provider : false;
 
 const Field = ({ field, value, onChange }) => {
   const control = () => {
     switch (field.type) {
       case 'select':
         return (
-          <NekoSelect scrolldown name={field.name} value={value ?? ''} onChange={onChange} disabled={locked}>
+          <NekoSelect scrolldown name={field.name} value={value ?? ''} onChange={onChange}>
             {field.options.map((o) => <NekoOption key={o.value} value={o.value} label={t(o.label)} />)}
           </NekoSelect>
         );
       case 'switch':
-        return <NekoSwitch name={field.name} checked={!!value} onChange={onChange} onValue={true} offValue={false} disabled={locked} />;
+        return <NekoSwitch name={field.name} checked={!!value} onChange={onChange} onValue={true} offValue={false} />;
       case 'number':
-        return <NekoInput type="number" name={field.name} value={value ?? ''} placeholder={field.placeholder} onBlur={onChange} onEnter={onChange} readOnly={locked} />;
+        return <NekoInput type="number" name={field.name} value={value ?? ''} placeholder={field.placeholder} onBlur={onChange} onEnter={onChange} />;
       case 'password':
-        return <NekoInput type="password" name={field.name} value={value ?? ''} placeholder={field.placeholder} onBlur={onChange} onEnter={onChange} readOnly={locked} />;
+        return <NekoInput type="password" name={field.name} value={value ?? ''} placeholder={field.placeholder} onBlur={onChange} onEnter={onChange} />;
       default:
-        return <NekoInput name={field.name} value={value ?? ''} placeholder={field.placeholder} onBlur={onChange} onEnter={onChange} readOnly={locked} />;
+        return <NekoInput name={field.name} value={value ?? ''} placeholder={field.placeholder} onBlur={onChange} onEnter={onChange} />;
     }
   };
   return <NekoSettings title={t(field.label)}>{control()}</NekoSettings>;
@@ -79,8 +74,8 @@ const OAuthConnect = ({ provider }) => {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         {connected
           ? <><NekoStatus status="ok">{t('Connected')}</NekoStatus>
-              <NekoButton className="danger" disabled={busy || locked} onClick={disconnect}>{t('Disconnect')}</NekoButton></>
-          : <NekoButton className="primary" icon="key" disabled={busy || locked} onClick={connect}>{t(provider.oauthLabel)}</NekoButton>}
+              <NekoButton className="danger" disabled={busy} onClick={disconnect}>{t('Disconnect')}</NekoButton></>
+          : <NekoButton className="primary" icon="key" disabled={busy} onClick={connect}>{t(provider.oauthLabel)}</NekoButton>}
       </div>
     </>
   );
@@ -94,13 +89,10 @@ const ProviderFields = ({ providerKey }) => {
   }
   const creds = state.options.providers[providerKey] || {};
 
+  // 'none' and 'offline' have nothing to configure. The status bar at the top of
+  // the page already says what each one does, so there is nothing to add here.
   if (provider.fields.length === 0 && !provider.oauth) {
-    return (
-      <>
-        <NekoSpacer />
-        <NekoMessage variant="info">{t(provider.description)}</NekoMessage>
-      </>
-    );
+    return null;
   }
 
   return (
