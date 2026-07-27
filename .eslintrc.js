@@ -19,9 +19,6 @@ module.exports = {
     "document": true,
     "navigator": true,
     "history": true,
-    "alert": true,
-    "confirm": true,
-    "prompt": true,
     "localStorage": true,
     "Promise": true,
     "FileReader": true,
@@ -44,7 +41,19 @@ module.exports = {
     "semi": ["error", "always"],
     "react/react-in-jsx-scope": "off",
     "react/jsx-uses-react": "off",
-    "react/prop-types": "off"
+    "react/prop-types": "off",
+    "no-restricted-globals": [
+      "error",
+      { "name": "alert", "message": "Use NekoModal or NekoNoticeModal instead of a native browser dialog." },
+      { "name": "confirm", "message": "Use NekoModal instead of a native browser dialog." },
+      { "name": "prompt", "message": "Use NekoModal with a NekoInput instead of a native browser dialog." }
+    ],
+    "no-restricted-properties": [
+      "error",
+      { "object": "window", "property": "alert", "message": "Use NekoModal or NekoNoticeModal instead." },
+      { "object": "window", "property": "confirm", "message": "Use NekoModal instead." },
+      { "object": "window", "property": "prompt", "message": "Use NekoModal with a NekoInput instead." }
+    ]
   },
   "settings": {
     "react": {

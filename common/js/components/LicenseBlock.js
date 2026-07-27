@@ -1,6 +1,7 @@
 /* eslint-disable no-undef */
 // React & Vendor Libs
 const { useState, useEffect } = wp.element;
+const { __ } = wp.i18n;
 
 // NekoUI
 import { NekoButton, NekoTypo, NekoBlock, NekoInput,
@@ -8,10 +9,11 @@ import { NekoButton, NekoTypo, NekoBlock, NekoInput,
 import { nekoFetch } from '@neko-ui';
 
 // From Main Plugin
-import { restUrl, prefix, isPro, isRegistered, restNonce } from '@app/settings';
+import { restUrl, prefix, domain, isPro, isRegistered, restNonce } from '@app/settings';
 
 // Integrity checker
 import { checkIntegrity } from '@common/integrity-checker';
+import { NekoNoticeModal, useNekoNotice } from './NoticeModal';
 
 const CommonApiUrl = `${restUrl}/meow-licenser/${prefix}/v1`;
 
@@ -23,7 +25,12 @@ const LicenseBlock = () => {
   const [ serialKey, setSerialKey ] = useState('');
   const [ editMode, setEditMode ] = useState(false);
   const [ integrityFailed, setIntegrityFailed ] = useState(false);
+  const { notice, showNotice, closeNotice } = useNekoNotice();
   const isOverridenLicense = isRegistered && (!license || license.license !== 'valid');
+
+  const showLicenseError = (message) => {
+    showNotice(message, { title: __( 'License Error', domain ) });
+  };
 
   const checkLicense = async () => {
     if (!isPro) {
@@ -53,7 +60,7 @@ const LicenseBlock = () => {
       }
     }
     catch (err) {
-      alert('Error while checking the license. Check your console for more information.');
+      showLicenseError(__( 'Error while checking the license. Check your console for more information.', domain ));
       console.error(err);
     }
     setBusy(false);
@@ -74,7 +81,7 @@ const LicenseBlock = () => {
       }
     }
     catch (err) {
-      alert('Error while removing the license. Check your console for more information.');
+      showLicenseError(__( 'Error while removing the license. Check your console for more information.', domain ));
       console.error(err);
     }
     setBusy(false);
@@ -99,7 +106,7 @@ const LicenseBlock = () => {
       }
     }
     catch (err) {
-      alert('Error while forcing the license. Check your console for more information.');
+      showLicenseError(__( 'Error while forcing the license. Check your console for more information.', domain ));
       console.error(err);
     }
     setBusy(false);
@@ -136,7 +143,7 @@ const LicenseBlock = () => {
       }
     }
     catch (err) {
-      alert('Error while validating the license. Check your console for more information.');
+      showLicenseError(__( 'Error while validating the license. Check your console for more information.', domain ));
       console.error(err);
     }
     setBusy(false);
@@ -286,6 +293,8 @@ const LicenseBlock = () => {
           onClick: () => location.reload()
         }}
       />
+
+      <NekoNoticeModal notice={notice} onClose={closeNotice} />
 
     </NekoBlock>;
 
