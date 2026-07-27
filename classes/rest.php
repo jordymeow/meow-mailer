@@ -16,10 +16,14 @@ class Meow_MWMAIL_Rest {
     // Every route is admin-only. permission_callback is declared inline on each
     // route (rather than merged from a shared array) so static analysers can see it.
     $perm = [ $this->core, 'can_access_settings' ];
+    // The provider group is always shared once network mode is on, so anything
+    // that rewrites credentials is a network-admin action there.
+    $edit = function () { return $this->core->can_edit_group( 'provider' ); };
 
     register_rest_route( $this->namespace, '/settings/list',   [ 'methods' => 'GET',  'callback' => [ $this, 'settings_list' ],   'permission_callback' => $perm ] );
     register_rest_route( $this->namespace, '/settings/update', [ 'methods' => 'POST', 'callback' => [ $this, 'settings_update' ], 'permission_callback' => $perm ] );
     register_rest_route( $this->namespace, '/settings/reset',  [ 'methods' => 'POST', 'callback' => [ $this, 'settings_reset' ],  'permission_callback' => $perm ] );
+    register_rest_route( $this->namespace, '/settings/network', [ 'methods' => 'POST', 'callback' => [ $this, 'settings_network' ], 'permission_callback' => $perm ] );
 
     register_rest_route( $this->namespace, '/logs/list',   [ 'methods' => 'POST', 'callback' => [ $this, 'logs_list' ],   'permission_callback' => $perm ] );
     register_rest_route( $this->namespace, '/logs/get',     [ 'methods' => 'POST', 'callback' => [ $this, 'logs_get' ],     'permission_callback' => $perm ] );
@@ -29,8 +33,8 @@ class Meow_MWMAIL_Rest {
     register_rest_route( $this->namespace, '/logs/export',  [ 'methods' => 'POST', 'callback' => [ $this, 'logs_export' ],  'permission_callback' => $perm ] );
 
     register_rest_route( $this->namespace, '/mail/test',         [ 'methods' => 'POST', 'callback' => [ $this, 'mail_test' ],        'permission_callback' => $perm ] );
-    register_rest_route( $this->namespace, '/oauth/auth-url',    [ 'methods' => 'POST', 'callback' => [ $this, 'oauth_auth_url' ],   'permission_callback' => $perm ] );
-    register_rest_route( $this->namespace, '/oauth/disconnect',  [ 'methods' => 'POST', 'callback' => [ $this, 'oauth_disconnect' ], 'permission_callback' => $perm ] );
+    register_rest_route( $this->namespace, '/oauth/auth-url',    [ 'methods' => 'POST', 'callback' => [ $this, 'oauth_auth_url' ],   'permission_callback' => $edit ] );
+    register_rest_route( $this->namespace, '/oauth/disconnect',  [ 'methods' => 'POST', 'callback' => [ $this, 'oauth_disconnect' ], 'permission_callback' => $edit ] );
   }
 
   #region Settings
@@ -41,7 +45,10 @@ class Meow_MWMAIL_Rest {
 
   public function settings_update( $request ) {
     $params = $request->get_json_params();
-    $merged = $this->core->merge_options( $params['options'] ?? [] );
+    // Silently ignore anything the caller is not allowed to write: a site admin
+    // may still save the groups their own site owns.
+    $incoming = $this->core->strip_locked_options( $params['options'] ?? [] );
+    $merged   = $this->core->merge_options( $incoming );
     $this->core->update_options( $merged );
     return new WP_REST_Response( [ 'success' => true, 'options' => $this->core->get_masked_options() ], 200 );
   }
@@ -49,6 +56,23 @@ class Meow_MWMAIL_Rest {
   public function settings_reset() {
     $this->core->reset_options();
     return new WP_REST_Response( [ 'success' => true, 'options' => $this->core->get_masked_options() ], 200 );
+  }
+
+  /**
+   * Toggle the shared network configuration. Restricted to super admins: this
+   * affects every site of the network, not just the current one.
+   */
+  public function settings_network( $request ) {
+    if ( ! is_multisite() || ! is_super_admin() || ! is_main_site() ) {
+      return new WP_REST_Response( [ 'success' => false,
+        'message' => __( 'The shared configuration is managed from the main site of the network.', 'meow-mailer' ) ], 403 );
+    }
+    $params = $request->get_json_params();
+    $groups = is_array( $params['groups'] ?? null ) ? $params['groups'] : [];
+    $this->core->set_network_mode( ! empty( $params['enabled'] ), $groups );
+    return new WP_REST_Response( [ 'success' => true,
+      'network'  => $this->core->network_state(),
+      'options'  => $this->core->get_masked_options() ], 200 );
   }
 
   #endregion

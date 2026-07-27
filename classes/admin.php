@@ -78,6 +78,7 @@ class Meow_MWMAIL_Admin extends MeowKit_MWMAIL_Admin {
       'domain'     => MWMAIL_DOMAIN,
       'rest_nonce' => wp_create_nonce( 'wp_rest' ),
       'oauth_redirect_uri' => self::oauth_redirect_uri(),
+      'network'    => $this->core->network_state(),
       'options'    => $this->core->get_masked_options(),
     ] );
   }
@@ -92,7 +93,7 @@ class Meow_MWMAIL_Admin extends MeowKit_MWMAIL_Admin {
     if ( sanitize_text_field( wp_unslash( $_GET['page'] ?? '' ) ) !== 'mwmail_settings' || ! isset( $_GET['code'] ) ) {
       return;
     }
-    if ( ! current_user_can( 'manage_options' ) ) {
+    if ( ! $this->core->can_edit_group( 'provider' ) ) {
       return;
     }
 

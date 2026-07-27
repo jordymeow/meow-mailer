@@ -12,6 +12,10 @@ class Meow_MWMAIL_Core {
 
   private $option_name = 'mwmail_options';
 
+  // The network-mode flag. It decides *where* the options are stored, so it can
+  // never live inside the options themselves — always at network level.
+  private $network_option = 'mwmail_network';
+
   // Sent to the browser in place of a stored secret; on save, this value means
   // "keep the existing secret" so credentials never round-trip through the client.
   const SECRET_MASK = '••••••••';
@@ -46,6 +50,160 @@ class Meow_MWMAIL_Core {
 
   public function can_access_settings() {
     return apply_filters( 'mwmail_allow_setup', current_user_can( 'manage_options' ) );
+  }
+
+  /**
+   * Reading a shared group is enough to see it; changing it is not. A site admin
+   * saving a shared group would silently reconfigure every other site of the
+   * network, so only a network admin may write those. Groups that are not shared
+   * still belong to the site, and its admin keeps full control of them.
+   */
+  public function can_edit_group( $group ) {
+    if ( ! $this->can_access_settings() ) {
+      return false;
+    }
+    if ( ! $this->is_group_shared( $group ) ) {
+      return true; // the site owns this group outright
+    }
+    // A shared group belongs to the network, and the network is configured from
+    // the main site — even a super admin does not edit it from a subsite, where
+    // it would look like a local change but affect everyone.
+    return is_super_admin() && is_main_site();
+  }
+
+  /**
+   * Whether a group appears on this site at all. Shared groups are simply not
+   * part of a subsite's settings: they are not its business, and showing them
+   * read-only only invites confusion about where they are managed.
+   */
+  public function is_group_visible( $group ) {
+    return ! $this->is_group_shared( $group ) || is_main_site();
+  }
+
+  #endregion
+
+  #region Network (Multisite)
+
+  /**
+   * The option groups that can be shared network-wide. 'provider' is what shared
+   * settings *means* — set the provider up once for the whole network — so it is
+   * always shared once the mode is on. The other two are opt-in: a network often
+   * wants one mail account but a different sender per site.
+   *
+   * Logs are never in here: each site has its own table and always sees only its
+   * own emails.
+   */
+  const NETWORK_GROUPS = [
+    'provider' => [ 'provider', 'providers' ],
+    'sender'   => [ 'from_email', 'from_name', 'force_from', 'reply_to' ],
+    'delivery' => [ 'logs_enabled', 'log_body', 'log_retention_days', 'send_in_background' ],
+  ];
+
+  /** The groups that are shareable on top of 'provider'. */
+  const NETWORK_OPTIONAL_GROUPS = [ 'sender', 'delivery' ];
+
+  /**
+   * Network mode: the provider (and optionally more) comes from one shared
+   * configuration instead of this site's own. Off is the default, and makes
+   * every site behave exactly like a standalone install.
+   */
+  public function is_network_mode() {
+    return is_multisite() && is_array( get_site_option( $this->network_option, false ) );
+  }
+
+  /** Which groups are currently read from the network store. */
+  public function network_groups() {
+    if ( ! $this->is_network_mode() ) {
+      return [];
+    }
+    $stored = get_site_option( $this->network_option, [] );
+    $groups = [ 'provider' ];
+    foreach ( self::NETWORK_OPTIONAL_GROUPS as $group ) {
+      if ( ! empty( $stored[ $group ] ) ) {
+        $groups[] = $group;
+      }
+    }
+    return $groups;
+  }
+
+  public function is_group_shared( $group ) {
+    return in_array( $group, $this->network_groups(), true );
+  }
+
+  /** Everything the admin app needs to render the multisite state. */
+  public function network_state() {
+    $shared = [];
+    $can_edit = [];
+    $visible = [];
+    foreach ( array_keys( self::NETWORK_GROUPS ) as $group ) {
+      $shared[ $group ]   = $this->is_group_shared( $group );
+      $can_edit[ $group ] = $this->can_edit_group( $group );
+      $visible[ $group ]  = $this->is_group_visible( $group );
+    }
+    return [
+      'is_multisite'   => is_multisite(),
+      'is_super_admin' => is_super_admin(),
+      'is_main_site'   => is_main_site(),
+      'enabled'        => $this->is_network_mode(),
+      'shared'         => $shared,
+      'can_edit'       => $can_edit,
+      'visible'        => $visible,
+      // Where the shared configuration actually lives, for the "managed there" link.
+      'config_url'     => is_multisite()
+        ? get_admin_url( get_main_site_id(), 'admin.php?page=mwmail_settings' ) : '',
+    ];
+  }
+
+  /** Every option name that currently lives in the network store. */
+  private function shared_keys() {
+    $keys = [];
+    foreach ( $this->network_groups() as $group ) {
+      $keys = array_merge( $keys, self::NETWORK_GROUPS[ $group ] );
+    }
+    return $keys;
+  }
+
+  /**
+   * Turn sharing on/off, and pick which optional groups come along. Returns the
+   * stored shape: false, or [ 'sender' => bool, 'delivery' => bool ].
+   */
+  public function set_network_mode( $enabled, $groups = [] ) {
+    if ( ! is_multisite() ) {
+      return false;
+    }
+    if ( ! $enabled ) {
+      update_site_option( $this->network_option, false );
+      return false;
+    }
+
+    $was     = $this->network_groups();
+    $network = $this->read_options( true );
+    $site    = $this->read_options( false );
+
+    // Seed each group from this site as it starts being shared. Without this the
+    // network store would hand every site an empty (or long-stale) config, and
+    // mail would break network-wide the moment the switch is flipped.
+    $becoming = [ 'provider' ];
+    foreach ( self::NETWORK_OPTIONAL_GROUPS as $group ) {
+      if ( ! empty( $groups[ $group ] ) ) {
+        $becoming[] = $group;
+      }
+    }
+    foreach ( array_diff( $becoming, $was ) as $group ) {
+      foreach ( self::NETWORK_GROUPS[ $group ] as $key ) {
+        if ( array_key_exists( $key, $site ) ) {
+          $network[ $key ] = $site[ $key ];
+        }
+      }
+    }
+    update_site_option( $this->option_name, $network );
+
+    $stored = [];
+    foreach ( self::NETWORK_OPTIONAL_GROUPS as $group ) {
+      $stored[ $group ] = ! empty( $groups[ $group ] );
+    }
+    update_site_option( $this->network_option, $stored );
+    return $stored;
   }
 
   #endregion
@@ -111,11 +269,29 @@ class Meow_MWMAIL_Core {
     return null;
   }
 
+  /** Raw stored options, from this site or from the network. */
+  private function read_options( $network ) {
+    $options = $network
+      ? get_site_option( $this->option_name, [] )
+      : get_option( $this->option_name, [] );
+    return is_array( $options ) ? $options : [];
+  }
+
   public function get_all_options() {
-    $options = get_option( $this->option_name, [] );
-    if ( ! is_array( $options ) ) {
-      $options = [];
+    $options = $this->read_options( false );
+
+    // Shared groups override this site's own values, group by group. Anything not
+    // shared stays exactly as the site stored it.
+    $shared_keys = $this->shared_keys();
+    if ( ! empty( $shared_keys ) ) {
+      $shared = $this->read_options( true );
+      foreach ( $shared_keys as $key ) {
+        if ( array_key_exists( $key, $shared ) ) {
+          $options[ $key ] = $shared[ $key ];
+        }
+      }
     }
+
     $defaults = $this->list_options();
     $options  = array_merge( $defaults, $options );
 
@@ -199,8 +375,43 @@ class Meow_MWMAIL_Core {
   }
 
   public function update_options( $options ) {
-    update_option( $this->option_name, $options, false );
+    $shared_keys = $this->shared_keys();
+    if ( empty( $shared_keys ) ) {
+      update_option( $this->option_name, $options, false );
+      return $this->get_all_options();
+    }
+
+    // Route each option to the store that owns it, so a shared group is written
+    // once for the network while the rest stays on this site.
+    $network = $this->read_options( true );
+    $site    = $this->read_options( false );
+    foreach ( $options as $key => $value ) {
+      if ( in_array( $key, $shared_keys, true ) ) {
+        $network[ $key ] = $value;
+      }
+      else {
+        $site[ $key ] = $value;
+      }
+    }
+    update_site_option( $this->option_name, $network );
+    update_option( $this->option_name, $site, false );
     return $this->get_all_options();
+  }
+
+  /**
+   * Drop the options the current user may not write. A site admin can still save
+   * the groups their site owns; the shared ones are silently left untouched.
+   */
+  public function strip_locked_options( $options ) {
+    foreach ( self::NETWORK_GROUPS as $group => $keys ) {
+      if ( $this->can_edit_group( $group ) ) {
+        continue;
+      }
+      foreach ( $keys as $key ) {
+        unset( $options[ $key ] );
+      }
+    }
+    return $options;
   }
 
   public function update_option( $option, $value ) {
@@ -210,7 +421,8 @@ class Meow_MWMAIL_Core {
   }
 
   public function reset_options() {
-    return $this->update_options( $this->list_options() );
+    // A site admin resetting only clears the groups their site actually owns.
+    return $this->update_options( $this->strip_locked_options( $this->list_options() ) );
   }
 
   #endregion

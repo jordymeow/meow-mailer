@@ -22,6 +22,7 @@ const get = async (path) => {
 export const refreshSettings = async () => (await get('/settings/list')).options;
 export const updateSettings = async (options) => (await post('/settings/update', { options })).options;
 export const resetSettings = async () => (await post('/settings/reset')).options;
+export const setNetworkMode = async (enabled, groups) => await post('/settings/network', { enabled, groups });
 
 // Logs
 export const fetchLogs = async ({ page, limit, filters, sort }) =>
