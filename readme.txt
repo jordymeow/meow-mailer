@@ -27,6 +27,7 @@ That is Meow Mailer, and all of this is free:
 * **Filters and export.** Filter by status and provider, search by subject or recipient, and export to CSV.
 * **Test and resend.** Check your setup with an HTML or plain text test, and resend any logged message in one click.
 * **Auto prune.** Keep logs forever, or delete anything older than 7, 30 or 90 days.
+* **Multisite ready.** Set your provider up once on the main site and let every site of the network use it, or leave each site to configure its own. Email logs always stay per site.
 * **Light and private.** No bloat, no tracking. Your credentials can live in `wp-config.php` instead of the database.
 
 = Supported providers =
@@ -43,6 +44,8 @@ Meow Mailer is part of the Meow Apps family of plugins, focused on doing one thi
 2. Activate the plugin.
 3. Go to **Meow Apps > Meow Mailer**, open the **Settings** tab, choose your provider and enter its credentials.
 4. Send a test email to confirm everything works. Watch the **Logs** tab.
+
+On a Multisite network, you can also network activate the plugin, then turn on **Shared Settings** on the main site to configure the provider once for every site.
 
 == External services ==
 
@@ -77,6 +80,16 @@ For SMTP and API providers, credentials are stored in the WordPress database. Yo
 = What does Offline Mode do? =
 
 When enabled, no email is sent. Every message WordPress tries to send is recorded in the log instead. Ideal for staging sites where you don't want real emails going out.
+
+= Does it work on Multisite? =
+
+Yes, and you can set it up once for the whole network. Activate it as usual (network activate works too), then on the main site turn on **Shared Settings**: every site of the network will send through the same provider, configured once from the main site. Subsites see that section as managed elsewhere and cannot change it, so nobody can reconfigure the network by accident.
+
+You decide how far the sharing goes. The provider is always shared once the option is on. The sender details (From address, name, Reply-To) and the delivery options (background send, logging, retention) are each optional, so you can share the mail account but let every site keep its own From address, which is usually what you want since each site has its own domain.
+
+Email logs are never shared. Each site keeps its own log and only ever sees its own emails.
+
+Leave **Shared Settings** off and nothing changes: every site configures itself, exactly like a standalone install.
 
 = Will it work with WooCommerce / contact form plugins? =
 
