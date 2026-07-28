@@ -22,6 +22,8 @@ class Meow_MWMAIL_Admin extends MeowKit_MWMAIL_Admin {
 
   /**
    * Make silent failures visible with a dashboard warning when recent sends failed.
+   * Dismissing it means "I have seen those failures": we remember the last failed
+   * log id, so the notice stays away until a *new* email fails.
    */
   public function failure_notice() {
     if ( ! current_user_can( 'manage_options' ) ) {
@@ -36,17 +38,35 @@ class Meow_MWMAIL_Admin extends MeowKit_MWMAIL_Admin {
     if ( sanitize_text_field( wp_unslash( $_GET['page'] ?? '' ) ) === 'mwmail_settings' ) {
       return;
     }
-    $count = $this->core->logs->count_recent_failed( 24 );
+    $count = $this->core->logs->count_recent_failed( 24, (int) get_option( Meow_MWMAIL_Core::NOTICE_SEEN_OPTION, 0 ) );
     if ( $count < 1 ) {
       return;
     }
     $url = admin_url( 'admin.php?page=mwmail_settings&nekoTab=logs' );
     printf(
-      '<div class="notice notice-error"><p><strong>Meow Mailer:</strong> %s <a href="%s">%s</a></p></div>',
+      '<div class="notice notice-error is-dismissible" data-mwmail-notice="failures"><p><strong>Meow Mailer:</strong> %s <a href="%s">%s</a></p></div>',
       /* translators: %d: number of emails that failed to send in the last 24 hours. */
       esc_html( sprintf( _n( '%d email failed to send in the last 24 hours.', '%d emails failed to send in the last 24 hours.', $count, 'meow-mailer' ), $count ) ),
       esc_url( $url ),
       esc_html__( 'View logs', 'meow-mailer' )
+    );
+
+    // WordPress adds the dismiss button itself (and only hides the notice), so we
+    // listen for the click to make the dismissal stick. Delegated on the document
+    // because that button does not exist yet when this script runs.
+    $config = wp_json_encode( [
+      'url'   => rest_url( 'meow-mailer/v1/notice/dismiss' ),
+      'nonce' => wp_create_nonce( 'wp_rest' ),
+    ] );
+    wp_print_inline_script_tag(
+      '( function () {
+        var notice = ' . $config . ';
+        document.addEventListener( "click", function ( ev ) {
+          var button = ev.target.closest && ev.target.closest( ".notice-dismiss" );
+          if ( ! button || ! button.closest( "[data-mwmail-notice=\'failures\']" ) ) { return; }
+          fetch( notice.url, { method: "POST", credentials: "same-origin", headers: { "X-WP-Nonce": notice.nonce } } );
+        } );
+      } )();'
     );
   }
 

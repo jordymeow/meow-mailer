@@ -9,6 +9,7 @@ global $wpdb;
 
 delete_option( 'mwmail_options' );
 delete_option( 'mwmail_db_logs_version' );
+delete_option( 'mwmail_failures_seen' );
 
 // Multisite: the shared configuration and its flag live at network level.
 if ( is_multisite() ) {

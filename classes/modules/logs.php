@@ -99,14 +99,26 @@ class Meow_MWMAIL_Modules_Logs {
     return $stats;
   }
 
-  public function count_recent_failed( $hours = 24 ) {
+  /**
+   * @param int $after_id  only count failures newer than this log id (0 = all of them).
+   */
+  public function count_recent_failed( $hours = 24, $after_id = 0 ) {
     if ( ! $this->check_db() ) {
       return 0;
     }
     // Rows are stored in site-local time, so compute the cutoff in local time too.
     $cutoff = gmdate( 'Y-m-d H:i:s', current_time( 'timestamp' ) - ( $hours * HOUR_IN_SECONDS ) );
     // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-    return (int) $this->wpdb->get_var( $this->wpdb->prepare( "SELECT COUNT(*) FROM {$this->table_name} WHERE status = 'failed' AND created >= %s", $cutoff ) );
+    return (int) $this->wpdb->get_var( $this->wpdb->prepare( "SELECT COUNT(*) FROM {$this->table_name} WHERE status = 'failed' AND created >= %s AND id > %d", $cutoff, max( 0, intval( $after_id ) ) ) );
+  }
+
+  /** Highest failed log id, so the admin notice can remember what was already seen. */
+  public function last_failed_id() {
+    if ( ! $this->check_db() ) {
+      return 0;
+    }
+    // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+    return (int) $this->wpdb->get_var( "SELECT MAX(id) FROM {$this->table_name} WHERE status = 'failed'" );
   }
 
   #endregion

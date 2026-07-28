@@ -32,6 +32,8 @@ class Meow_MWMAIL_Rest {
     register_rest_route( $this->namespace, '/logs/resend',  [ 'methods' => 'POST', 'callback' => [ $this, 'logs_resend' ],  'permission_callback' => $perm ] );
     register_rest_route( $this->namespace, '/logs/export',  [ 'methods' => 'POST', 'callback' => [ $this, 'logs_export' ],  'permission_callback' => $perm ] );
 
+    register_rest_route( $this->namespace, '/notice/dismiss', [ 'methods' => 'POST', 'callback' => [ $this, 'notice_dismiss' ], 'permission_callback' => $perm ] );
+
     register_rest_route( $this->namespace, '/mail/test',         [ 'methods' => 'POST', 'callback' => [ $this, 'mail_test' ],        'permission_callback' => $perm ] );
     register_rest_route( $this->namespace, '/oauth/auth-url',    [ 'methods' => 'POST', 'callback' => [ $this, 'oauth_auth_url' ],   'permission_callback' => $edit ] );
     register_rest_route( $this->namespace, '/oauth/disconnect',  [ 'methods' => 'POST', 'callback' => [ $this, 'oauth_disconnect' ], 'permission_callback' => $edit ] );
@@ -176,6 +178,15 @@ class Meow_MWMAIL_Rest {
   #endregion
 
   #region Tools
+
+  /**
+   * The admin dismissed the failure notice: remember the newest failure they saw,
+   * so it only comes back when another email fails.
+   */
+  public function notice_dismiss() {
+    update_option( Meow_MWMAIL_Core::NOTICE_SEEN_OPTION, $this->core->logs->last_failed_id(), false );
+    return new WP_REST_Response( [ 'success' => true ], 200 );
+  }
 
   public function mail_test( $request ) {
     $params = $request->get_json_params();

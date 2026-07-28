@@ -20,6 +20,9 @@ class Meow_MWMAIL_Core {
   // "keep the existing secret" so credentials never round-trip through the client.
   const SECRET_MASK = '••••••••';
 
+  // Id of the newest failed email the admin acknowledged by dismissing the notice.
+  const NOTICE_SEEN_OPTION = 'mwmail_failures_seen';
+
   public function __construct() {
     $this->is_rest = MeowKit_MWMAIL_Helpers::is_rest();
 
