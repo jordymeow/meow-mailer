@@ -60,7 +60,7 @@ class Meow_MWMAIL_Mailers_Outlook extends Meow_MWMAIL_Mailers_Base {
 
   private function graph_recipients( $list ) {
     return array_map( function ( $r ) {
-      return [ 'emailAddress' => array_filter( [ 'address' => $r['email'], 'name' => $r['name'] ] ) ];
+      return [ 'emailAddress' => array_filter( [ 'address' => $r['email'], 'name' => $r['name'] ?? '' ] ) ];
     }, $this->recipients( $list ) );
   }
 

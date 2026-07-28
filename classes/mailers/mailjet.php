@@ -24,7 +24,9 @@ class Meow_MWMAIL_Mailers_Mailjet extends Meow_MWMAIL_Mailers_Base {
     }
     if ( $email['reply_to'] ) {
       $rt = $this->mj_recipients( $email['reply_to'] );
-      $message['ReplyTo'] = $rt[0];
+      if ( $rt ) {
+        $message['ReplyTo'] = $rt[0];
+      }
     }
     if ( $this->is_html( $email ) ) {
       $message['HTMLPart'] = $email['message'];
@@ -53,7 +55,7 @@ class Meow_MWMAIL_Mailers_Mailjet extends Meow_MWMAIL_Mailers_Base {
   private function mj_recipients( $list ) {
     $out = [];
     foreach ( $this->recipients( $list ) as $r ) {
-      $out[] = array_filter( [ 'Email' => $r['email'], 'Name' => $r['name'] ] );
+      $out[] = array_filter( [ 'Email' => $r['email'], 'Name' => $r['name'] ?? '' ] );
     }
     return $out;
   }

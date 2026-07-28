@@ -23,7 +23,9 @@ class Meow_MWMAIL_Mailers_Mailersend extends Meow_MWMAIL_Mailers_Base {
     }
     if ( $email['reply_to'] ) {
       $rt = $this->recipients( $email['reply_to'] );
-      $payload['reply_to'] = $rt[0];
+      if ( $rt ) {
+        $payload['reply_to'] = $rt[0];
+      }
     }
     if ( $this->is_html( $email ) ) {
       $payload['html'] = $email['message'];

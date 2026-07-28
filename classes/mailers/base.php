@@ -104,14 +104,17 @@ abstract class Meow_MWMAIL_Mailers_Base {
   }
 
   /**
-   * Recipients as [ ['email'=>, 'name'=>], ... ] for the JSON APIs.
+   * Recipients as [ ['email'=>, 'name'=>], ... ] for the JSON APIs. The name is
+   * only there when the address actually carries one: Brevo (and others) reject
+   * an empty "name" with "name is missing in to", and most wp_mail() recipients
+   * are a bare email address.
    */
   protected function recipients( $list ) {
     $out = [];
     foreach ( (array) $list as $address ) {
       list( $email, $name ) = $this->split_address( $address );
       if ( $email ) {
-        $out[] = [ 'email' => $email, 'name' => $name ];
+        $out[] = $name === '' ? [ 'email' => $email ] : [ 'email' => $email, 'name' => $name ];
       }
     }
     return $out;

@@ -23,7 +23,9 @@ class Meow_MWMAIL_Mailers_Brevo extends Meow_MWMAIL_Mailers_Base {
     }
     if ( $email['reply_to'] ) {
       $rt = $this->recipients( $email['reply_to'] );
-      $payload['replyTo'] = $rt[0];
+      if ( $rt ) {
+        $payload['replyTo'] = $rt[0];
+      }
     }
     if ( $this->is_html( $email ) ) {
       $payload['htmlContent'] = $email['message'];

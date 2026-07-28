@@ -29,7 +29,9 @@ class Meow_MWMAIL_Mailers_Sendgrid extends Meow_MWMAIL_Mailers_Base {
     ];
     if ( $email['reply_to'] ) {
       $rt = $this->recipients( $email['reply_to'] );
-      $payload['reply_to'] = $rt[0];
+      if ( $rt ) {
+        $payload['reply_to'] = $rt[0];
+      }
     }
     $files = $this->attachments_base64( $email );
     if ( $files ) {
