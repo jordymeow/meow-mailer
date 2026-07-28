@@ -33,7 +33,11 @@ class Meow_MWMAIL_Mailers_Postmark extends Meow_MWMAIL_Mailers_Base {
     $files = $this->attachments_base64( $email );
     if ( $files ) {
       $payload['Attachments'] = array_map( function ( $f ) {
-        return [ 'Name' => $f['filename'], 'Content' => $f['content'], 'ContentType' => $f['type'] ];
+        $item = [ 'Name' => $f['filename'], 'Content' => $f['content'], 'ContentType' => $f['type'] ];
+        if ( $f['inline'] ) {
+          $item['ContentID'] = 'cid:' . $f['cid'];
+        }
+        return $item;
       }, $files );
     }
 

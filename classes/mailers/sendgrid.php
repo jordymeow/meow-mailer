@@ -36,7 +36,12 @@ class Meow_MWMAIL_Mailers_Sendgrid extends Meow_MWMAIL_Mailers_Base {
     $files = $this->attachments_base64( $email );
     if ( $files ) {
       $payload['attachments'] = array_map( function ( $f ) {
-        return [ 'content' => $f['content'], 'filename' => $f['filename'], 'type' => $f['type'] ];
+        $item = [ 'content' => $f['content'], 'filename' => $f['filename'], 'type' => $f['type'] ];
+        if ( $f['inline'] ) {
+          $item['disposition'] = 'inline';
+          $item['content_id']  = $f['cid'];
+        }
+        return $item;
       }, $files );
     }
 

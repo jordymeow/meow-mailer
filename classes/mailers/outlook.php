@@ -37,12 +37,17 @@ class Meow_MWMAIL_Mailers_Outlook extends Meow_MWMAIL_Mailers_Base {
     $files = $this->attachments_base64( $email );
     if ( $files ) {
       $message['attachments'] = array_map( function ( $f ) {
-        return [
+        $item = [
           '@odata.type'  => '#microsoft.graph.fileAttachment',
           'name'         => $f['filename'],
           'contentType'  => $f['type'],
           'contentBytes' => $f['content'],
         ];
+        if ( $f['inline'] ) {
+          $item['isInline']  = true;
+          $item['contentId'] = $f['cid'];
+        }
+        return $item;
       }, $files );
     }
 

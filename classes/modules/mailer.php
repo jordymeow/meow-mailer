@@ -49,7 +49,7 @@ class Meow_MWMAIL_Modules_Mailer {
     // and they'd be gone by shutdown.
     if ( $this->core->get_option( 'send_in_background', false )
       && $active_provider !== 'offline'
-      && empty( $email['attachments'] ) ) {
+      && empty( $email['attachments'] ) && empty( $email['embeds'] ) ) {
       $this->enqueue( $email );
       return true;
     }
@@ -174,7 +174,7 @@ class Meow_MWMAIL_Modules_Mailer {
         'subject'     => (string) $email['subject'],
         'headers'     => wp_json_encode( $email['headers_raw'] ),
         'body'        => $store_body ? (string) $email['message'] : '',
-        'attachments' => implode( ', ', array_map( 'basename', (array) $email['attachments'] ) ),
+        'attachments' => implode( ', ', $this->file_names( $email['attachments'] ) ),
         'provider'    => $provider,
         'status'      => $status,
         'error'       => (string) $error,
@@ -183,6 +183,15 @@ class Meow_MWMAIL_Modules_Mailer {
       $this->core->log( 'Failed to log email: ' . $e->getMessage() );
       return null;
     }
+  }
+
+  /** The names the recipient sees: the array key when there is one, the file name otherwise. */
+  private function file_names( $files ) {
+    $names = [];
+    foreach ( (array) $files as $name => $path ) {
+      $names[] = is_string( $name ) ? $name : basename( $path );
+    }
+    return $names;
   }
 
   private function format_from( $email ) {
@@ -201,17 +210,13 @@ class Meow_MWMAIL_Modules_Mailer {
     $subject     = $atts['subject'] ?? '';
     $message     = $atts['message'] ?? '';
     $headers     = $atts['headers'] ?? '';
-    $attachments = $atts['attachments'] ?? [];
+    $attachments = $this->normalize_files( $atts['attachments'] ?? [] );
+    $embeds      = $this->normalize_files( $atts['embeds'] ?? [] ); // inline images, since WP 6.9
 
     if ( ! is_array( $to ) ) {
       $to = explode( ',', $to );
     }
     $to = array_filter( array_map( 'trim', $to ) );
-
-    if ( ! is_array( $attachments ) ) {
-      $attachments = explode( "\n", str_replace( "\r\n", "\n", $attachments ) );
-    }
-    $attachments = array_filter( array_map( 'trim', (array) $attachments ) );
 
     $cc = $bcc = $reply_to = [];
     $from_email = $from_name = '';
@@ -304,7 +309,8 @@ class Meow_MWMAIL_Modules_Mailer {
       'to'           => array_values( $to ),
       'subject'      => $subject,
       'message'      => $message,
-      'attachments'  => array_values( $attachments ),
+      'attachments'  => $attachments,
+      'embeds'       => $embeds,
       'cc'           => array_values( array_filter( $cc ) ),
       'bcc'          => array_values( array_filter( $bcc ) ),
       'reply_to'     => array_values( array_filter( $reply_to ) ),
@@ -316,6 +322,20 @@ class Meow_MWMAIL_Modules_Mailer {
       'headers_raw'  => $header_lines,
       'provider'     => $atts['provider'] ?? null,
     ];
+  }
+
+  /**
+   * File lists exactly as wp_mail() accepts them: an array or newline-separated
+   * paths. The keys carry meaning (the filename the recipient should see for an
+   * attachment, the Content-ID for an embed), so they must be preserved, never
+   * run through array_values().
+   */
+  private function normalize_files( $files ) {
+    if ( ! is_array( $files ) ) {
+      $files = explode( "\n", str_replace( "\r\n", "\n", (string) $files ) );
+    }
+    $files = array_filter( $files, 'is_string' );
+    return array_filter( array_map( 'trim', $files ) );
   }
 
   private function parse_from( $content ) {

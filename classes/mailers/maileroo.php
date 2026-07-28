@@ -41,10 +41,12 @@ class Meow_MWMAIL_Mailers_Maileroo extends Meow_MWMAIL_Mailers_Base {
     if ( $files ) {
       $payload['attachments'] = array_map( function ( $f ) {
         return [
-          'file_name'    => $f['filename'],
+          // Inline files are referenced by their name, so the Content-ID has to
+          // be the file name for the cid: links in the HTML to resolve.
+          'file_name'    => $f['inline'] && $f['cid'] !== '' ? $f['cid'] : $f['filename'],
           'content_type' => $f['type'],
           'content'      => $f['content'],
-          'inline'       => false,
+          'inline'       => $f['inline'],
         ];
       }, $files );
     }

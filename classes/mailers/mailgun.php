@@ -31,7 +31,7 @@ class Meow_MWMAIL_Mailers_Mailgun extends Meow_MWMAIL_Mailers_Base {
     $fields[] = [ 'subject', $email['subject'] ];
     $fields[] = [ $this->is_html( $email ) ? 'html' : 'text', $email['message'] ];
 
-    $multipart = $this->build_multipart( $fields, $email['attachments'] );
+    $multipart = $this->build_multipart( $fields, $email['attachments'], $email['embeds'] ?? [] );
 
     $result = $this->http_post( $url, [
       'timeout' => 30,
