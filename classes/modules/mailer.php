@@ -35,11 +35,10 @@ class Meow_MWMAIL_Modules_Mailer {
       return $short_circuit;
     }
 
-    // Preserve compatibility with code that hooks the `wp_mail` filter.
-    if ( is_array( $atts ) ) {
-      $atts = apply_filters( 'wp_mail', $atts ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- core WordPress hook
-    }
-
+    // Note: do NOT apply the `wp_mail` filter here. Core runs it just before
+    // `pre_wp_mail`, so $atts already went through it. Applying it again would run
+    // every hooked filter twice, duplicating whatever they append (signatures,
+    // subject prefixes, extra Bcc headers…).
     $email           = $this->normalize( $atts );
     $active_provider  = $email['provider'] ?? $this->core->get_option( 'provider', 'none' );
 
