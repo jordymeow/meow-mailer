@@ -27,6 +27,8 @@ export const statusOf = (status) => {
   }
 };
 
+const countAddresses = (value) => (value ? value.split(',').filter((x) => x.trim()).length : 0);
+
 const COLUMNS = [
   { accessor: 'created', title: t('Date'), width: '160px', sortable: true },
   { accessor: 'to', title: t('To') },
@@ -150,10 +152,15 @@ const LogsScreen = ({ onView, reloadSignal, onChanged = () => {} }) => {
 
   const data = rows.map((row) => {
     const st = statusOf(row.status);
+    // Cc/Bcc have no column of their own; without this hint the email looks like it
+    // only ever went to one person.
+    const extra = countAddresses(row.cc) + countAddresses(row.bcc);
     return {
       id: row.id,
       created: row.created,
-      to: row.email_to,
+      to: extra
+        ? <>{row.email_to} <span style={{ opacity: 0.5 }} title={t('Cc / Bcc recipients')}>+{extra}</span></>
+        : row.email_to,
       subject: row.subject || <em style={{ opacity: 0.5 }}>{t('(no subject)')}</em>,
       provider: PROVIDER_LABELS[row.provider] || row.provider || '-',
       status: <NekoStatus status={st.type}>{st.label}</NekoStatus>,

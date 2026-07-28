@@ -108,7 +108,7 @@ class Meow_MWMAIL_Rest {
     if ( ! $row ) {
       return new WP_REST_Response( [ 'success' => false, 'message' => __( 'Log entry not found.', 'meow-mailer' ) ], 200 );
     }
-    return new WP_REST_Response( [ 'success' => true, 'log' => $row ], 200 );
+    return new WP_REST_Response( [ 'success' => true, 'log' => Meow_MWMAIL_Modules_Logs::with_recipients( $row ) ], 200 );
   }
 
   public function logs_delete( $request ) {
@@ -129,9 +129,9 @@ class Meow_MWMAIL_Rest {
     // limit 0 = all matching rows; the list query already omits the heavy body column.
     $result  = $this->core->logs->select( 0, 0, $filters, $params['sort'] ?? null );
 
-    $lines = [ $this->csv_row( [ 'Date', 'To', 'From', 'Subject', 'Provider', 'Status', 'Error' ] ) ];
+    $lines = [ $this->csv_row( [ 'Date', 'To', 'Cc', 'Bcc', 'From', 'Subject', 'Provider', 'Status', 'Error' ] ) ];
     foreach ( $result['data'] as $r ) {
-      $lines[] = $this->csv_row( [ $r['created'], $r['email_to'], $r['email_from'], $r['subject'], $r['provider'], $r['status'], $r['error'] ] );
+      $lines[] = $this->csv_row( [ $r['created'], $r['email_to'], $r['cc'], $r['bcc'], $r['email_from'], $r['subject'], $r['provider'], $r['status'], $r['error'] ] );
     }
 
     return new WP_REST_Response( [ 'success' => true, 'csv' => implode( "\r\n", $lines ) ], 200 );

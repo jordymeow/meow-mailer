@@ -166,6 +166,17 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
             <SwitchSetting title={t('Force From')} name="force_from" checked={options.force_from}
               onChange={(v) => updateOption(v, 'force_from')}
               description={t('Use the address above for every email, even when another plugin sets its own. Recommended, because providers reject mail sent from addresses you do not own.')} />
+            {/* Contact form plugins (Contact Form 7, WPForms…) set their own From header,
+                which silently wins over the address above. It is the usual reason mail is
+                rejected or lands in spam, and nothing else in the UI would show it. */}
+            {!options.force_from && options.from_email ? (
+              <>
+                <NekoMessage variant="warning">
+                  {t('Contact form plugins usually set their own sender, which overrides the address above. If your forms are not delivered, or land in spam, turn Force From on.')}
+                </NekoMessage>
+                <NekoSpacer />
+              </>
+            ) : null}
             <NekoSettings title={t('Reply-To')}>
               <NekoInput name="reply_to" value={options.reply_to} placeholder={t('(optional)')} onBlur={updateOption} onEnter={updateOption}
                 description={t('Where replies should go, if different from the From address.')} />

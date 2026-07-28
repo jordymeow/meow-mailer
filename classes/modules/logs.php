@@ -67,15 +67,33 @@ class Meow_MWMAIL_Modules_Logs {
     // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
     $total = (int) $this->wpdb->get_var( "SELECT COUNT(*) FROM {$this->table_name} WHERE {$where_sql}" );
 
-    // The list view never needs the heavy body column.
+    // The list view never needs the heavy body column. Headers are read only to pull
+    // the Cc / Bcc / Reply-To out of them, and dropped again before they are returned.
     $limit_sql = $limit > 0 ? $this->wpdb->prepare( ' LIMIT %d, %d', $offset, $limit ) : '';
-    $query     = "SELECT id, created, email_to, email_from, subject, provider, status, error, retries FROM {$this->table_name} WHERE {$where_sql} ORDER BY {$sort_col} {$sort_dir}{$limit_sql}";
+    $query     = "SELECT id, created, email_to, email_from, subject, headers, provider, status, error, retries FROM {$this->table_name} WHERE {$where_sql} ORDER BY {$sort_col} {$sort_dir}{$limit_sql}";
 
-    return [
-      'total' => $total,
-      // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
-      'data'  => $this->wpdb->get_results( $query, ARRAY_A ),
-    ];
+    // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
+    $rows = $this->wpdb->get_results( $query, ARRAY_A );
+    foreach ( $rows as &$row ) {
+      $row = self::with_recipients( $row );
+      unset( $row['headers'] );
+    }
+    unset( $row );
+
+    return [ 'total' => $total, 'data' => $rows ];
+  }
+
+  /**
+   * Add the cc / bcc / reply_to of a row, read back from its stored headers. Only
+   * the "To" gets a column of its own, so without this the extra recipients look
+   * like they were never part of the email.
+   */
+  public static function with_recipients( $row ) {
+    $extra = Meow_MWMAIL_Modules_Mailer::extra_recipients( json_decode( $row['headers'] ?? '', true ) );
+    $row['cc']       = implode( ', ', $extra['cc'] );
+    $row['bcc']      = implode( ', ', $extra['bcc'] );
+    $row['reply_to'] = implode( ', ', $extra['reply_to'] );
+    return $row;
   }
 
   public function select_one( $id ) {

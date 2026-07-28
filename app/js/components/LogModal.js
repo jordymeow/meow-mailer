@@ -54,6 +54,9 @@ const LogModal = ({ id, onClose, onResent }) => {
       <Row label={t('Provider')} value={PROVIDER_LABELS[log.provider] || log.provider || '-'} />
       <Row label={t('From')} value={log.email_from || '-'} />
       <Row label={t('To')} value={log.email_to} />
+      {log.cc ? <Row label={t('Cc')} value={log.cc} /> : null}
+      {log.bcc ? <Row label={t('Bcc')} value={log.bcc} /> : null}
+      {log.reply_to ? <Row label={t('Reply-To')} value={log.reply_to} /> : null}
       <Row label={t('Subject')} value={log.subject} />
       {log.attachments ? <Row label={t('Attachments')} value={<>{log.attachments}
         <em style={{ color: 'var(--neko-gray-50)' }}> — {t('not included in a resend')}</em></>} /> : null}

@@ -218,33 +218,22 @@ class Meow_MWMAIL_Modules_Mailer {
     }
     $to = array_filter( array_map( 'trim', $to ) );
 
-    $cc = $bcc = $reply_to = [];
     $from_email = $from_name = '';
     $content_type = 'text/plain';
     $charset      = get_bloginfo( 'charset' );
     $custom_headers = [];
 
-    // Normalize the headers to an array of "Key: Value" lines.
-    $header_lines = [];
-    if ( ! is_array( $headers ) ) {
-      $header_lines = explode( "\n", str_replace( "\r\n", "\n", $headers ) );
-    } else {
-      $header_lines = $headers;
-    }
+    $header_lines = self::header_lines( $headers );
 
-    foreach ( $header_lines as $key => $line ) {
-      $name    = '';
-      $content = '';
-      if ( is_string( $key ) ) {
-        $name    = $key;
-        $content = $line;
-      } elseif ( strpos( $line, ':' ) !== false ) {
-        list( $name, $content ) = explode( ':', trim( $line ), 2 );
-      } else {
-        continue;
-      }
-      $name    = trim( $name );
-      $content = trim( $content );
+    // Cc / Bcc / Reply-To come from one shared parser, so the logs can read the very
+    // same addresses back out of the headers they stored.
+    $extra    = self::extra_recipients( $header_lines );
+    $cc       = $extra['cc'];
+    $bcc      = $extra['bcc'];
+    $reply_to = $extra['reply_to'];
+
+    foreach ( self::header_pairs( $header_lines ) as $pair ) {
+      list( $name, $content ) = $pair;
 
       switch ( strtolower( $name ) ) {
         case 'from':
@@ -264,13 +253,10 @@ class Meow_MWMAIL_Modules_Mailer {
           }
           break;
         case 'cc':
-          $cc = array_merge( $cc, array_map( 'trim', explode( ',', $content ) ) );
-          break;
         case 'bcc':
-          $bcc = array_merge( $bcc, array_map( 'trim', explode( ',', $content ) ) );
-          break;
         case 'reply-to':
-          $reply_to = array_merge( $reply_to, array_map( 'trim', explode( ',', $content ) ) );
+          // Already collected above. Still listed here so they never fall through to
+          // the default branch and get re-sent as custom headers (duplicate recipients).
           break;
         default:
           if ( $name !== '' ) {
@@ -322,6 +308,55 @@ class Meow_MWMAIL_Modules_Mailer {
       'headers_raw'  => $header_lines,
       'provider'     => $atts['provider'] ?? null,
     ];
+  }
+
+  /** Headers as an array of lines, either shape wp_mail() accepts. */
+  private static function header_lines( $headers ) {
+    if ( is_array( $headers ) ) {
+      return $headers;
+    }
+    return explode( "\n", str_replace( "\r\n", "\n", (string) $headers ) );
+  }
+
+  /**
+   * Header lines as [ name, content ] pairs. wp_mail() takes both "Key: Value"
+   * strings and an associative array, so both have to be understood here.
+   */
+  private static function header_pairs( $header_lines ) {
+    $pairs = [];
+    foreach ( (array) $header_lines as $key => $line ) {
+      if ( is_string( $key ) ) {
+        $pairs[] = [ trim( $key ), trim( (string) $line ) ];
+      } elseif ( is_string( $line ) && strpos( $line, ':' ) !== false ) {
+        list( $name, $content ) = explode( ':', trim( $line ), 2 );
+        $pairs[] = [ trim( $name ), trim( $content ) ];
+      }
+    }
+    return $pairs;
+  }
+
+  /**
+   * The Cc / Bcc / Reply-To addresses a set of headers carries. Used when sending,
+   * and again by the logs: only the "To" is stored as its own column, so this is
+   * what makes the other recipients visible in the admin instead of looking dropped.
+   *
+   * @return array  cc, bcc, reply_to — each a list of addresses.
+   */
+  public static function extra_recipients( $headers ) {
+    $out = [ 'cc' => [], 'bcc' => [], 'reply_to' => [] ];
+    $map = [ 'cc' => 'cc', 'bcc' => 'bcc', 'reply-to' => 'reply_to' ];
+
+    foreach ( self::header_pairs( self::header_lines( $headers ) ) as $pair ) {
+      list( $name, $content ) = $pair;
+      $key = $map[ strtolower( $name ) ] ?? null;
+      if ( $key !== null ) {
+        $out[ $key ] = array_merge( $out[ $key ], array_map( 'trim', explode( ',', $content ) ) );
+      }
+    }
+    foreach ( $out as $key => $list ) {
+      $out[ $key ] = array_values( array_filter( $list ) );
+    }
+    return $out;
   }
 
   /**
