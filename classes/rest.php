@@ -159,6 +159,13 @@ class Meow_MWMAIL_Rest {
       return new WP_REST_Response( [ 'success' => false, 'message' => __( 'Provider is set to None. Choose a provider before resending.', 'meow-mailer' ) ], 200 );
     }
 
+    // Without the body there is nothing to resend, and sending an empty email
+    // would look like a success. Attachments are never stored, so a resend can
+    // only ever carry the message itself.
+    if ( trim( (string) $row['body'] ) === '' ) {
+      return new WP_REST_Response( [ 'success' => false, 'message' => __( 'The content of this email was not stored, so it cannot be resent. Turn on "Store Body" in the settings to keep future emails resendable.', 'meow-mailer' ) ], 200 );
+    }
+
     $headers = json_decode( $row['headers'], true );
     $email   = $this->core->mailer->normalize( [
       'to'          => $row['email_to'],
@@ -169,6 +176,11 @@ class Meow_MWMAIL_Rest {
     ] );
 
     $result = $this->core->mailer->dispatch( $email );
+
+    // The attempt is logged as its own entry; count it on the original too, so the
+    // log shows an email was retried rather than looking like a duplicate.
+    $this->core->logs->update( $id, [ 'retries' => intval( $row['retries'] ) + 1 ] );
+
     if ( is_wp_error( $result ) ) {
       return new WP_REST_Response( [ 'success' => false, 'message' => $result->get_error_message() ], 200 );
     }

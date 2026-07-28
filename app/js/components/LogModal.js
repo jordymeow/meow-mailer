@@ -44,6 +44,8 @@ const LogModal = ({ id, onClose, onResent }) => {
 
   const st = log ? statusOf(log.status) : null;
   const isHtml = log && /<[a-z][\s\S]*>/i.test(log.body || '');
+  // Only the message is stored, so a resend needs a body and never carries the files.
+  const canResend = !!(log && log.body);
 
   const content = busy || !log ? <div style={{ padding: 40, textAlign: 'center' }}><NekoSpinner /></div> : (
     <div>
@@ -53,7 +55,8 @@ const LogModal = ({ id, onClose, onResent }) => {
       <Row label={t('From')} value={log.email_from || '-'} />
       <Row label={t('To')} value={log.email_to} />
       <Row label={t('Subject')} value={log.subject} />
-      {log.attachments ? <Row label={t('Attachments')} value={log.attachments} /> : null}
+      {log.attachments ? <Row label={t('Attachments')} value={<>{log.attachments}
+        <em style={{ color: 'var(--neko-gray-50)' }}> — {t('not included in a resend')}</em></>} /> : null}
       {log.error ? <Row label={t('Error')} value={<span style={{ color: 'var(--neko-red)' }}>{log.error}</span>} /> : null}
 
       <div style={{ marginTop: 15 }}>
@@ -69,7 +72,7 @@ const LogModal = ({ id, onClose, onResent }) => {
   return (
     <NekoModal isOpen={!!id} title={t('Email Details')} onRequestClose={onClose} content={content} size="large"
       okButton={{ label: t('Close'), onClick: onClose }}
-      customButtons={log ? <NekoButton className="primary" icon="refresh" busy={resending} onClick={doResend}>{t('Resend')}</NekoButton> : null}
+      customButtons={canResend ? <NekoButton className="primary" icon="refresh" busy={resending} onClick={doResend}>{t('Resend')}</NekoButton> : null}
       customButtonsPosition="left" />
   );
 };
