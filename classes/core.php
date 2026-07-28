@@ -229,6 +229,7 @@ class Meow_MWMAIL_Core {
       'mailjet'    => [ 'api_key' => '', 'secret_key' => '' ],
       'resend'     => [ 'api_key' => '' ],
       'mailersend' => [ 'api_key' => '' ],
+      'maileroo'   => [ 'api_key' => '' ],
       'gmail'      => [ 'client_id' => '', 'client_secret' => '', 'access_token' => '', 'refresh_token' => '', 'expires' => 0 ],
       'outlook'    => [ 'client_id' => '', 'client_secret' => '', 'tenant' => 'common', 'access_token' => '', 'refresh_token' => '', 'expires' => 0 ],
     ];

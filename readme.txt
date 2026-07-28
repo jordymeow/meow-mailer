@@ -32,7 +32,7 @@ That is Meow Mailer, and all of this is free:
 
 = Supported providers =
 
-Generic SMTP, Mailgun, Brevo, SendGrid, Amazon SES, Postmark, SMTP2GO, Mailjet, Resend, MailerSend, Gmail / Google Workspace (OAuth 2.0), and Microsoft 365 / Outlook (OAuth 2.0).
+Generic SMTP, Mailgun, Brevo, SendGrid, Amazon SES, Postmark, SMTP2GO, Mailjet, Resend, MailerSend, Maileroo, Gmail / Google Workspace (OAuth 2.0), and Microsoft 365 / Outlook (OAuth 2.0).
 
 = About Meow Apps =
 
@@ -64,6 +64,7 @@ You choose a single provider. Generic SMTP talks only to the server you configur
 * Mailjet: [terms](https://www.mailjet.com/legal/terms/), [privacy](https://www.mailjet.com/legal/privacy-policy/)
 * Resend: [terms](https://resend.com/legal/terms-of-service), [privacy](https://resend.com/legal/privacy-policy)
 * MailerSend: [terms and privacy](https://www.mailersend.com/legal)
+* Maileroo: [terms](https://maileroo.com/terms-conditions), [privacy](https://maileroo.com/privacy-policy)
 * Gmail: [terms](https://policies.google.com/terms), [privacy](https://policies.google.com/privacy)
 * Microsoft 365: [terms](https://www.microsoft.com/en-us/servicesagreement), [privacy](https://privacy.microsoft.com/en-us/privacystatement)
 
@@ -136,6 +137,6 @@ Meow Mailer is open source. The full source, including the React code used to bu
 
 = 0.1.0 =
 * First release.
-* Providers: Generic SMTP, Mailgun, Brevo, SendGrid, Amazon SES, Postmark, SMTP2GO, Mailjet, Resend, MailerSend, Gmail (OAuth), Microsoft 365 / Outlook (OAuth).
+* Providers: Generic SMTP, Mailgun, Brevo, SendGrid, Amazon SES, Postmark, SMTP2GO, Mailjet, Resend, MailerSend, Maileroo, Gmail (OAuth), Microsoft 365 / Outlook (OAuth).
 * Email log with content preview, status, filters, search, CSV export, and one-click resend.
 * Offline mode, background sending, dashboard failure warnings, HTML/plain test emails, and automatic log pruning.

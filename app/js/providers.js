@@ -103,6 +103,12 @@ export const PROVIDERS = [
     fields: [ { name: 'api_key', label: 'API Key', type: 'password' } ],
   },
   {
+    key: 'maileroo',
+    label: 'Maileroo',
+    description: 'European (GDPR) API mailer with a free tier. Create a Sending Key for your domain in the Maileroo dashboard.',
+    fields: [ { name: 'api_key', label: 'Sending Key', type: 'password' } ],
+  },
+  {
     key: 'gmail',
     label: 'Gmail / Google Workspace',
     description: 'Send via your Google account using OAuth 2.0 (no password stored).',
