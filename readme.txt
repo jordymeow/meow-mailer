@@ -4,7 +4,7 @@ Tags: smtp, email, mailer, email log, deliverability
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 0.1.4
+Stable tag: 0.1.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -101,6 +101,14 @@ Both use OAuth 2.0, so no password is stored. Create an OAuth app (Google Cloud 
 Meow Mailer is open source. The full source, including the React code used to build the admin interface, lives [on GitHub](https://github.com/jordymeow/meow-mailer).
 
 == Changelog ==
+
+= 0.1.5 (2026/07/28) =
+* Add: Maileroo as an email provider via its API.
+* Add: Support for inline images, with attachments keeping the filename given by the caller.
+* Fix: The wp_mail filter running twice, which duplicated changes other plugins made to emails.
+* Fix: Brevo rejecting emails with "name is missing in to" when a recipient had no display name.
+* Update: The failed emails notice is now dismissible and stays hidden until a new email fails.
+* Update: Resend is no longer offered when the email content was not stored, and resends are counted on the original entry.
 
 = 0.1.4 (2026/07/27) =
 * Add: Shared settings for multisite, letting one provider serve the whole network.
