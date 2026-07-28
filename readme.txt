@@ -95,6 +95,7 @@ Both use OAuth 2.0, so no password is stored. Create an OAuth app (Google Cloud 
 
 1. The email log: every message with recipient, subject, provider and status. Search, filter by status or provider, and export to CSV.
 2. Settings: pick one provider and set it up once, with sender options, delivery controls, and a test email.
+3. Any logged email opens in full, with its status, its error if it failed, and a one-click resend.
 
 == Development ==
 
