@@ -8,7 +8,8 @@
   "scripts": {
     "dev": "webpack --watch --mode development",
     "build": "webpack --mode production",
-    "analysis": "webpack --mode production --env.analysis='true'"
+    "analysis": "webpack --mode production --env.analysis='true'",
+    "zip": "git archive --format=zip --prefix=meow-mailer/ -o ~/Desktop/meow-mailer.zip HEAD"
   },
   "license": "GPL-2.0-or-later",
   "dependencies": {
