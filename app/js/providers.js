@@ -135,6 +135,29 @@ export const PROVIDERS = [
       { name: 'tenant', label: 'Tenant', type: 'text', placeholder: 'common' },
     ],
   },
+  {
+    key: 'zoho',
+    label: 'Zoho Mail',
+    description: 'Send via your Zoho Mail account using OAuth 2.0 (no password stored). Emails are sent from the connected mailbox.',
+    oauth: 'zoho',
+    oauthLabel: 'Connect with Zoho',
+    oauthHelp: 'Create a Server-based Application in the Zoho API Console, add the redirect URI below, then paste the Client ID and Secret above, pick your data center and Save before connecting:',
+    fields: [
+      { name: 'client_id', label: 'Client ID', type: 'text' },
+      { name: 'client_secret', label: 'Client Secret', type: 'password' },
+      // Zoho regions hold their data separately, so the wrong one fails to connect
+      // rather than falling back. It has to match where the account was created.
+      { name: 'datacenter', label: 'Data Center', type: 'select', options: [
+        { value: 'zoho.com', label: 'zoho.com (US)' },
+        { value: 'zoho.eu', label: 'zoho.eu (Europe)' },
+        { value: 'zoho.in', label: 'zoho.in (India)' },
+        { value: 'zoho.com.au', label: 'zoho.com.au (Australia)' },
+        { value: 'zoho.jp', label: 'zoho.jp (Japan)' },
+        { value: 'zoho.com.cn', label: 'zoho.com.cn (China)' },
+        { value: 'zohocloud.ca', label: 'zohocloud.ca (Canada)' },
+      ] },
+    ],
+  },
 ];
 
 export const PROVIDER_LABELS = PROVIDERS.reduce((acc, p) => {
@@ -154,7 +177,11 @@ export const isProviderConfigured = (key, creds = {}) => {
   }
   switch (key) {
     case 'smtp':     return !!creds.host;
-    case 'gmail':    return !!creds.refresh_token;
+    // The OAuth providers hold no api_key, so they need to be named here or they
+    // read as unconfigured however well they are connected.
+    case 'gmail':
+    case 'outlook':
+    case 'zoho':     return !!creds.refresh_token;
     case 'mailgun':  return !!creds.api_key && !!creds.domain;
     case 'ses':      return !!creds.access_key && !!creds.secret_key;
     case 'postmark': return !!creds.server_token;

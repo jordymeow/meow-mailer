@@ -120,7 +120,7 @@ class Meow_MWMAIL_Admin extends MeowKit_MWMAIL_Admin {
     // state = "<nonce>|<provider>" so one redirect URI serves both providers.
     $state = sanitize_text_field( wp_unslash( $_GET['state'] ?? '' ) );
     list( $nonce, $provider ) = array_pad( explode( '|', $state, 2 ), 2, '' );
-    $provider = in_array( $provider, [ 'gmail', 'outlook' ], true ) ? $provider : '';
+    $provider = in_array( $provider, Meow_MWMAIL_Core::OAUTH_PROVIDERS, true ) ? $provider : '';
 
     if ( ! $provider || ! wp_verify_nonce( $nonce, 'mwmail_oauth' ) ) {
       wp_safe_redirect( add_query_arg( [ 'mwmail_oauth' => 'error', 'nekoTab' => 'settings' ], self::oauth_redirect_uri() ) );
@@ -128,7 +128,7 @@ class Meow_MWMAIL_Admin extends MeowKit_MWMAIL_Admin {
     }
 
     $creds  = $this->core->get_provider_options( $provider );
-    $config = Meow_MWMAIL_Core::oauth_config( $provider, $creds['tenant'] ?? 'common' );
+    $config = Meow_MWMAIL_Core::oauth_config( $provider, Meow_MWMAIL_Core::oauth_variant( $creds ) );
     $code   = sanitize_text_field( wp_unslash( $_GET['code'] ) );
 
     $response = wp_remote_post( $config['token'], [

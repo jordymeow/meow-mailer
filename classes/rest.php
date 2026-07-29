@@ -249,8 +249,8 @@ class Meow_MWMAIL_Rest {
     if ( empty( $creds['client_id'] ) || empty( $creds['client_secret'] ) ) {
       return new WP_REST_Response( [ 'success' => false, 'message' => __( 'Enter your Client ID and Secret first, and Save.', 'meow-mailer' ) ], 200 );
     }
-    // Rebuild the config with the saved tenant (Outlook).
-    $config = Meow_MWMAIL_Core::oauth_config( $provider, $creds['tenant'] ?? 'common' );
+    // Rebuild the config with the saved variant (Outlook tenant, Zoho data center).
+    $config = Meow_MWMAIL_Core::oauth_config( $provider, Meow_MWMAIL_Core::oauth_variant( $creds ) );
 
     $args = array_merge( [
       'client_id'     => $creds['client_id'],
@@ -265,11 +265,16 @@ class Meow_MWMAIL_Rest {
 
   public function oauth_disconnect( $request ) {
     $provider = $request->get_json_params()['provider'] ?? '';
-    if ( ! in_array( $provider, [ 'gmail', 'outlook' ], true ) ) {
+    if ( ! in_array( $provider, Meow_MWMAIL_Core::OAUTH_PROVIDERS, true ) ) {
       return new WP_REST_Response( [ 'success' => false, 'message' => __( 'Unknown OAuth provider.', 'meow-mailer' ) ], 200 );
     }
     $all = $this->core->get_all_options();
-    foreach ( [ 'access_token', 'refresh_token', 'expires' ] as $field ) {
+    // account_id is Zoho's, and it belongs to the account that was just disconnected:
+    // leaving it behind would aim the next connection's sends at the previous mailbox.
+    foreach ( [ 'access_token', 'refresh_token', 'expires', 'account_id' ] as $field ) {
+      if ( ! isset( $all['providers'][ $provider ][ $field ] ) ) {
+        continue;
+      }
       $all['providers'][ $provider ][ $field ] = $field === 'expires' ? 0 : '';
     }
     $this->core->update_options( $all );

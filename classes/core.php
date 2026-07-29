@@ -235,14 +235,27 @@ class Meow_MWMAIL_Core {
       'maileroo'   => [ 'api_key' => '' ],
       'gmail'      => [ 'client_id' => '', 'client_secret' => '', 'access_token' => '', 'refresh_token' => '', 'expires' => 0 ],
       'outlook'    => [ 'client_id' => '', 'client_secret' => '', 'tenant' => 'common', 'access_token' => '', 'refresh_token' => '', 'expires' => 0 ],
+      'zoho'       => [ 'client_id' => '', 'client_secret' => '', 'datacenter' => 'zoho.com', 'access_token' => '', 'refresh_token' => '', 'expires' => 0, 'account_id' => '' ],
     ];
+  }
+
+  /** Providers whose endpoints are authorized through OAuth rather than a key. */
+  const OAUTH_PROVIDERS = [ 'gmail', 'outlook', 'zoho' ];
+
+  /**
+   * The saved value that varies a provider's OAuth URLs: the Microsoft tenant, or
+   * the Zoho data center. Kept here so the REST builder and the admin callback
+   * cannot drift apart and produce a token request aimed at the wrong host.
+   */
+  public static function oauth_variant( $creds ) {
+    return $creds['tenant'] ?? $creds['datacenter'] ?? '';
   }
 
   /**
    * OAuth endpoints/scope per provider. Both the REST auth-url builder and the
    * admin callback use this so the two stay in sync.
    */
-  public static function oauth_config( $provider, $tenant = 'common' ) {
+  public static function oauth_config( $provider, $variant = '' ) {
     if ( $provider === 'gmail' ) {
       return [
         'auth'  => 'https://accounts.google.com/o/oauth2/v2/auth',
@@ -252,7 +265,7 @@ class Meow_MWMAIL_Core {
       ];
     }
     if ( $provider === 'outlook' ) {
-      $tenant = $tenant ?: 'common';
+      $tenant = $variant ?: 'common';
       return [
         'auth'  => "https://login.microsoftonline.com/{$tenant}/oauth2/v2.0/authorize",
         'token' => "https://login.microsoftonline.com/{$tenant}/oauth2/v2.0/token",
@@ -260,7 +273,27 @@ class Meow_MWMAIL_Core {
         'extra' => [ 'response_mode' => 'query', 'prompt' => 'consent' ],
       ];
     }
+    if ( $provider === 'zoho' ) {
+      // Zoho keeps each region's accounts on its own host and they do not share
+      // data, so the whole flow has to happen on the user's own data center.
+      $dc = self::zoho_datacenter( $variant );
+      return [
+        'auth'  => "https://accounts.{$dc}/oauth/v2/auth",
+        'token' => "https://accounts.{$dc}/oauth/v2/token",
+        'scope' => 'ZohoMail.messages.CREATE,ZohoMail.accounts.READ',
+        'extra' => [ 'access_type' => 'offline', 'prompt' => 'consent' ],
+      ];
+    }
     return null;
+  }
+
+  /** The Zoho data centers, as their domain suffix. Anything else falls back to the US one. */
+  public static function zoho_datacenters() {
+    return [ 'zoho.com', 'zoho.eu', 'zoho.in', 'zoho.com.au', 'zoho.jp', 'zoho.com.cn', 'zohocloud.ca' ];
+  }
+
+  public static function zoho_datacenter( $value ) {
+    return in_array( $value, self::zoho_datacenters(), true ) ? $value : 'zoho.com';
   }
 
   /** Raw stored options, from this site or from the network. */
