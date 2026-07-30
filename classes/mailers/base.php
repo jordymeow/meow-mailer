@@ -39,6 +39,11 @@ abstract class Meow_MWMAIL_Mailers_Base {
     $mail = new \PHPMailer\PHPMailer\PHPMailer( true );
     $mail->CharSet = $email['charset'] ?: 'UTF-8';
 
+    // Left alone, PHPMailer advertises itself and its version in X-Mailer. A site has
+    // no reason to tell recipients which library sent its mail, so drop the header:
+    // PHPMailer omits it entirely when XMailer is whitespace (empty means "default").
+    $mail->XMailer = ' ';
+
     $mail->setFrom( $email['from_email'], $email['from_name'], false );
 
     foreach ( $email['to'] as $addr ) {
