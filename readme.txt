@@ -39,7 +39,7 @@ That is Meow Mailer, and all of this is free:
 
 = Supported providers =
 
-Generic SMTP, Mailgun, Brevo, SendGrid, Amazon SES, Postmark, SMTP2GO, Mailjet, Resend, MailerSend, Maileroo, Gmail / Google Workspace (OAuth 2.0), and Microsoft 365 / Outlook (OAuth 2.0).
+Generic SMTP, Mailgun, Brevo, SendGrid, Amazon SES, Postmark, SMTP2GO, Mailjet, Resend, MailerSend, Maileroo, Gmail / Google Workspace (OAuth 2.0), Microsoft 365 / Outlook (OAuth 2.0), and Zoho Mail (OAuth 2.0).
 
 = About Meow Apps =
 
@@ -58,9 +58,9 @@ On a Multisite network, you can also network activate the plugin, then turn on *
 
 Meow Mailer contacts an external service only after you choose and configure an email provider. Until then (the default "None") and in "Offline" mode, it sends nothing anywhere.
 
-When you pick a provider, your outgoing email (recipients, subject, body, headers and attachments) and the credentials you entered are sent to that provider so it can be delivered, and only when your site actually sends an email. For Gmail and Microsoft 365, Meow Mailer also contacts their OAuth servers when you connect and refresh your account. Nothing else is ever sent.
+When you pick a provider, your outgoing email (recipients, subject, body, headers and attachments) and the credentials you entered are sent to that provider so it can be delivered, and only when your site actually sends an email. For Gmail, Microsoft 365 and Zoho Mail, Meow Mailer also contacts their OAuth servers when you connect and refresh your account. Nothing else is ever sent.
 
-You choose a single provider. Generic SMTP talks only to the server you configure. For the others, please review their terms and privacy policy: Mailgun ([terms](https://www.mailgun.com/legal/terms/), [privacy](https://www.mailgun.com/legal/privacy-policy/)), Brevo ([terms](https://www.brevo.com/legal/termsofuse/), [privacy](https://www.brevo.com/legal/privacypolicy/)), SendGrid ([terms](https://www.twilio.com/en-us/legal/tos), [privacy](https://www.twilio.com/en-us/legal/privacy)), Amazon SES ([terms](https://aws.amazon.com/service-terms/), [privacy](https://aws.amazon.com/privacy/)), Postmark ([terms](https://postmarkapp.com/terms-of-service), [privacy](https://postmarkapp.com/privacy-policy)), SMTP2GO ([terms](https://www.smtp2go.com/terms/), [privacy](https://www.smtp2go.com/privacy/)), Mailjet ([terms](https://www.mailjet.com/legal/terms/), [privacy](https://www.mailjet.com/legal/privacy-policy/)), Resend ([terms](https://resend.com/legal/terms-of-service), [privacy](https://resend.com/legal/privacy-policy)), MailerSend ([terms and privacy](https://www.mailersend.com/legal)), Maileroo ([terms](https://maileroo.com/terms-conditions), [privacy](https://maileroo.com/privacy-policy)), Gmail ([terms](https://policies.google.com/terms), [privacy](https://policies.google.com/privacy)), and Microsoft 365 ([terms](https://www.microsoft.com/en-us/servicesagreement), [privacy](https://privacy.microsoft.com/en-us/privacystatement)).
+You choose a single provider. Generic SMTP talks only to the server you configure. For the others, please review their terms and privacy policy: Mailgun ([terms](https://www.mailgun.com/legal/terms/), [privacy](https://www.mailgun.com/legal/privacy-policy/)), Brevo ([terms](https://www.brevo.com/legal/termsofuse/), [privacy](https://www.brevo.com/legal/privacypolicy/)), SendGrid ([terms](https://www.twilio.com/en-us/legal/tos), [privacy](https://www.twilio.com/en-us/legal/privacy)), Amazon SES ([terms](https://aws.amazon.com/service-terms/), [privacy](https://aws.amazon.com/privacy/)), Postmark ([terms](https://postmarkapp.com/terms-of-service), [privacy](https://postmarkapp.com/privacy-policy)), SMTP2GO ([terms](https://www.smtp2go.com/terms/), [privacy](https://www.smtp2go.com/privacy/)), Mailjet ([terms](https://www.mailjet.com/legal/terms/), [privacy](https://www.mailjet.com/legal/privacy-policy/)), Resend ([terms](https://resend.com/legal/terms-of-service), [privacy](https://resend.com/legal/privacy-policy)), MailerSend ([terms and privacy](https://www.mailersend.com/legal)), Maileroo ([terms](https://maileroo.com/terms-conditions), [privacy](https://maileroo.com/privacy-policy)), Gmail ([terms](https://policies.google.com/terms), [privacy](https://policies.google.com/privacy)), Microsoft 365 ([terms](https://www.microsoft.com/en-us/servicesagreement), [privacy](https://privacy.microsoft.com/en-us/privacystatement)), and Zoho Mail ([terms](https://www.zoho.com/terms.html), [privacy](https://www.zoho.com/privacy.html)).
 
 == Frequently Asked Questions ==
 
@@ -70,7 +70,7 @@ No, that's on purpose. One active provider keeps configuration simple and predic
 
 = Does it store my email password? =
 
-For SMTP and API providers, credentials are stored in the WordPress database. You can instead define them as PHP constants in `wp-config.php` (e.g. `MWMAIL_SMTP_PASSWORD`) to keep them out of the database. Gmail and Microsoft 365 use OAuth 2.0, so no password is ever stored.
+For SMTP and API providers, credentials are stored in the WordPress database. You can instead define them as PHP constants in `wp-config.php` (e.g. `MWMAIL_SMTP_PASSWORD`) to keep them out of the database. Gmail, Microsoft 365 and Zoho Mail use OAuth 2.0, so no password is ever stored.
 
 = What does Offline Mode do? =
 
