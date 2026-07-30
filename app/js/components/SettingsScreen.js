@@ -98,6 +98,10 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
     updateOption(send ? blocked.filter((k) => k !== key) : [...blocked, key], 'blocked_notifications');
   };
 
+  // Zoho reports which of its addresses it will actually send as, aliases included.
+  // Showing them beats letting someone discover the restriction from a failed send.
+  const senderAddresses = ((options.providers || {})[options.provider] || {}).addresses || [];
+
   const sendTest = async () => {
     setTestBusy(true);
     setNotice(null);
@@ -186,7 +190,9 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
           <NekoBlock title={t('Sender')} busy={busy}>
             <NekoSettings title={t('From Email')}>
               <NekoInput name="from_email" value={options.from_email} placeholder="you@example.com" onBlur={updateOption} onEnter={updateOption}
-                description={t('The address your emails are sent from. Use one at your own domain for the best deliverability. Leave empty to keep what WordPress uses.')} />
+                description={senderAddresses.length
+                  ? `${t('Your provider will only send from one of its own addresses:')} ${senderAddresses.join(', ')}`
+                  : t('The address your emails are sent from. Use one at your own domain for the best deliverability. Leave empty to keep what WordPress uses.')} />
             </NekoSettings>
             <NekoSettings title={t('From Name')}>
               <NekoInput name="from_name" value={options.from_name} placeholder="My Website" onBlur={updateOption} onEnter={updateOption}

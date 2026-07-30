@@ -68,6 +68,9 @@ const OAuthConnect = ({ provider }) => {
       <NekoSpacer />
       <NekoMessage variant="info">
         {t(provider.oauthHelp)}
+        {provider.oauthConsole && <>
+          {' '}<a href={provider.oauthConsole(creds)} target="_blank" rel="noopener noreferrer">{t('Open the console')}</a>
+        </>}
         <br /><code>{window.mwmail.oauth_redirect_uri}</code>
       </NekoMessage>
       <NekoSpacer />

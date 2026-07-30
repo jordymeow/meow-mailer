@@ -247,7 +247,7 @@ class Meow_MWMAIL_Core {
       'maileroo'   => [ 'api_key' => '' ],
       'gmail'      => [ 'client_id' => '', 'client_secret' => '', 'access_token' => '', 'refresh_token' => '', 'expires' => 0 ],
       'outlook'    => [ 'client_id' => '', 'client_secret' => '', 'tenant' => 'common', 'access_token' => '', 'refresh_token' => '', 'expires' => 0 ],
-      'zoho'       => [ 'client_id' => '', 'client_secret' => '', 'datacenter' => 'zoho.com', 'access_token' => '', 'refresh_token' => '', 'expires' => 0, 'account_id' => '' ],
+      'zoho'       => [ 'client_id' => '', 'client_secret' => '', 'datacenter' => 'zoho.com', 'access_token' => '', 'refresh_token' => '', 'expires' => 0, 'account_id' => '', 'addresses' => [], 'primary_address' => '' ],
     ];
   }
 

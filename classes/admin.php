@@ -152,11 +152,37 @@ class Meow_MWMAIL_Admin extends MeowKit_MWMAIL_Admin {
         $all['providers'][ $provider ]['expires']       = time() + intval( $body['expires_in'] ?? 3600 );
         $this->core->update_options( $all );
         $ok = true;
+        $this->after_connect( $provider );
       }
     }
 
     wp_safe_redirect( add_query_arg( [ 'mwmail_oauth' => $ok ? 'connected' : 'error', 'nekoTab' => 'settings' ], self::oauth_redirect_uri() ) );
     exit;
+  }
+
+  /**
+   * Right after a successful authorization, ask the provider about the mailbox we
+   * just connected to. Zoho is the one that needs it: it will only send from, and
+   * only reply to, addresses the account owns, so knowing them is what keeps the
+   * settings honest instead of letting the first real email discover the problem.
+   */
+  private function after_connect( $provider ) {
+    if ( $provider !== 'zoho' ) {
+      return;
+    }
+
+    $mailer  = new Meow_MWMAIL_Mailers_Zoho( $this->core, $this->core->get_provider_options( 'zoho' ) );
+    $account = $mailer->sync_account();
+    if ( is_wp_error( $account ) || empty( $account['primary_address'] ) ) {
+      return;
+    }
+
+    // Fill the sender in for them, but never overwrite an address they chose.
+    if ( $this->core->get_option( 'from_email', '' ) === '' ) {
+      $all = $this->core->get_all_options();
+      $all['from_email'] = $account['primary_address'];
+      $this->core->update_options( $all );
+    }
   }
 
   #endregion

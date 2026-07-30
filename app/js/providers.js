@@ -142,6 +142,9 @@ export const PROVIDERS = [
     oauth: 'zoho',
     oauthLabel: 'Connect with Zoho',
     oauthHelp: 'Create a Server-based Application in the Zoho API Console, add the redirect URI below, then paste the Client ID and Secret above, pick your data center and Save before connecting:',
+    // The console lives on the account's own data center, so the link has to follow
+    // the choice made above or it lands EU and Indian accounts in the wrong place.
+    oauthConsole: (creds) => `https://api-console.${(creds || {}).datacenter || 'zoho.com'}/`,
     fields: [
       { name: 'client_id', label: 'Client ID', type: 'text' },
       { name: 'client_secret', label: 'Client Secret', type: 'password' },

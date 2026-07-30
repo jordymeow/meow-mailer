@@ -43,7 +43,17 @@ class Meow_MWMAIL_Mailers_Zoho extends Meow_MWMAIL_Mailers_Base {
     if ( $email['reply_to'] ) {
       // The API takes a single address here, so extra Reply-To values are dropped.
       list( $reply_to ) = $this->split_address( $email['reply_to'][0] );
-      $payload['replyTo'] = $reply_to;
+      // Zoho refuses a Reply-To that is not one of the account's own verified
+      // addresses, and rejects the entire message rather than ignoring the header.
+      // Contact forms routinely put the visitor's address there, so sending it
+      // through unchecked means the enquiry never arrives at all. Delivering
+      // without the header beats not delivering.
+      if ( $this->is_verified_address( $reply_to, $token, $email['from_email'] ) ) {
+        $payload['replyTo'] = $reply_to;
+      }
+      else {
+        $this->core->log( sprintf( 'Zoho: Reply-To %s is not a verified address on the account, sent without it.', $reply_to ) );
+      }
     }
 
     $attachments = $this->upload_attachments( $email, $token, $account_id );
@@ -200,23 +210,87 @@ class Meow_MWMAIL_Mailers_Zoho extends Meow_MWMAIL_Mailers_Base {
     if ( ! empty( $account_id ) ) {
       return $account_id;
     }
+    $account = $this->sync_account( $token );
+    return is_wp_error( $account ) ? $account : $account['account_id'];
+  }
 
-    $response = wp_remote_get( $this->api_url( '' ), [
+  /**
+   * Read the connected mailbox and remember what matters about it: the account id
+   * the send URLs need, and the addresses Zoho is willing to send as. Called once
+   * when connecting, so the settings can offer the right addresses straight away,
+   * and lazily on send for connections made before this existed.
+   *
+   * @return array|WP_Error  account_id, addresses, primary_address
+   */
+  public function sync_account( $token = null ) {
+    if ( $token === null ) {
+      $token = $this->get_access_token();
+    }
+    if ( is_wp_error( $token ) ) {
+      return $token;
+    }
+
+    $result = $this->read_response( wp_remote_get( $this->api_url( '' ), [
       'timeout' => 30,
       'headers' => [ 'Authorization' => 'Zoho-oauthtoken ' . $token ],
-    ] );
-    $result = $this->read_response( $response );
+    ] ) );
     if ( is_wp_error( $result ) ) {
       return $result;
     }
 
-    $account_id = $result['data'][0]['accountId'] ?? '';
-    if ( empty( $account_id ) ) {
+    $account    = $result['data'][0] ?? [];
+    $account_id = (string) ( $account['accountId'] ?? '' );
+    if ( $account_id === '' ) {
       return new WP_Error( 'mwmail_zoho_account', __( 'Could not read the Zoho Mail account. Make sure the connected account has a mailbox.', 'meow-mailer' ) );
     }
 
-    $this->store( [ 'account_id' => (string) $account_id ] );
-    return (string) $account_id;
+    // sendMailDetails is one entry per address the account can send as, aliases
+    // included. Only the validated ones are usable, and Zoho checks Reply-To
+    // against this same set.
+    $addresses = [];
+    foreach ( (array) ( $account['sendMailDetails'] ?? [] ) as $detail ) {
+      $address = strtolower( trim( (string) ( $detail['fromAddress'] ?? '' ) ) );
+      if ( $address !== '' && ! empty( $detail['validated'] ) ) {
+        $addresses[] = $address;
+      }
+    }
+    $addresses = array_values( array_unique( $addresses ) );
+    $primary   = strtolower( trim( (string) ( $account['primaryEmailAddress'] ?? '' ) ) );
+    if ( $primary === '' && $addresses ) {
+      $primary = $addresses[0];
+    }
+
+    $this->store( [
+      'account_id'      => $account_id,
+      'addresses'       => $addresses,
+      'primary_address' => $primary,
+    ] );
+
+    return [ 'account_id' => $account_id, 'addresses' => $addresses, 'primary_address' => $primary ];
+  }
+
+  /**
+   * Whether Zoho will accept this address in Reply-To. The cached list is filled
+   * when connecting; if it is somehow missing we try once to fetch it, and if that
+   * fails too we only allow the address the message is already being sent from,
+   * which Zoho accepts by definition.
+   */
+  private function is_verified_address( $address, $token, $from_email ) {
+    $address = strtolower( trim( $address ) );
+    if ( $address === '' ) {
+      return false;
+    }
+
+    $addresses = $this->opt( 'addresses', [] );
+    if ( ! is_array( $addresses ) || empty( $addresses ) ) {
+      $account   = $this->sync_account( $token );
+      $addresses = is_wp_error( $account ) ? [] : $account['addresses'];
+    }
+
+    if ( empty( $addresses ) ) {
+      return $address === strtolower( trim( (string) $from_email ) );
+    }
+    return in_array( $address, $addresses, true );
   }
 
   private function store( $values ) {
