@@ -22,6 +22,9 @@ That is Meow Mailer, and all of this is free:
 * **A real email log, free.** Every email in a clean table with recipient, subject, provider and status (sent, failed, offline, pending). Click any row to read the full message, see the error, and resend it. Many plugins charge for this. Here it is free.
 * **Stays out of the way.** Until you pick a provider, Meow Mailer doesn't touch your email, so activating it never breaks what already works.
 * **Never miss a failure.** A dashboard warning appears when emails fail, so silent problems don't go unnoticed. Dismiss it once you have had a look and it stays away until a new email fails.
+* **Failure alerts by email, free.** Get told when your site stops being able to send, instead of finding out from a customer. The alert is sent by WordPress itself rather than your provider, so it still reaches you when the provider is the thing that broke. One alert per hour at most, however many emails fail.
+* **Weekly summary, free.** A short email with what was sent, what failed, and the most common errors. Nothing is sent on a quiet week.
+* **Control WordPress's own emails.** Switch off the notifications WordPress sends by itself: new user registrations, password and email change confirmations, comment moderation, automatic update reports. Password resets are never affected, so nobody gets locked out.
 * **Background sending.** Email goes out after the page has loaded, so your visitors never wait on the mail server.
 * **Offline mode.** Capture every email in the log without sending. Perfect for staging and development.
 * **Filters and export.** Filter by status and provider, search by subject or recipient, and export to CSV.
@@ -29,6 +32,10 @@ That is Meow Mailer, and all of this is free:
 * **Auto prune.** Keep logs forever, or delete anything older than 7, 30 or 90 days.
 * **Multisite ready.** Set your provider up once on the main site and let every site of the network use it, or leave each site to configure its own. Email logs always stay per site.
 * **Light and private.** No bloat, no tracking. Your credentials can live in `wp-config.php` instead of the database.
+
+= What Meow Mailer will never do =
+
+**No open or click tracking.** Other email plugins advertise it as a premium feature. It works by putting an invisible pixel in every message and rewriting every link to pass through a redirect, which means logging when your recipients read their mail and what they clicked. That is surveillance of the people your site writes to, it is personal data you then have to account for under the GDPR, and rewritten links make your email look more like spam, not less. Meow Mailer does not do it, and that is not a gap waiting to be filled in a Pro version. There is no Pro version.
 
 = Supported providers =
 

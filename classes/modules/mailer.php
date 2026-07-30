@@ -12,6 +12,7 @@ class Meow_MWMAIL_Modules_Mailer {
   private $core = null;
   private $queue = [];           // emails deferred for background sending
   private $shutdown_hooked = false;
+  private $bypass = false;       // let WordPress send this one itself
 
   public function __construct( $core ) {
     $this->core = $core;
@@ -26,6 +27,12 @@ class Meow_MWMAIL_Modules_Mailer {
   public function pre_wp_mail( $short_circuit, $atts ) {
     // Respect anything a plugin returned earlier in the filter chain.
     if ( null !== $short_circuit ) {
+      return $short_circuit;
+    }
+
+    // A failure alert must not travel through the provider it is reporting on, so
+    // that path asks us to stand aside and let WordPress send it natively.
+    if ( $this->bypass ) {
       return $short_circuit;
     }
 
@@ -57,6 +64,21 @@ class Meow_MWMAIL_Modules_Mailer {
     $result = $this->dispatch( $email );
 
     return ! is_wp_error( $result );
+  }
+
+  /**
+   * Run $callback with our wp_mail() interception turned off, so WordPress sends
+   * with its own PHPMailer. Used for the failure alert: routing that through the
+   * provider that just failed would lose exactly the message you needed.
+   */
+  public function without_routing( $callback ) {
+    $previous     = $this->bypass;
+    $this->bypass = true;
+    try {
+      return $callback();
+    } finally {
+      $this->bypass = $previous;
+    }
   }
 
   #region Background queue

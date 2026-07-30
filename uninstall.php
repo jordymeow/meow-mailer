@@ -10,6 +10,7 @@ global $wpdb;
 delete_option( 'mwmail_options' );
 delete_option( 'mwmail_db_logs_version' );
 delete_option( 'mwmail_failures_seen' );
+delete_option( 'mwmail_last_alert' );
 
 // Multisite: the shared configuration and its flag live at network level.
 if ( is_multisite() ) {
@@ -22,3 +23,4 @@ $mwmail_table = $wpdb->prefix . 'mwmail_logs';
 $wpdb->query( "DROP TABLE IF EXISTS {$mwmail_table}" );
 
 wp_clear_scheduled_hook( 'mwmail_prune_logs' );
+wp_clear_scheduled_hook( 'mwmail_weekly_summary' );

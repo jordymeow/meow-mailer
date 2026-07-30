@@ -42,6 +42,27 @@ const LockedBlock = ({ title }) => (
 // The shared configuration is managed from the main site only.
 const showNetworkBlock = !!network.is_multisite && !!network.is_super_admin && !!network.is_main_site;
 
+// The core emails that can be switched off. The keys must match
+// Meow_MWMAIL_Modules_Notifications::FILTERS, which maps each one to its core filter.
+const WP_NOTIFICATIONS = [
+  { key: 'new_user_admin', label: 'New User (to you)',
+    description: 'WordPress tells the site admin whenever someone registers.' },
+  { key: 'new_user', label: 'New User (to them)',
+    description: 'The welcome email a new user receives, with the link to set their password.' },
+  { key: 'password_changed', label: 'Password Changed',
+    description: 'Confirmation sent to a user after they change their password. This is not the password reset email, which is never affected.' },
+  { key: 'email_changed', label: 'Email Changed',
+    description: 'Confirmation sent to a user after they change their email address.' },
+  { key: 'admin_email_changed', label: 'Admin Email Changed',
+    description: 'Notice sent when the site administration email address is changed.' },
+  { key: 'comment_moderation', label: 'Comment Awaiting Moderation',
+    description: 'WordPress emails the moderator each time a comment needs approval.' },
+  { key: 'comment_published', label: 'New Comment',
+    description: 'WordPress emails the post author each time a comment is published.' },
+  { key: 'core_update', label: 'Automatic Updates',
+    description: 'The report WordPress sends after it updates itself in the background.' },
+];
+
 const SettingsScreen = ({ onChanged = () => {} }) => {
   const { state, actions } = useCoreContext();
   const { options, busy } = state;
@@ -68,6 +89,14 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
       setNotice({ variant: 'danger', text: t('Connection failed. Check your Client ID, Secret and redirect URI.') });
     }
   }, []);
+
+  // The switch reads as "send this email", so ticking it off is what adds the key
+  // to the blocked list. Storing what is blocked keeps an empty setting meaning
+  // "everything sends", which is what a fresh install should do.
+  const toggleNotification = (key, send) => {
+    const blocked = options.blocked_notifications || [];
+    updateOption(send ? blocked.filter((k) => k !== key) : [...blocked, key], 'blocked_notifications');
+  };
 
   const sendTest = async () => {
     setTestBusy(true);
@@ -218,6 +247,43 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
             </NekoSettings>
           </NekoBlock>
         )}
+
+        <NekoBlock title={t('Alerts')} busy={busy}
+          subtitle={t('How you find out something went wrong, without having to log in and look.')}>
+          <SwitchSetting title={t('Failure Alerts')} name="alerts_enabled" checked={options.alerts_enabled}
+            onChange={(v) => updateOption(v, 'alerts_enabled')}
+            description={t('Email you when your site stops being able to send. At most one alert per hour, however many emails fail. It is sent by WordPress itself rather than your provider, so it still reaches you when the provider is the problem.')} />
+          {options.alerts_enabled && (
+            <NekoSettings title={t('Alert To')}>
+              <NekoInput name="alerts_email" value={options.alerts_email} placeholder={t('(site admin address)')}
+                onBlur={updateOption} onEnter={updateOption}
+                description={t('Where alerts go. Leave empty to use the site admin address. An address at another provider is safer, since it is reachable when yours is down.')} />
+            </NekoSettings>
+          )}
+          <SwitchSetting title={t('Weekly Summary')} name="summary_enabled" checked={options.summary_enabled}
+            onChange={(v) => updateOption(v, 'summary_enabled')}
+            description={t('A short weekly email with how much was sent, how much failed, and the most common errors. Skipped entirely on weeks where nothing was sent.')} />
+          {options.summary_enabled && (
+            <NekoSettings title={t('Summary To')}>
+              <NekoInput name="summary_email" value={options.summary_email} placeholder={t('(site admin address)')}
+                onBlur={updateOption} onEnter={updateOption}
+                description={t('Where the summary goes. Leave empty to use the site admin address.')} />
+            </NekoSettings>
+          )}
+        </NekoBlock>
+
+        <NekoBlock title={t('WordPress Notifications')} busy={busy}
+          subtitle={t('Emails WordPress sends by itself. Turn off the ones you do not want anyone to receive.')}>
+          {WP_NOTIFICATIONS.map((n) => (
+            <SwitchSetting key={n.key} title={t(n.label)} name={`notify_${n.key}`}
+              checked={!(options.blocked_notifications || []).includes(n.key)}
+              onChange={(v) => toggleNotification(n.key, v)}
+              description={t(n.description)} />
+          ))}
+          <NekoMessage variant="info">
+            {t('Password reset emails are never affected. Turning those off would lock people out of the site.')}
+          </NekoMessage>
+        </NekoBlock>
 
         {showNetworkBlock && (
           <NekoBlock title={t('Multisite')} busy={sharedBusy}

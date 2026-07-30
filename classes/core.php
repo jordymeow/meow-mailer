@@ -8,6 +8,8 @@ class Meow_MWMAIL_Core {
   public $rest = null;
   public $logs = null;
   public $mailer = null;
+  public $alerts = null;
+  public $notifications = null;
   public $is_rest = false;
 
   private $option_name = 'mwmail_options';
@@ -30,6 +32,11 @@ class Meow_MWMAIL_Core {
     // wp_mail() is intercepted wherever it is called.
     $this->logs   = new Meow_MWMAIL_Modules_Logs( $this );
     $this->mailer = new Meow_MWMAIL_Modules_Mailer( $this );
+    $this->alerts = new Meow_MWMAIL_Modules_Alerts( $this );
+
+    // Also on every request: the core notifications it suppresses are triggered from
+    // the front-end (a comment, a registration) as often as from the admin.
+    $this->notifications = new Meow_MWMAIL_Modules_Notifications( $this );
 
     // Daily prune of old logs (when a retention is configured).
     add_action( 'mwmail_prune_logs', [ $this, 'prune_logs' ] );
@@ -216,6 +223,11 @@ class Meow_MWMAIL_Core {
       'log_body'           => true,
       'log_retention_days' => 0, // 0 = keep forever
       'send_in_background' => false,
+      'alerts_enabled'     => false,
+      'alerts_email'       => '', // empty = the site admin address
+      'summary_enabled'    => false,
+      'summary_email'      => '', // empty = the site admin address
+      'blocked_notifications' => [], // keys from Meow_MWMAIL_Modules_Notifications
       'providers'          => $this->default_providers(),
     ];
   }

@@ -130,6 +130,47 @@ class Meow_MWMAIL_Modules_Logs {
     return (int) $this->wpdb->get_var( $this->wpdb->prepare( "SELECT COUNT(*) FROM {$this->table_name} WHERE status = 'failed' AND created >= %s AND id > %d", $cutoff, max( 0, intval( $after_id ) ) ) );
   }
 
+  /**
+   * Counts per status over the last $days, for the weekly summary.
+   *
+   * @return array  status => count
+   */
+  public function count_by_status_since( $days ) {
+    if ( ! $this->check_db() ) {
+      return [];
+    }
+    $cutoff = gmdate( 'Y-m-d H:i:s', current_time( 'timestamp' ) - ( intval( $days ) * DAY_IN_SECONDS ) );
+    // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+    $rows  = $this->wpdb->get_results( $this->wpdb->prepare( "SELECT status, COUNT(*) AS total FROM {$this->table_name} WHERE created >= %s GROUP BY status", $cutoff ), ARRAY_A );
+    $stats = [];
+    foreach ( (array) $rows as $row ) {
+      $stats[ $row['status'] ] = (int) $row['total'];
+    }
+    return $stats;
+  }
+
+  /**
+   * The most frequent error messages over the last $days. A summary that says
+   * "12 failed" without saying why is one more click before anything is learned.
+   *
+   * @return array  list of [ 'error' => string, 'total' => int ]
+   */
+  public function top_errors_since( $days, $limit = 3 ) {
+    if ( ! $this->check_db() ) {
+      return [];
+    }
+    $cutoff = gmdate( 'Y-m-d H:i:s', current_time( 'timestamp' ) - ( intval( $days ) * DAY_IN_SECONDS ) );
+    // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+    $rows = $this->wpdb->get_results( $this->wpdb->prepare(
+      "SELECT error, COUNT(*) AS total FROM {$this->table_name} WHERE status = 'failed' AND created >= %s AND error <> '' GROUP BY error ORDER BY total DESC LIMIT %d",
+      $cutoff,
+      max( 1, intval( $limit ) )
+    ), ARRAY_A );
+    return array_map( function ( $row ) {
+      return [ 'error' => (string) $row['error'], 'total' => (int) $row['total'] ];
+    }, (array) $rows );
+  }
+
   /** Highest failed log id, so the admin notice can remember what was already seen. */
   public function last_failed_id() {
     if ( ! $this->check_db() ) {
