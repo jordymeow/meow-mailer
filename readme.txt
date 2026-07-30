@@ -1,4 +1,4 @@
-=== Meow Mailer ===
+=== Meow Mailer - Free SMTP, Everything Included ===
 Contributors: TigrouMeow
 Tags: smtp, email, mailer, email log, deliverability
 Requires at least: 6.0
@@ -8,7 +8,7 @@ Stable tag: 0.1.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Reliable WordPress email through the provider of your choice, with a beautiful log, offline mode, and one click resend. Simple by design.
+Reliable WordPress email through the provider of your choice, with a real email log, one click resend, failure alerts and offline mode. All free.
 
 == Description ==
 
