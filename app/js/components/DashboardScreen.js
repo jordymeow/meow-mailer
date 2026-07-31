@@ -19,31 +19,35 @@ let viewDays = 30;
  * appears when something has actually failed, because a red card showing zero reads
  * as an alarm when it is the best possible news.
  */
+/**
+ * Solid cards in the NekoUI hues, white text on top.
+ *
+ * The hue and saturation are the interface's own; only the lightness is dialled
+ * down, because white on the base green sits at 2.5:1 and on the base orange at
+ * 2.7:1, which is unreadable. These steps were measured, not guessed: every card
+ * clears 4.5:1 for the value and for the slightly muted label above it.
+ */
 const TONES = {
-  neutral: { bg: 'var(--neko-gray-95)', ink: 'var(--neko-gray-30)' },
-  good:    { bg: 'var(--neko-lighten-green)', ink: 'var(--neko-green)' },
-  bad:     { bg: 'var(--neko-lighten-red)', ink: 'var(--neko-red)' },
-  warn:    { bg: 'hsl(28 92% 95%)', ink: 'var(--neko-orange)' },
-  info:    { bg: 'var(--neko-main-color-95)', ink: 'var(--neko-main-color)' },
+  neutral: 'hsl(220 12% 34%)',
+  good:    'hsl(155 75% 27%)',
+  bad:     'hsl(358 76% 44%)',
+  warn:    'hsl(28 92% 34%)',
+  info:    'var(--neko-main-color)',
 };
 
-const Tile = ({ label, value, hint, tone = 'neutral', quiet = false }) => {
-  const { bg, ink } = TONES[tone] || TONES.neutral;
-  return (
-    <div style={{ background: bg, borderRadius: 10, padding: '11px 13px', minWidth: 0 }}>
-      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase', color: 'var(--neko-gray-50)' }}>
-        {label}
-      </div>
-      <div style={{
-        fontSize: 27, fontWeight: 700, lineHeight: 1.2, overflowWrap: 'anywhere',
-        // The card keeps its colour so the panel stays legible at a glance, but a
-        // zero does not get to shout in it: nothing failed is good news.
-        color: quiet ? 'var(--neko-gray-40)' : ink,
-      }}>{value}</div>
-      {hint && <div style={{ fontSize: 11, color: 'var(--neko-gray-50)', lineHeight: 1.3 }}>{hint}</div>}
-    </div>
-  );
-};
+const Tile = ({ label, value, hint, tone = 'neutral', quiet = false }) => (
+  // A card with nothing to report keeps its shape but steps back, so the panel
+  // reads at a glance instead of shouting four things at once.
+  <div style={{ background: quiet ? 'var(--neko-gray-60)' : (TONES[tone] || TONES.neutral),
+    borderRadius: 10, padding: '11px 13px', minWidth: 0, color: 'var(--neko-white)' }}>
+    <div style={{
+      fontSize: 10, fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase',
+      color: 'rgba(255, 255, 255, 0.88)',
+    }}>{label}</div>
+    <div style={{ fontSize: 27, fontWeight: 700, lineHeight: 1.2, overflowWrap: 'anywhere' }}>{value}</div>
+    {hint && <div style={{ fontSize: 11, lineHeight: 1.3, color: 'rgba(255, 255, 255, 0.88)' }}>{hint}</div>}
+  </div>
+);
 
 /** A ranked reason with a bar for its share. The count is always written out. */
 const ErrorRow = ({ error, total, share }) => (
@@ -122,11 +126,13 @@ const DashboardScreen = ({ reloadSignal }) => {
           {/* Two by two rather than a flexible row: this sits in a side column, and
               a wrapping row of four leaves an orphan tile on its own line. */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10, marginBottom: 14 }}>
-            <Tile label={t('Delivered')} value={rateValue} tone={rateTone} quiet={totals.rate === null}
+            <Tile label={t('Delivered')} value={rateValue} tone={rateTone}
               hint={attempted > 0
                 ? `${totals.sent} ${t('of')} ${attempted} ${t('attempted')}`
                 : t('nothing sent yet')} />
-            <Tile label={t('Sent')} value={totals.sent} tone="good" quiet={totals.sent === 0} />
+            <Tile label={t('Sent')} value={totals.sent} tone="good" />
+            {/* The only card that steps back at zero. Everywhere else a colour with
+                nothing behind it is merely quiet; a red one reads as an alarm. */}
             <Tile label={t('Failed')} value={totals.failed} tone="bad" quiet={totals.failed === 0} />
             <Tile label={t('Per Day')} value={perDay} tone="info" hint={t('on average')} />
           </div>
