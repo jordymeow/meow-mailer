@@ -61,7 +61,7 @@ const gridLine = (bottom) => ({
  * Heights for the placeholder chart. Deterministic, so the shape doesn't reshuffle
  * on every render, and shallow, so it reads as decoration rather than as data.
  */
-const placeholderHeight = (i) => 34 + 18 * Math.sin(i * 0.7) + 8 * Math.sin(i * 0.29);
+const placeholderHeight = (i) => 56 + 22 * Math.sin(i * 0.7) + 10 * Math.sin(i * 0.29);
 
 /**
  * Nothing sent in this period. An empty rectangle says "broken" more than it says

@@ -11,15 +11,39 @@ import { t } from '@app/i18n';
 // Survives a tab switch, like the logs view does.
 let viewDays = 30;
 
-const Tile = ({ label, value, hint, color }) => (
-  <div style={{ flex: '1 1 0', minWidth: 120 }}>
-    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase', color: 'var(--neko-gray-50)' }}>
-      {label}
+/**
+ * The four headline numbers, as cards.
+ *
+ * The colour is never decoration: it is the same green and red the chart gives to
+ * sent and failed, so the cards teach the chart below them. Red in particular only
+ * appears when something has actually failed, because a red card showing zero reads
+ * as an alarm when it is the best possible news.
+ */
+const TONES = {
+  neutral: { bg: 'var(--neko-gray-95)', ink: 'var(--neko-gray-30)' },
+  good:    { bg: 'var(--neko-lighten-green)', ink: 'var(--neko-green)' },
+  bad:     { bg: 'var(--neko-lighten-red)', ink: 'var(--neko-red)' },
+  warn:    { bg: 'hsl(28 92% 95%)', ink: 'var(--neko-orange)' },
+  info:    { bg: 'var(--neko-main-color-95)', ink: 'var(--neko-main-color)' },
+};
+
+const Tile = ({ label, value, hint, tone = 'neutral', quiet = false }) => {
+  const { bg, ink } = TONES[tone] || TONES.neutral;
+  return (
+    <div style={{ background: bg, borderRadius: 10, padding: '11px 13px', minWidth: 0 }}>
+      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase', color: 'var(--neko-gray-50)' }}>
+        {label}
+      </div>
+      <div style={{
+        fontSize: 27, fontWeight: 700, lineHeight: 1.2, overflowWrap: 'anywhere',
+        // The card keeps its colour so the panel stays legible at a glance, but a
+        // zero does not get to shout in it: nothing failed is good news.
+        color: quiet ? 'var(--neko-gray-40)' : ink,
+      }}>{value}</div>
+      {hint && <div style={{ fontSize: 11, color: 'var(--neko-gray-50)', lineHeight: 1.3 }}>{hint}</div>}
     </div>
-    <div style={{ fontSize: 30, fontWeight: 700, lineHeight: 1.15, color: color || 'var(--neko-gray-30)' }}>{value}</div>
-    {hint && <div style={{ fontSize: 12, color: 'var(--neko-gray-50)' }}>{hint}</div>}
-  </div>
-);
+  );
+};
 
 /** A ranked reason with a bar for its share. The count is always written out. */
 const ErrorRow = ({ error, total, share }) => (
@@ -69,8 +93,10 @@ const DashboardScreen = ({ reloadSignal }) => {
   // A rate needs something to divide. Until an email has actually been attempted,
   // a big "0%" would read as a problem rather than as an empty log.
   const rateValue = totals.rate === null ? '—' : `${totals.rate}%`;
-  const rateColor = totals.rate === null ? 'var(--neko-gray-60)'
-    : (totals.rate >= 99 ? 'var(--neko-green)' : (totals.rate >= 90 ? 'var(--neko-orange)' : 'var(--neko-red)'));
+  // With no rate yet the card still carries its colour, and the dash inside it says
+  // there is nothing to judge. Claiming "good" before a single email is misleading.
+  const rateTone = totals.rate === null ? 'good'
+    : (totals.rate >= 99 ? 'good' : (totals.rate >= 90 ? 'warn' : 'bad'));
 
   const rangeSelect = (
     <NekoSelect scrolldown name="days" value={String(days)} onChange={(v) => setDays(parseInt(v, 10))} style={{ width: 150 }}>
@@ -95,14 +121,14 @@ const DashboardScreen = ({ reloadSignal }) => {
         <NekoBlock title={t('Overview')} busy={busy} action={rangeSelect}>
           {/* Two by two rather than a flexible row: this sits in a side column, and
               a wrapping row of four leaves an orphan tile on its own line. */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 16, marginBottom: 22 }}>
-            <Tile label={t('Delivered')} value={rateValue} color={rateColor}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10, marginBottom: 14 }}>
+            <Tile label={t('Delivered')} value={rateValue} tone={rateTone} quiet={totals.rate === null}
               hint={attempted > 0
                 ? `${totals.sent} ${t('of')} ${attempted} ${t('attempted')}`
                 : t('nothing sent yet')} />
-            <Tile label={t('Sent')} value={totals.sent} />
-            <Tile label={t('Failed')} value={totals.failed} color={totals.failed > 0 ? 'var(--neko-red)' : undefined} />
-            <Tile label={t('Per Day')} value={perDay} hint={t('on average')} />
+            <Tile label={t('Sent')} value={totals.sent} tone="good" quiet={totals.sent === 0} />
+            <Tile label={t('Failed')} value={totals.failed} tone="bad" quiet={totals.failed === 0} />
+            <Tile label={t('Per Day')} value={perDay} tone="info" hint={t('on average')} />
           </div>
 
           <VolumeChart series={stats ? stats.series : []}
