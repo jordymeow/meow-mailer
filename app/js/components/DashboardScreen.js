@@ -1,6 +1,6 @@
 const { useState, useEffect, useCallback } = wp.element;
 
-import { NekoWrapper, NekoColumn, NekoBlock, NekoSelect, NekoOption, NekoSpacer, NekoEmpty, NekoButton } from '@neko-ui';
+import { NekoWrapper, NekoColumn, NekoBlock, NekoSelect, NekoOption, NekoSpacer, NekoEmpty } from '@neko-ui';
 
 import { useCoreContext } from '@app/contexts/core';
 import { fetchStats } from '@app/requests';
@@ -35,7 +35,7 @@ const ErrorRow = ({ error, total, share }) => (
   </div>
 );
 
-const DashboardScreen = ({ reloadSignal, onGoToLogs }) => {
+const DashboardScreen = ({ reloadSignal }) => {
   const { state, actions } = useCoreContext();
   const { setError } = actions;
 
@@ -115,8 +115,7 @@ const DashboardScreen = ({ reloadSignal, onGoToLogs }) => {
 
         {errors.length > 0 && (
           <NekoBlock title={t('Why emails failed')} busy={busy}
-            subtitle={t('The most common errors in this period. Fixing the top one usually fixes most of them.')}
-            action={<NekoButton className="secondary" onClick={onGoToLogs}>{t('Open the logs')}</NekoButton>}>
+            subtitle={t('The most common errors in this period. Fixing the top one usually fixes most of them.')}>
             {errors.map((row, i) => (
               <ErrorRow key={i} error={row.error} total={row.total} share={Math.round((row.total / worst) * 100)} />
             ))}

@@ -11,13 +11,14 @@ import { wrapperTop } from '@app/layout';
 import { t } from '@app/i18n';
 
 const PAGES = {
-  dashboard: { label: t('Dashboard'), icon: 'chart-bar' },
-  logs:      { label: t('Logs'),      icon: 'list' },
+  dashboard: { label: t('Dashboard'), icon: 'dashboard' },
   settings:  { label: t('Settings'),  icon: 'cog' },
 };
 
 // The screen is chosen in the header, but the URL still carries it so links from
-// our admin notices (…&nekoTab=logs) and the OAuth redirect keep working.
+// our admin notices and the OAuth redirect keep working. Older links point at
+// `nekoTab=logs`, which no longer exists as a screen of its own: they fall through
+// to the dashboard, where the log now lives anyway.
 const pageFromUrl = () => {
   const wanted = new URLSearchParams(window.location.search).get('nekoTab');
   return PAGES[wanted] ? wanted : 'dashboard';
@@ -88,8 +89,12 @@ const MainScreen = () => {
         </NekoColumn>
       </NekoWrapper>
 
-      {page === 'dashboard' && <DashboardScreen reloadSignal={reloadSignal} onGoToLogs={() => navigate('logs')} />}
-      {page === 'logs' && <LogsScreen onView={setOpenLogId} reloadSignal={reloadSignal} onChanged={bumpReload} />}
+      {/* The statistics summarize the log, so they share one screen: the numbers
+          on top, the emails they were computed from underneath. */}
+      {page === 'dashboard' && <>
+        <DashboardScreen reloadSignal={reloadSignal} />
+        <LogsScreen onView={setOpenLogId} reloadSignal={reloadSignal} onChanged={bumpReload} />
+      </>}
       {page === 'settings' && <SettingsScreen onChanged={bumpReload} />}
 
       <LogModal id={openLogId} onClose={() => setOpenLogId(null)} onResent={bumpReload} />
