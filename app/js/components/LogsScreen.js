@@ -2,7 +2,7 @@ const { useState, useEffect, useCallback } = wp.element;
 
 import {
   NekoBlock, NekoTable, NekoPaging, NekoToolbar, NekoSelect, NekoOption,
-  NekoInput, NekoButton, NekoStatus, NekoSpacer, NekoEmpty,
+  NekoInput, NekoButton, NekoIcon, NekoSpacer, NekoEmpty,
 } from '@neko-ui';
 
 import { useCoreContext } from '@app/contexts/core';
@@ -26,6 +26,31 @@ export const statusOf = (status) => {
   }
 };
 
+// The icon carries the status on its own in the table, so it always ships with a
+// title: an icon with no words is only obvious to whoever chose it.
+const STATUS_ICONS = {
+  sent:    { icon: 'check-circle', color: 'var(--neko-green)' },
+  failed:  { icon: 'alert-circle', color: 'var(--neko-red)' },
+  offline: { icon: 'pause-circle', color: 'var(--neko-gray-60)' },
+  pending: { icon: 'timer-outline', color: 'var(--neko-orange)' },
+};
+
+const StatusCell = ({ status, label, onExplain }) => {
+  const { icon, color } = STATUS_ICONS[status] || { icon: 'info-outline', color: 'var(--neko-gray-60)' };
+  const clickable = !!onExplain;
+  return (
+    <span title={clickable ? `${label} — ${t('click to find out why')}` : label}
+      aria-label={label}
+      role={clickable ? 'button' : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      onClick={clickable ? onExplain : undefined}
+      onKeyDown={clickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onExplain(); } } : undefined}
+      style={{ display: 'inline-flex', cursor: clickable ? 'pointer' : 'default' }}>
+      <NekoIcon icon={icon} width={20} height={20} color={color} />
+    </span>
+  );
+};
+
 const countAddresses = (value) => (value ? value.split(',').filter((x) => x.trim()).length : 0);
 
 // Stored as "YYYY-MM-DD HH:MM:SS". Stacking the time under the date keeps the
@@ -43,16 +68,18 @@ const DateCell = ({ value }) => {
   );
 };
 
+// Status leads: scanning a log is looking for the thing that went wrong, and one
+// column of icons down the left edge answers that faster than reading any row.
 const COLUMNS = [
+  { accessor: 'status', title: '', width: '38px' },
   { accessor: 'created', title: t('Date'), width: '105px', sortable: true },
   { accessor: 'to', title: t('To') },
   { accessor: 'subject', title: t('Subject') },
   { accessor: 'provider', title: t('Provider'), width: '130px' },
-  { accessor: 'status', title: t('Status'), width: '110px' },
-  { accessor: 'actions', title: '', width: '90px' },
+  { accessor: 'actions', title: '', width: '46px' },
 ];
 
-const LogsScreen = ({ onView, reloadSignal, onChanged = () => {} }) => {
+const LogsScreen = ({ onView, onExplainError, reloadSignal, onChanged = () => {} }) => {
   const { state, actions } = useCoreContext();
   const { setError } = actions;
   const loggingOff = !state.options.logs_enabled;
@@ -177,7 +204,11 @@ const LogsScreen = ({ onView, reloadSignal, onChanged = () => {} }) => {
         : row.email_to,
       subject: row.subject || <em style={{ opacity: 0.5 }}>{t('(no subject)')}</em>,
       provider: PROVIDER_LABELS[row.provider] || row.provider || '-',
-      status: <NekoStatus status={st.type}>{st.label}</NekoStatus>,
+      // Only a failure has something to explain, so only that icon invites a click.
+      // The modal itself is owned by MainScreen, alongside the email one, so both
+      // live at the page root rather than inside a table that re-renders constantly.
+      status: <StatusCell status={row.status} label={st.label}
+        onExplain={row.status === 'failed' ? () => onExplainError(row) : null} />,
       actions: (
         <NekoButton rounded icon="search" className="primary" title={t('View')} aria-label={t('View email')}
           onClick={() => onView(row.id)} />

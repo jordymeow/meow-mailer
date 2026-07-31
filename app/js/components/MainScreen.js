@@ -6,6 +6,7 @@ import DashboardScreen from './DashboardScreen';
 import LogsScreen from './LogsScreen';
 import SettingsScreen from './SettingsScreen';
 import LogModal from './LogModal';
+import ErrorModal from './ErrorModal';
 import StatusBar from './StatusBar';
 import { wrapperTop, wrapperBody } from '@app/layout';
 import { t } from '@app/i18n';
@@ -41,6 +42,7 @@ const MainScreen = () => {
 
   // Modal state lives at the page root so it survives any re-render below.
   const [openLogId, setOpenLogId] = useState(null);
+  const [errorLog, setErrorLog] = useState(null);
   const [reloadSignal, setReloadSignal] = useState(0);
   const bumpReload = () => setReloadSignal((s) => s + 1);
 
@@ -95,7 +97,8 @@ const MainScreen = () => {
       {page === 'dashboard' && (
         <NekoWrapper style={wrapperBody}>
           <NekoColumn minimal size="3/4">
-            <LogsScreen onView={setOpenLogId} reloadSignal={reloadSignal} onChanged={bumpReload} />
+            <LogsScreen onView={setOpenLogId} onExplainError={setErrorLog}
+              reloadSignal={reloadSignal} onChanged={bumpReload} />
           </NekoColumn>
           <NekoColumn minimal size="1/4">
             <DashboardScreen reloadSignal={reloadSignal} />
@@ -105,6 +108,7 @@ const MainScreen = () => {
       {page === 'settings' && <SettingsScreen onChanged={bumpReload} />}
 
       <LogModal id={openLogId} onClose={() => setOpenLogId(null)} onResent={bumpReload} />
+      <ErrorModal log={errorLog} onClose={() => setErrorLog(null)} />
     </NekoPage>
   );
 };
