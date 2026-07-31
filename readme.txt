@@ -3,8 +3,8 @@ Contributors: TigrouMeow
 Tags: smtp, email, mailer, email log, deliverability
 Requires at least: 6.0
 Tested up to: 7.0
-Requires PHP: 7.4
-Stable tag: 0.1.7
+Requires PHP: 8.1
+Stable tag: 0.1.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -110,6 +110,14 @@ Both use OAuth 2.0, so no password is stored. Create an OAuth app (Google Cloud 
 Meow Mailer is open source. The full source, including the React code used to build the admin interface, lives [on GitHub](https://github.com/jordymeow/meow-mailer).
 
 == Changelog ==
+
+= 0.1.8 (2026/07/31) =
+* Add: New Dashboard with delivery statistics, a daily volume chart and the top reasons emails failed.
+* Add: Emails sent by WordPress itself are now logged when no provider is chosen.
+* Update: Email logs are merged into the Dashboard and displayed beside the statistics as coloured cards, with the status shown as an icon on each row.
+* Fix: Password fields no longer offer to reveal a secret they don't have.
+* Fix: Zoho no longer rejects emails whose Reply-To is not one of the account's own addresses.
+* Fix: Blank Meow Apps dashboard when Meow Mailer is the only Meow plugin active.
 
 = 0.1.7 (2026/07/30) =
 * Add: Zoho Mail as an OAuth provider.
