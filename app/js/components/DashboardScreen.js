@@ -20,32 +20,40 @@ let viewDays = 30;
  * as an alarm when it is the best possible news.
  */
 /**
- * Solid cards in the NekoUI hues, white text on top.
+ * Solid cards, one hue each, white text on top.
  *
- * The hue and saturation are the interface's own; only the lightness is dialled
- * down, because white on the base green sits at 2.5:1 and on the base orange at
- * 2.7:1, which is unreadable. These steps were measured, not guessed: every card
- * clears 4.5:1 for the value and for the slightly muted label above it.
+ * Every value here is the brightest step of its NekoUI hue that still carries
+ * white text at 4.5:1, measured rather than guessed. Purple and red land on the
+ * interface's own values untouched and blue is brighter than the base; only green
+ * has to darken, because a green light enough to look like the base one cannot
+ * hold white text at all (it measures 2.5:1).
+ *
+ * Sent and Failed wear the same green and red as the chart below, so the cards and
+ * the bars agree. The two derived numbers take blue and purple, which are not
+ * used by any series and so cannot be mistaken for one.
  */
 const TONES = {
-  neutral: 'hsl(220 12% 34%)',
-  good:    'hsl(155 75% 27%)',
-  bad:     'hsl(358 76% 44%)',
-  warn:    'hsl(28 92% 34%)',
-  info:    'var(--neko-main-color)',
+  grey:   'hsl(220 10% 48%)',
+  green:  'hsl(155 80% 29%)',
+  blue:   'hsl(217 80% 53%)',
+  red:    'hsl(358 80% 52%)',
+  purple: 'hsl(262 72% 62%)',
+  orange: 'hsl(28 92% 38%)',
 };
 
-const Tile = ({ label, value, hint, tone = 'neutral', quiet = false }) => (
-  // A card with nothing to report keeps its shape but steps back, so the panel
-  // reads at a glance instead of shouting four things at once.
-  <div style={{ background: quiet ? 'var(--neko-gray-60)' : (TONES[tone] || TONES.neutral),
-    borderRadius: 10, padding: '11px 13px', minWidth: 0, color: 'var(--neko-white)' }}>
-    <div style={{
-      fontSize: 10, fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase',
-      color: 'rgba(255, 255, 255, 0.88)',
-    }}>{label}</div>
+// The text is pure white throughout, hierarchy coming from size and weight. Fading
+// the label to 85% would look nicer and would drop it under the contrast floor,
+// since these backgrounds are already as bright as white text allows.
+const Tile = ({ label, value, hint, tone }) => (
+  <div style={{
+    background: TONES[tone] || TONES.grey, borderRadius: 10,
+    padding: '11px 13px', minWidth: 0, color: 'var(--neko-white)',
+  }}>
+    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase', opacity: 0.95 }}>
+      {label}
+    </div>
     <div style={{ fontSize: 27, fontWeight: 700, lineHeight: 1.2, overflowWrap: 'anywhere' }}>{value}</div>
-    {hint && <div style={{ fontSize: 11, lineHeight: 1.3, color: 'rgba(255, 255, 255, 0.88)' }}>{hint}</div>}
+    {hint && <div style={{ fontSize: 11, lineHeight: 1.3 }}>{hint}</div>}
   </div>
 );
 
@@ -97,10 +105,11 @@ const DashboardScreen = ({ reloadSignal }) => {
   // A rate needs something to divide. Until an email has actually been attempted,
   // a big "0%" would read as a problem rather than as an empty log.
   const rateValue = totals.rate === null ? '—' : `${totals.rate}%`;
-  // With no rate yet the card still carries its colour, and the dash inside it says
-  // there is nothing to judge. Claiming "good" before a single email is misleading.
-  const rateTone = totals.rate === null ? 'good'
-    : (totals.rate >= 99 ? 'good' : (totals.rate >= 90 ? 'warn' : 'bad'));
+  // Blue while things are fine, because a healthy rate is not news. It only takes a
+  // warning colour once it is worth looking at, which is what makes that worth
+  // noticing at all.
+  const rateTone = totals.rate === null || totals.rate >= 99 ? 'blue'
+    : (totals.rate >= 90 ? 'orange' : 'red');
 
   const rangeSelect = (
     <NekoSelect scrolldown name="days" value={String(days)} onChange={(v) => setDays(parseInt(v, 10))} style={{ width: 150 }}>
@@ -126,15 +135,19 @@ const DashboardScreen = ({ reloadSignal }) => {
           {/* Two by two rather than a flexible row: this sits in a side column, and
               a wrapping row of four leaves an orphan tile on its own line. */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10, marginBottom: 14 }}>
-            <Tile label={t('Delivered')} value={rateValue} tone={rateTone}
+            {/* "Delivered" would be a claim we cannot make: all we know is that the
+                provider accepted the email, never that it reached an inbox. This is
+                the share of attempts that left without an error, so it is named for
+                that, and the difference from the Sent count beside it is clear. */}
+            <Tile label={t('Success Rate')} value={rateValue} tone={rateTone}
               hint={attempted > 0
                 ? `${totals.sent} ${t('of')} ${attempted} ${t('attempted')}`
                 : t('nothing sent yet')} />
-            <Tile label={t('Sent')} value={totals.sent} tone="good" />
-            {/* The only card that steps back at zero. Everywhere else a colour with
-                nothing behind it is merely quiet; a red one reads as an alarm. */}
-            <Tile label={t('Failed')} value={totals.failed} tone="bad" quiet={totals.failed === 0} />
-            <Tile label={t('Per Day')} value={perDay} tone="info" hint={t('on average')} />
+            <Tile label={t('Sent')} value={totals.sent} tone="green" hint={t('left without error')} />
+            {/* The one card that steps back at zero. Elsewhere a colour with nothing
+                behind it is merely quiet; a red one reads as an alarm. */}
+            <Tile label={t('Failed')} value={totals.failed} tone={totals.failed > 0 ? 'red' : 'grey'} />
+            <Tile label={t('Per Day')} value={perDay} tone="purple" hint={t('on average')} />
           </div>
 
           <VolumeChart series={stats ? stats.series : []}
