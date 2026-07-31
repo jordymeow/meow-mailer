@@ -28,8 +28,23 @@ export const statusOf = (status) => {
 
 const countAddresses = (value) => (value ? value.split(',').filter((x) => x.trim()).length : 0);
 
+// Stored as "YYYY-MM-DD HH:MM:SS". Stacking the time under the date keeps the
+// column narrow, which leaves the width for the recipient and the subject.
+const DateCell = ({ value }) => {
+  const [date, time] = String(value || '').split(' ');
+  if (!time) {
+    return <>{value}</>;
+  }
+  return (
+    <>
+      <div>{date}</div>
+      <div style={{ fontSize: 11, color: 'var(--neko-gray-50)', lineHeight: 1.3 }}>{time}</div>
+    </>
+  );
+};
+
 const COLUMNS = [
-  { accessor: 'created', title: t('Date'), width: '160px', sortable: true },
+  { accessor: 'created', title: t('Date'), width: '105px', sortable: true },
   { accessor: 'to', title: t('To') },
   { accessor: 'subject', title: t('Subject') },
   { accessor: 'provider', title: t('Provider'), width: '130px' },
@@ -156,7 +171,7 @@ const LogsScreen = ({ onView, reloadSignal, onChanged = () => {} }) => {
     const extra = countAddresses(row.cc) + countAddresses(row.bcc);
     return {
       id: row.id,
-      created: row.created,
+      created: <DateCell value={row.created} />,
       to: extra
         ? <>{row.email_to} <span style={{ opacity: 0.5 }} title={t('Cc / Bcc recipients')}>+{extra}</span></>
         : row.email_to,
