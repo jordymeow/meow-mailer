@@ -100,9 +100,10 @@ Both use OAuth 2.0, so no password is stored. Create an OAuth app (Google Cloud 
 
 == Screenshots ==
 
-1. The email log: every message with recipient, subject, provider and status. Search, filter by status or provider, and export to CSV.
-2. Settings: pick one provider and set it up once, with sender options, delivery controls, and a test email.
+1. The dashboard: how much was sent, how much failed, the volume day by day, and every email beside it. Search, filter by status or provider, and export to CSV.
+2. Settings: pick one provider and set it up once, with sender options, delivery controls, failure alerts, and a test email.
 3. Any logged email opens in full, with its status, its error if it failed, and a one-click resend.
+4. When an email fails, the log explains why in plain language and what to do about it, with the provider's own message underneath.
 
 == Development ==
 
