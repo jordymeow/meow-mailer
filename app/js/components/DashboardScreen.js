@@ -109,10 +109,8 @@ const DashboardScreen = ({ reloadSignal, onGoToLogs }) => {
             <Tile label={t('Per Day')} value={perDay} hint={t('on average')} />
           </div>
 
-          {volume > 0
-            ? <VolumeChart series={stats ? stats.series : []} />
-            : <NekoEmpty inline icon="mail" title={t('No emails in this period')}
-                subtitle={t('Once WordPress sends something, it will show up here.')} />}
+          <VolumeChart series={stats ? stats.series : []}
+            emptyMessage={t('Once WordPress sends something, it will show up here.')} />
         </NekoBlock>
 
         {errors.length > 0 && (

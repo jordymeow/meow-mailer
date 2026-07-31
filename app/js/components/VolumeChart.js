@@ -57,7 +57,53 @@ const gridLine = (bottom) => ({
   background: 'var(--neko-gray-90)', pointerEvents: 'none',
 });
 
-const VolumeChart = ({ series }) => {
+/**
+ * Heights for the placeholder chart. Deterministic, so the shape doesn't reshuffle
+ * on every render, and shallow, so it reads as decoration rather than as data.
+ */
+const placeholderHeight = (i) => 34 + 18 * Math.sin(i * 0.7) + 8 * Math.sin(i * 0.29);
+
+/**
+ * Nothing sent in this period. An empty rectangle says "broken" more than it says
+ * "quiet", so the chart keeps its shape in a flat, obviously inert grey. It is a
+ * lighter grey than the offline series on purpose: that one carries meaning here,
+ * and the legend is hidden meanwhile so nothing invites reading these as data.
+ */
+const EmptyChart = ({ days, message }) => (
+  <div>
+    <div style={{ position: 'relative', height: HEIGHT }}>
+      <div style={gridLine(0)} />
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'flex-end', gap: GAP }} aria-hidden="true">
+        {days.map((day, i) => (
+          <div key={day.day} style={{
+            flex: '1 1 0', minWidth: 0, height: `${placeholderHeight(i).toFixed(2)}%`,
+            background: 'var(--neko-gray-90)', borderRadius: '3px 3px 0 0', opacity: 0.55,
+          }} />
+        ))}
+      </div>
+      <div style={{
+        position: 'absolute', inset: 0, display: 'flex',
+        alignItems: 'center', justifyContent: 'center',
+      }}>
+        {/* Its own surface: laid straight over the bars the text loses contrast
+            against them, and this is the one thing on the panel that must be read. */}
+        <div style={{
+          textAlign: 'center', padding: '10px 18px', borderRadius: 8,
+          background: 'var(--neko-white)', boxShadow: '0 1px 10px rgba(0, 0, 0, 0.06)',
+        }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--neko-gray-40)' }}>{t('No emails in this period')}</div>
+          <div style={{ fontSize: 12, color: 'var(--neko-gray-50)', marginTop: 2 }}>{message}</div>
+        </div>
+      </div>
+    </div>
+    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--neko-gray-60)', marginTop: 6 }}>
+      <span>{dayLabel(days[0].day)}</span>
+      <span>{dayLabel(days[days.length - 1].day)}</span>
+    </div>
+  </div>
+);
+
+const VolumeChart = ({ series, emptyMessage }) => {
   const [hover, setHover] = useState(null);
 
   const days = series || [];
@@ -66,6 +112,10 @@ const VolumeChart = ({ series }) => {
   }
 
   const totals = days.map((d) => SERIES.reduce((sum, s) => sum + (d[s.key] || 0), 0));
+  if (!totals.some((total) => total > 0)) {
+    return <EmptyChart days={days} message={emptyMessage} />;
+  }
+
   const max = niceMax(Math.max(...totals, 1));
 
   const active = hover !== null ? days[hover] : null;
