@@ -20,7 +20,7 @@ That is Meow Mailer, and all of this is free:
 
 * **One provider, set up once.** Pick the one you use and forget about it. No confusing multi provider routing.
 * **A real email log, free.** Every email in a clean table with recipient, subject, provider and status (sent, failed, offline, pending). Click any row to read the full message, see the error, and resend it. Many plugins charge for this. Here it is free.
-* **Stays out of the way.** Until you pick a provider, Meow Mailer doesn't touch your email, so activating it never breaks what already works.
+* **Stays out of the way.** Until you pick a provider, Meow Mailer doesn't change how your email is sent, so activating it never breaks what already works. It still logs everything WordPress sends on its own, so you get the log from the moment you activate it.
 * **Never miss a failure.** A dashboard warning appears when emails fail, so silent problems don't go unnoticed. Dismiss it once you have had a look and it stays away until a new email fails.
 * **Failure alerts by email, free.** Get told when your site stops being able to send, instead of finding out from a customer. The alert is sent by WordPress itself rather than your provider, so it still reaches you when the provider is the thing that broke. One alert per hour at most, however many emails fail.
 * **Weekly summary, free.** A short email with what was sent, what failed, and the most common errors. Nothing is sent on a quiet week.

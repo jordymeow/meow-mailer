@@ -6,5 +6,6 @@ const pluginUrl = window.mwmail.plugin_url.replace(/\/+$/, "");
 const restNonce = window.mwmail.rest_nonce;
 const options = window.mwmail.options;
 const network = window.mwmail.network || {};
+const secretMask = window.mwmail.secret_mask || '';
 
-export { prefix, domain, apiUrl, restUrl, pluginUrl, restNonce, options, network };
+export { prefix, domain, apiUrl, restUrl, pluginUrl, restNonce, options, network, secretMask };

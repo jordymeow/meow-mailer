@@ -166,7 +166,11 @@ export const PROVIDERS = [
 export const PROVIDER_LABELS = PROVIDERS.reduce((acc, p) => {
   acc[p.key] = p.label;
   return acc;
-}, {});
+}, {
+  // Not a provider you can pick: it is what the log records when no provider is
+  // set and WordPress sent the email on its own.
+  wordpress: 'WordPress',
+});
 
 export const getProvider = (key) => PROVIDERS.find((p) => p.key === key);
 

@@ -98,6 +98,9 @@ class Meow_MWMAIL_Admin extends MeowKit_MWMAIL_Admin {
       'domain'     => MWMAIL_DOMAIN,
       'rest_nonce' => wp_create_nonce( 'wp_rest' ),
       'oauth_redirect_uri' => self::oauth_redirect_uri(),
+      // So the UI can tell a stored secret apart from one the user just typed,
+      // without the two definitions drifting.
+      'secret_mask' => Meow_MWMAIL_Core::SECRET_MASK,
       'network'    => $this->core->network_state(),
       'options'    => $this->core->get_masked_options(),
     ] );

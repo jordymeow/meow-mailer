@@ -13,11 +13,49 @@ class Meow_MWMAIL_Modules_Mailer {
   private $queue = [];           // emails deferred for background sending
   private $shutdown_hooked = false;
   private $bypass = false;       // let WordPress send this one itself
+  private $own_action = false;   // we are the ones firing wp_mail_succeeded/failed
 
   public function __construct( $core ) {
     $this->core = $core;
     add_filter( 'pre_wp_mail', [ $this, 'pre_wp_mail' ], 10, 2 );
+
+    // With no provider chosen we stay out of the delivery path, but the log is
+    // still worth keeping: watching what WordPress sends changes nothing about how
+    // it is sent, and "why is my log empty" is otherwise the first thing anyone
+    // installing an email logger asks. Core reports both outcomes for us.
+    // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- core WordPress hook
+    add_action( 'wp_mail_succeeded', [ $this, 'log_native_sent' ] );
+    // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- core WordPress hook
+    add_action( 'wp_mail_failed', [ $this, 'log_native_failed' ] );
   }
+
+  #region Logging WordPress's own sends
+
+  public function log_native_sent( $atts ) {
+    $this->log_native( is_array( $atts ) ? $atts : [], 'sent', '' );
+  }
+
+  public function log_native_failed( $error ) {
+    $atts = is_wp_error( $error ) ? $error->get_error_data() : [];
+    $this->log_native( is_array( $atts ) ? $atts : [], 'failed', is_wp_error( $error ) ? $error->get_error_message() : '' );
+  }
+
+  private function log_native( $atts, $status, $error ) {
+    // Only when WordPress did the sending. Once a provider is set we route the
+    // email ourselves and have already logged it, and these same actions are what
+    // we fire afterwards, so without this every email would be recorded twice.
+    if ( $this->own_action || $this->core->get_option( 'provider', 'none' ) !== 'none' ) {
+      return;
+    }
+    if ( ! $this->core->get_option( 'logs_enabled', true ) || empty( $atts ) ) {
+      return;
+    }
+
+    $email = $this->normalize( $atts );
+    $this->log_email( $email, $status, $error, 'wordpress', (bool) $this->core->get_option( 'log_body', true ) );
+  }
+
+  #endregion
 
   /**
    * @param null|bool $short_circuit
@@ -158,18 +196,25 @@ class Meow_MWMAIL_Modules_Mailer {
 
   /** Keep WordPress's wp_mail_succeeded / wp_mail_failed contract intact for listeners. */
   private function fire_mail_action( $result, $email ) {
-    if ( is_wp_error( $result ) ) {
-      do_action( 'wp_mail_failed', $result ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- core WordPress hook
-      return;
+    // Flagged so our own listener above can tell these apart from the ones core
+    // fires when it sends by itself.
+    $this->own_action = true;
+    try {
+      if ( is_wp_error( $result ) ) {
+        do_action( 'wp_mail_failed', $result ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- core WordPress hook
+        return;
+      }
+      // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- core WordPress hook
+      do_action( 'wp_mail_succeeded', [
+        'to'          => $email['to'],
+        'subject'     => $email['subject'],
+        'message'     => $email['message'],
+        'headers'     => $email['headers_raw'],
+        'attachments' => $email['attachments'],
+      ] );
+    } finally {
+      $this->own_action = false;
     }
-    // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- core WordPress hook
-    do_action( 'wp_mail_succeeded', [
-      'to'          => $email['to'],
-      'subject'     => $email['subject'],
-      'message'     => $email['message'],
-      'headers'     => $email['headers_raw'],
-      'attachments' => $email['attachments'],
-    ] );
   }
 
   private function send_with_provider( $provider_key, $email ) {

@@ -5,6 +5,7 @@ import { NekoSettings, NekoInput, NekoSelect, NekoOption, NekoSwitch, NekoButton
 import { useCoreContext } from '@app/contexts/core';
 import { getProvider } from '@app/providers';
 import { getOAuthUrl, disconnectOAuth } from '@app/requests';
+import { secretMask as SECRET_MASK } from '@app/settings';
 import { t } from '@app/i18n';
 
 const Field = ({ field, value, onChange }) => {
@@ -20,8 +21,18 @@ const Field = ({ field, value, onChange }) => {
         return <NekoSwitch name={field.name} checked={!!value} onChange={onChange} onValue={true} offValue={false} />;
       case 'number':
         return <NekoInput type="number" name={field.name} value={value ?? ''} placeholder={field.placeholder} onBlur={onChange} onEnter={onChange} />;
-      case 'password':
-        return <NekoInput type="password" name={field.name} value={value ?? ''} placeholder={field.placeholder} onBlur={onChange} onEnter={onChange} />;
+      case 'password': {
+        // A stored secret is never sent to the browser: what sits in this field is
+        // the mask, a literal row of bullets. NekoInput's reveal button would
+        // faithfully uncover those bullets and look broken, so a saved secret shows
+        // a padlock instead (any icon suppresses the toggle). Type a new value and
+        // it behaves like a normal password field again.
+        const saved = value === SECRET_MASK;
+        return <NekoInput type="password" name={field.name} value={value ?? ''} placeholder={field.placeholder}
+          onBlur={onChange} onEnter={onChange}
+          iconFilled={saved ? 'lock' : undefined}
+          description={saved ? t('Saved. It is never sent back to your browser, so it cannot be shown here. Type a new one to replace it.') : undefined} />;
+      }
       default:
         return <NekoInput name={field.name} value={value ?? ''} placeholder={field.placeholder} onBlur={onChange} onEnter={onChange} />;
     }
