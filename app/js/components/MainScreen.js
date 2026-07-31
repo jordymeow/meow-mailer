@@ -7,7 +7,7 @@ import LogsScreen from './LogsScreen';
 import SettingsScreen from './SettingsScreen';
 import LogModal from './LogModal';
 import StatusBar from './StatusBar';
-import { wrapperTop } from '@app/layout';
+import { wrapperTop, wrapperBody } from '@app/layout';
 import { t } from '@app/i18n';
 
 const PAGES = {
@@ -89,12 +89,19 @@ const MainScreen = () => {
         </NekoColumn>
       </NekoWrapper>
 
-      {/* The statistics summarize the log, so they share one screen: the numbers
-          on top, the emails they were computed from underneath. */}
-      {page === 'dashboard' && <>
-        <DashboardScreen reloadSignal={reloadSignal} />
-        <LogsScreen onView={setOpenLogId} reloadSignal={reloadSignal} onChanged={bumpReload} />
-      </>}
+      {/* The statistics summarize the log, so they share one screen. The log takes
+          the wider column because its table has six columns to fit; the numbers and
+          the chart read fine in a narrower one. */}
+      {page === 'dashboard' && (
+        <NekoWrapper style={wrapperBody}>
+          <NekoColumn minimal size="3/4">
+            <LogsScreen onView={setOpenLogId} reloadSignal={reloadSignal} onChanged={bumpReload} />
+          </NekoColumn>
+          <NekoColumn minimal size="1/4">
+            <DashboardScreen reloadSignal={reloadSignal} />
+          </NekoColumn>
+        </NekoWrapper>
+      )}
       {page === 'settings' && <SettingsScreen onChanged={bumpReload} />}
 
       <LogModal id={openLogId} onClose={() => setOpenLogId(null)} onResent={bumpReload} />

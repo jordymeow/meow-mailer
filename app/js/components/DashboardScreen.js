@@ -1,11 +1,10 @@
 const { useState, useEffect, useCallback } = wp.element;
 
-import { NekoWrapper, NekoColumn, NekoBlock, NekoSelect, NekoOption, NekoSpacer, NekoEmpty } from '@neko-ui';
+import { NekoBlock, NekoSelect, NekoOption, NekoEmpty } from '@neko-ui';
 
 import { useCoreContext } from '@app/contexts/core';
 import { fetchStats } from '@app/requests';
 import { PROVIDER_LABELS } from '@app/providers';
-import { wrapperBody } from '@app/layout';
 import VolumeChart from './VolumeChart';
 import { t } from '@app/i18n';
 
@@ -83,23 +82,20 @@ const DashboardScreen = ({ reloadSignal }) => {
 
   if (!state.options.logs_enabled) {
     return (
-      <NekoWrapper style={wrapperBody}>
-        <NekoColumn minimal fullWidth>
-          <NekoBlock title={t('Overview')}>
-            <NekoEmpty inline icon="eye-off" title={t('Logging is turned off')}
-              subtitle={t('Statistics are built from the log, so there is nothing to show until logging is back on.')} />
-          </NekoBlock>
-        </NekoColumn>
-      </NekoWrapper>
+      <NekoBlock title={t('Overview')}>
+        <NekoEmpty inline icon="eye-off" title={t('Logging is turned off')}
+          subtitle={t('Statistics are built from the log, so there is nothing to show until logging is back on.')} />
+      </NekoBlock>
     );
   }
 
+  // No wrapper of its own: MainScreen lays this out beside the log.
   return (
-    <NekoWrapper style={wrapperBody}>
-      <NekoColumn minimal fullWidth>
-
+    <>
         <NekoBlock title={t('Overview')} busy={busy} action={rangeSelect}>
-          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 22 }}>
+          {/* Two by two rather than a flexible row: this sits in a side column, and
+              a wrapping row of four leaves an orphan tile on its own line. */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 16, marginBottom: 22 }}>
             <Tile label={t('Delivered')} value={rateValue} color={rateColor}
               hint={attempted > 0
                 ? `${totals.sent} ${t('of')} ${attempted} ${t('attempted')}`
@@ -133,10 +129,7 @@ const DashboardScreen = ({ reloadSignal }) => {
             ))}
           </NekoBlock>
         )}
-
-        <NekoSpacer />
-      </NekoColumn>
-    </NekoWrapper>
+    </>
   );
 };
 

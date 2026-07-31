@@ -1,14 +1,13 @@
 const { useState, useEffect, useCallback } = wp.element;
 
 import {
-  NekoWrapper, NekoColumn, NekoBlock, NekoTable, NekoPaging, NekoToolbar, NekoSelect, NekoOption,
+  NekoBlock, NekoTable, NekoPaging, NekoToolbar, NekoSelect, NekoOption,
   NekoInput, NekoButton, NekoStatus, NekoSpacer, NekoEmpty,
 } from '@neko-ui';
 
 import { useCoreContext } from '@app/contexts/core';
 import { fetchLogs, deleteLogs, clearLogs, exportLogs } from '@app/requests';
 import { PROVIDERS, PROVIDER_LABELS } from '@app/providers';
-import { wrapperBody } from '@app/layout';
 import { t } from '@app/i18n';
 
 const LIMIT = 20;
@@ -171,9 +170,8 @@ const LogsScreen = ({ onView, reloadSignal, onChanged = () => {} }) => {
     };
   });
 
+  // No wrapper of its own: MainScreen lays this out beside the statistics.
   return (
-    <NekoWrapper style={wrapperBody}>
-    <NekoColumn minimal fullWidth>
     <NekoBlock title={t('Email Logs')}
       action={<NekoButton className="primary" icon="refresh" busy={busy} onClick={load}>{t('Refresh')}</NekoButton>}>
 
@@ -220,8 +218,6 @@ const LogsScreen = ({ onView, reloadSignal, onChanged = () => {} }) => {
         <NekoPaging currentPage={page} limit={LIMIT} total={total} onClick={setPage} />
       </div>
     </NekoBlock>
-    </NekoColumn>
-    </NekoWrapper>
   );
 };
 
