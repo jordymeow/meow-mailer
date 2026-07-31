@@ -2,6 +2,7 @@ const { useState } = wp.element;
 
 import { NekoPage, NekoHeader, NekoWrapper, NekoColumn, NekoButton, NekoMessage, NekoSpacer } from '@neko-ui';
 
+import DashboardScreen from './DashboardScreen';
 import LogsScreen from './LogsScreen';
 import SettingsScreen from './SettingsScreen';
 import LogModal from './LogModal';
@@ -10,15 +11,16 @@ import { wrapperTop } from '@app/layout';
 import { t } from '@app/i18n';
 
 const PAGES = {
-  logs:     { label: t('Logs'),     icon: 'list' },
-  settings: { label: t('Settings'), icon: 'cog' },
+  dashboard: { label: t('Dashboard'), icon: 'chart-bar' },
+  logs:      { label: t('Logs'),      icon: 'list' },
+  settings:  { label: t('Settings'),  icon: 'cog' },
 };
 
 // The screen is chosen in the header, but the URL still carries it so links from
 // our admin notices (…&nekoTab=logs) and the OAuth redirect keep working.
 const pageFromUrl = () => {
   const wanted = new URLSearchParams(window.location.search).get('nekoTab');
-  return PAGES[wanted] ? wanted : 'logs';
+  return PAGES[wanted] ? wanted : 'dashboard';
 };
 
 const HeaderActions = ({ page, onNavigate }) => (
@@ -86,9 +88,9 @@ const MainScreen = () => {
         </NekoColumn>
       </NekoWrapper>
 
-      {page === 'logs'
-        ? <LogsScreen onView={setOpenLogId} reloadSignal={reloadSignal} onChanged={bumpReload} />
-        : <SettingsScreen onChanged={bumpReload} />}
+      {page === 'dashboard' && <DashboardScreen reloadSignal={reloadSignal} onGoToLogs={() => navigate('logs')} />}
+      {page === 'logs' && <LogsScreen onView={setOpenLogId} reloadSignal={reloadSignal} onChanged={bumpReload} />}
+      {page === 'settings' && <SettingsScreen onChanged={bumpReload} />}
 
       <LogModal id={openLogId} onClose={() => setOpenLogId(null)} onResent={bumpReload} />
     </NekoPage>

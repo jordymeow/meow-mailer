@@ -171,6 +171,62 @@ class Meow_MWMAIL_Modules_Logs {
     }, (array) $rows );
   }
 
+  /**
+   * One row per day for the last $days, each with its per-status counts. Days with
+   * no email are filled in as zeroes: a chart that silently skips quiet days makes
+   * a gap look like activity.
+   *
+   * @return array  list of [ 'day' => 'Y-m-d', 'sent' => int, 'failed' => int, 'offline' => int, 'pending' => int ]
+   */
+  public function daily_series( $days = 30 ) {
+    $days  = max( 1, min( 365, intval( $days ) ) );
+    $empty = [ 'sent' => 0, 'failed' => 0, 'offline' => 0, 'pending' => 0 ];
+
+    // Build the calendar first, so the series is complete whatever the table holds.
+    $series = [];
+    $today  = current_time( 'timestamp' );
+    for ( $i = $days - 1; $i >= 0; $i-- ) {
+      $day = gmdate( 'Y-m-d', $today - ( $i * DAY_IN_SECONDS ) );
+      $series[ $day ] = array_merge( [ 'day' => $day ], $empty );
+    }
+
+    if ( ! $this->check_db() ) {
+      return array_values( $series );
+    }
+
+    $cutoff = gmdate( 'Y-m-d 00:00:00', $today - ( ( $days - 1 ) * DAY_IN_SECONDS ) );
+    // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+    $rows = $this->wpdb->get_results( $this->wpdb->prepare(
+      "SELECT DATE(created) AS day, status, COUNT(*) AS total FROM {$this->table_name} WHERE created >= %s GROUP BY day, status",
+      $cutoff
+    ), ARRAY_A );
+
+    foreach ( (array) $rows as $row ) {
+      $day    = (string) $row['day'];
+      $status = (string) $row['status'];
+      if ( isset( $series[ $day ], $empty[ $status ] ) ) {
+        $series[ $day ][ $status ] = (int) $row['total'];
+      }
+    }
+    return array_values( $series );
+  }
+
+  /** The providers that actually sent something recently, with their volume. */
+  public function count_by_provider_since( $days ) {
+    if ( ! $this->check_db() ) {
+      return [];
+    }
+    $cutoff = gmdate( 'Y-m-d H:i:s', current_time( 'timestamp' ) - ( intval( $days ) * DAY_IN_SECONDS ) );
+    // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+    $rows = $this->wpdb->get_results( $this->wpdb->prepare(
+      "SELECT provider, COUNT(*) AS total FROM {$this->table_name} WHERE created >= %s AND provider <> '' GROUP BY provider ORDER BY total DESC",
+      $cutoff
+    ), ARRAY_A );
+    return array_map( function ( $row ) {
+      return [ 'provider' => (string) $row['provider'], 'total' => (int) $row['total'] ];
+    }, (array) $rows );
+  }
+
   /** Highest failed log id, so the admin notice can remember what was already seen. */
   public function last_failed_id() {
     if ( ! $this->check_db() ) {

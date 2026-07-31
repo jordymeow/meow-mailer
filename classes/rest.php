@@ -31,6 +31,7 @@ class Meow_MWMAIL_Rest {
     register_rest_route( $this->namespace, '/logs/clear',   [ 'methods' => 'POST', 'callback' => [ $this, 'logs_clear' ],   'permission_callback' => $perm ] );
     register_rest_route( $this->namespace, '/logs/resend',  [ 'methods' => 'POST', 'callback' => [ $this, 'logs_resend' ],  'permission_callback' => $perm ] );
     register_rest_route( $this->namespace, '/logs/export',  [ 'methods' => 'POST', 'callback' => [ $this, 'logs_export' ],  'permission_callback' => $perm ] );
+    register_rest_route( $this->namespace, '/logs/stats',   [ 'methods' => 'POST', 'callback' => [ $this, 'logs_stats' ],   'permission_callback' => $perm ] );
 
     register_rest_route( $this->namespace, '/notice/dismiss', [ 'methods' => 'POST', 'callback' => [ $this, 'notice_dismiss' ], 'permission_callback' => $perm ] );
 
@@ -135,6 +136,36 @@ class Meow_MWMAIL_Rest {
     }
 
     return new WP_REST_Response( [ 'success' => true, 'csv' => implode( "\r\n", $lines ) ], 200 );
+  }
+
+  /**
+   * Everything the dashboard draws, in one request: the daily series, the totals
+   * for the period, why things failed, and which providers carried the volume.
+   */
+  public function logs_stats( $request ) {
+    $days = intval( $request->get_json_params()['days'] ?? 30 );
+    $days = in_array( $days, [ 7, 30, 90 ], true ) ? $days : 30;
+
+    $stats  = $this->core->logs->count_by_status_since( $days );
+    $sent   = (int) ( $stats['sent'] ?? 0 );
+    $failed = (int) ( $stats['failed'] ?? 0 );
+
+    return new WP_REST_Response( [
+      'success'   => true,
+      'days'      => $days,
+      'series'    => $this->core->logs->daily_series( $days ),
+      'totals'    => [
+        'sent'    => $sent,
+        'failed'  => $failed,
+        'offline' => (int) ( $stats['offline'] ?? 0 ),
+        'pending' => (int) ( $stats['pending'] ?? 0 ),
+        // Offline and pending are not delivery outcomes, so they stay out of the
+        // rate: it answers "of the emails we really tried to send, how many left".
+        'rate'    => ( $sent + $failed ) > 0 ? round( ( $sent / ( $sent + $failed ) ) * 100, 1 ) : null,
+      ],
+      'errors'    => $this->core->logs->top_errors_since( $days, 5 ),
+      'providers' => $this->core->logs->count_by_provider_since( $days ),
+    ], 200 );
   }
 
   private function csv_row( $fields ) {
