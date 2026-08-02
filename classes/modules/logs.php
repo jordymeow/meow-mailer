@@ -16,6 +16,7 @@ class Meow_MWMAIL_Modules_Logs {
   private $table = 'mwmail_logs';
   private $table_name = null;
   private $db_check = false;
+  private $create_attempted = false;
 
   const MWMAIL_DB_LOGS_VERSION = '1.0';
 
@@ -323,7 +324,12 @@ class Meow_MWMAIL_Modules_Logs {
     if ( $this->does_table_exist( $this->table_name ) ) {
       $this->check_columns();
       $this->db_check = true;
-    } else {
+    }
+    elseif ( ! $this->create_attempted ) {
+      // Once per request at most. When creation cannot succeed, every send and every
+      // log query would otherwise run dbDelta again, which is expensive and fixes
+      // nothing. That is what made the case-sensitivity bug above so costly.
+      $this->create_attempted = true;
       $this->create_db();
       $this->db_check = $this->does_table_exist( $this->table_name );
     }
@@ -377,11 +383,23 @@ class Meow_MWMAIL_Modules_Logs {
     update_option( 'mwmail_db_logs_version', self::MWMAIL_DB_LOGS_VERSION );
   }
 
+  /**
+   * The name goes in exactly as WordPress built it, never lowercased. SHOW TABLES
+   * LIKE compares case-sensitively wherever the server does, which on Linux is the
+   * default (lower_case_table_names=0), so a site whose prefix carries a capital
+   * (say "Dm0710_") would be told its own table did not exist, and would then try to
+   * create it on every single request.
+   *
+   * The underscores are escaped too: LIKE reads them as single-character wildcards,
+   * so without that an unrelated table could answer for ours.
+   */
   private function does_table_exist( $table_name ) {
-    $table_name = strtolower( $table_name );
     // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, PluginCheck.Security.DirectDB.UnescapedDBParameter
-    $result = $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $table_name ) );
-    return strtolower( (string) $result ) === $table_name;
+    $found = $this->wpdb->get_var( $this->wpdb->prepare(
+      'SHOW TABLES LIKE %s',
+      $this->wpdb->esc_like( $table_name )
+    ) );
+    return ! empty( $found );
   }
 
   #endregion
