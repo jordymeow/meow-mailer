@@ -4,7 +4,7 @@ Tags: smtp, email, mailer, email log, deliverability
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.1.8
+Stable tag: 0.1.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -110,6 +110,9 @@ Both use OAuth 2.0, so no password is stored. Create an OAuth app (Google Cloud 
 Meow Mailer is open source. The full source, including the React code used to build the admin interface, lives [on GitHub](https://github.com/jordymeow/meow-mailer).
 
 == Changelog ==
+
+= 0.1.9 (2026/08/02) =
+* Fix: Log table no longer goes missing on databases with capital letters in the table prefix.
 
 = 0.1.8 (2026/07/31) =
 * Add: New Dashboard with delivery statistics, a daily volume chart and the top reasons emails failed.
