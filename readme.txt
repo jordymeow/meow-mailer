@@ -4,7 +4,7 @@ Tags: smtp, email, mailer, email log, deliverability
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.1.9
+Stable tag: 0.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -123,6 +123,15 @@ Both use OAuth 2.0, so no password is stored. Create an OAuth app (Google Cloud 
 Meow Mailer is open source. The full source, including the React code used to build the admin interface, lives [on GitHub](https://github.com/jordymeow/meow-mailer).
 
 == Changelog ==
+
+= 0.2.0 (2026/08/03) =
+* Add: Return Path setting so bounces go to their own mailbox, settable per message via the `mwmail_return_path` filter.
+* Add: Fallback provider that takes over when the main provider refuses an email, with WordPress itself as the zero-setup option.
+* Add: Maintenance section in the settings with settings export, import and reset, plus log emptying moved over from the dashboard.
+* Update: Dashboard filters now apply to the log, statistics, chart and error ranking together.
+* Update: Saved credentials now use an eye toggle that fetches and shows the stored value instead of a padlock.
+* Update: Renamed Clear All to Delete All and made it red, and tidied the dashboard headings, filter bar and Refresh placement.
+* Fix: Volume chart no longer shifts down when a bar is hovered.
 
 = 0.1.9 (2026/08/02) =
 * Fix: Log table no longer goes missing on databases with capital letters in the table prefix.
