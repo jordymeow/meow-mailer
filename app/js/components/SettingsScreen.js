@@ -10,6 +10,7 @@ import { PROVIDERS, fallbackChoices, isProviderConfigured } from '@app/providers
 import ProviderFields from './ProviderFields';
 import ProviderPicker from './ProviderPicker';
 import SwitchSetting from './SwitchSetting';
+import MaintenanceBlock from './MaintenanceBlock';
 import { sendTestEmail, setNetworkMode } from '@app/requests';
 import { network } from '@app/settings';
 import { wrapperBody } from '@app/layout';
@@ -333,6 +334,8 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
             {t('Password reset emails are never affected. Turning those off would lock people out of the site.')}
           </NekoMessage>
         </NekoBlock>
+
+        <MaintenanceBlock onLogsCleared={onChanged} />
 
         {showNetworkBlock && (
           <NekoBlock title={t('Multisite')} busy={sharedBusy}

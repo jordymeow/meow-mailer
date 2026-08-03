@@ -24,6 +24,10 @@ class Meow_MWMAIL_Rest {
     register_rest_route( $this->namespace, '/settings/update', [ 'methods' => 'POST', 'callback' => [ $this, 'settings_update' ], 'permission_callback' => $perm ] );
     register_rest_route( $this->namespace, '/settings/reset',  [ 'methods' => 'POST', 'callback' => [ $this, 'settings_reset' ],  'permission_callback' => $perm ] );
     register_rest_route( $this->namespace, '/settings/network', [ 'methods' => 'POST', 'callback' => [ $this, 'settings_network' ], 'permission_callback' => $perm ] );
+    // Both carry credentials in the clear, so they take the stricter check: on a
+    // network with a shared provider, only where that provider can be edited.
+    register_rest_route( $this->namespace, '/settings/export', [ 'methods' => 'POST', 'callback' => [ $this, 'settings_export' ], 'permission_callback' => $edit ] );
+    register_rest_route( $this->namespace, '/settings/import', [ 'methods' => 'POST', 'callback' => [ $this, 'settings_import' ], 'permission_callback' => $edit ] );
 
     register_rest_route( $this->namespace, '/logs/list',   [ 'methods' => 'POST', 'callback' => [ $this, 'logs_list' ],   'permission_callback' => $perm ] );
     register_rest_route( $this->namespace, '/logs/get',     [ 'methods' => 'POST', 'callback' => [ $this, 'logs_get' ],     'permission_callback' => $perm ] );
@@ -54,6 +58,48 @@ class Meow_MWMAIL_Rest {
     $incoming = $this->core->strip_locked_options( $params['options'] ?? [] );
     $merged   = $this->core->merge_options( $incoming );
     $this->core->update_options( $merged );
+    return new WP_REST_Response( [ 'success' => true, 'options' => $this->core->get_masked_options() ], 200 );
+  }
+
+  /**
+   * The whole configuration as it really is, credentials included, so the file can
+   * stand a site back up on its own. That is the point of an export, and a backup
+   * that quietly leaves the API keys out is one you find out about at the worst
+   * moment — so the UI says plainly what the file holds instead.
+   */
+  public function settings_export() {
+    return new WP_REST_Response( [
+      'success' => true,
+      'export'  => [
+        'plugin'   => 'meow-mailer',
+        'version'  => MWMAIL_VERSION,
+        'exported' => current_time( 'mysql' ),
+        'options'  => $this->core->get_all_options(),
+      ],
+    ], 200 );
+  }
+
+  public function settings_import( $request ) {
+    $params = $request->get_json_params();
+    $given  = $params['export'] ?? [];
+
+    // Accept the wrapper an export produces, or a bare options object for anyone who
+    // has hand-written one. Anything else is almost certainly the wrong file.
+    $incoming = $given['options'] ?? $given;
+    if ( ! is_array( $incoming ) || empty( $incoming ) ) {
+      return new WP_REST_Response( [ 'success' => false, 'message' => __( 'That file does not look like a Meow Mailer export.', 'meow-mailer' ) ], 200 );
+    }
+
+    $clean = $this->core->filter_known_options( $incoming );
+    if ( empty( $clean ) ) {
+      return new WP_REST_Response( [ 'success' => false, 'message' => __( 'That file has no Meow Mailer settings in it.', 'meow-mailer' ) ], 200 );
+    }
+
+    // Same guard as a normal save: on a network, groups this site does not own are
+    // dropped rather than quietly rewritten for everyone else.
+    $merged = $this->core->merge_options( $this->core->strip_locked_options( $clean ) );
+    $this->core->update_options( $merged );
+
     return new WP_REST_Response( [ 'success' => true, 'options' => $this->core->get_masked_options() ], 200 );
   }
 

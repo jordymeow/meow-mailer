@@ -462,6 +462,43 @@ class Meow_MWMAIL_Core {
     return $this->update_options( $options );
   }
 
+  /**
+   * Keep only the options this plugin actually defines, provider credentials field by
+   * field. An import is a file the admin picked off their own disk, and without this
+   * whatever it happened to contain would be written into the options row and then
+   * travel onwards into every later export.
+   */
+  public function filter_known_options( $incoming ) {
+    if ( ! is_array( $incoming ) ) {
+      return [];
+    }
+    $defaults = $this->list_options();
+    $clean    = [];
+
+    foreach ( $incoming as $key => $value ) {
+      // 'providers' is a map of maps, so it is rebuilt below rather than copied.
+      if ( $key !== 'providers' && array_key_exists( $key, $defaults ) ) {
+        $clean[ $key ] = $value;
+      }
+    }
+
+    if ( ! empty( $incoming['providers'] ) && is_array( $incoming['providers'] ) ) {
+      foreach ( $defaults['providers'] as $provider => $fields ) {
+        $given = $incoming['providers'][ $provider ] ?? null;
+        if ( ! is_array( $given ) ) {
+          continue;
+        }
+        foreach ( array_keys( $fields ) as $field ) {
+          if ( array_key_exists( $field, $given ) ) {
+            $clean['providers'][ $provider ][ $field ] = $given[ $field ];
+          }
+        }
+      }
+    }
+
+    return $clean;
+  }
+
   public function reset_options() {
     // A site admin resetting only clears the groups their site actually owns.
     return $this->update_options( $this->strip_locked_options( $this->list_options() ) );

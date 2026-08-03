@@ -5,8 +5,9 @@ import {
 } from '@neko-ui';
 
 import { useCoreContext } from '@app/contexts/core';
-import { fetchLogs, deleteLogs, clearLogs, exportLogs } from '@app/requests';
+import { fetchLogs, deleteLogs, exportLogs } from '@app/requests';
 import { PROVIDER_LABELS } from '@app/providers';
+import { download } from '@app/download';
 import { hasActiveFilters } from './FilterBar';
 import { t } from '@app/i18n';
 
@@ -132,36 +133,9 @@ const LogsScreen = ({ filters, onClearFilters, onView, onExplainError, reloadSig
     }
   };
 
-  const clearAll = async () => {
-    // It empties the table whatever the filters are showing, so when they are
-    // narrowing the view the confirmation has to say so: the count on screen can be
-    // two rows while the button is about to take every one of them.
-    const warning = hasActiveFilters(filters)
-      ? t('This deletes every log entry, not only the ones your filters are showing. This cannot be undone.')
-      : t('Delete ALL log entries? This cannot be undone.');
-    if (!window.confirm(warning)) return;
-    try {
-      await clearLogs();
-      setSelected([]);
-      setPage(1);
-      load();
-      onChanged();
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
   const exportCsv = async () => {
     try {
-      const csv = await exportLogs(filters, sort);
-      const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'meow-mailer-logs.csv';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+      download('meow-mailer-logs.csv', await exportLogs(filters, sort), 'text/csv;charset=utf-8;');
     } catch (err) {
       setError(err.message);
     }
@@ -235,10 +209,8 @@ const LogsScreen = ({ filters, onClearFilters, onView, onExplainError, reloadSig
         <NekoButton className="danger" disabled={!selected.length} onClick={removeSelected}>
           {selected.length ? `${t('Delete')} (${selected.length})` : t('Delete')}
         </NekoButton>
-        {/* Red, and named for what it does. It used to be a quiet "Clear All", which
-            since the filter bar gained a Clear of its own read like a bigger version
-            of that harmless button rather than the one that empties the table. */}
-        <NekoButton className="danger" disabled={!total} onClick={clearAll}>{t('Delete All')}</NekoButton>
+        {/* Emptying the whole log lives in Settings › Maintenance now. Beside the
+            filters it was one slip from the button that only changes the view. */}
         <NekoButton className="secondary" icon="download" disabled={!total} onClick={exportCsv}>{t('Export CSV')}</NekoButton>
         <div style={{ flex: 1 }} />
         <NekoPaging currentPage={page} limit={LIMIT} total={total} onClick={setPage} />
