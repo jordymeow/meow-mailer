@@ -235,6 +235,7 @@ class Meow_MWMAIL_Rest {
     $params = $request->get_json_params();
     $to     = sanitize_email( $params['to'] ?? '' );
     $format = ( ( $params['format'] ?? 'html' ) === 'plain' ) ? 'plain' : 'html';
+    $target = ( ( $params['target'] ?? 'provider' ) === 'fallback' ) ? 'fallback' : 'provider';
 
     if ( ! is_email( $to ) ) {
       return new WP_REST_Response( [ 'success' => false, 'message' => __( 'Please provide a valid email address.', 'meow-mailer' ) ], 200 );
@@ -242,6 +243,17 @@ class Meow_MWMAIL_Rest {
 
     if ( $this->core->get_option( 'provider', 'none' ) === 'none' ) {
       return new WP_REST_Response( [ 'success' => false, 'message' => __( 'Provider is set to None. Choose a provider (or Offline) to send a test.', 'meow-mailer' ) ], 200 );
+    }
+
+    // A fallback nobody has ever exercised is the one whose API key was rotated or
+    // whose OAuth token quietly expired, so it has to be testable on its own. This
+    // routes the test straight at it, with no attempt on the main provider first.
+    $route_to = null;
+    if ( $target === 'fallback' ) {
+      $route_to = $this->core->get_option( 'fallback_provider', 'none' );
+      if ( ! $route_to || in_array( $route_to, [ 'none', 'offline' ], true ) ) {
+        return new WP_REST_Response( [ 'success' => false, 'message' => __( 'No fallback provider is configured.', 'meow-mailer' ) ], 200 );
+      }
     }
 
     if ( $format === 'plain' ) {
@@ -256,17 +268,23 @@ class Meow_MWMAIL_Rest {
     }
 
     $email = $this->core->mailer->normalize( [
-      'to'      => $to,
-      'subject' => $subject,
-      'message' => $message,
-      'headers' => $headers,
+      'to'       => $to,
+      'subject'  => $subject,
+      'message'  => $message,
+      'headers'  => $headers,
+      'provider' => $route_to,
     ] );
 
     $result = $this->core->mailer->dispatch( $email );
     if ( is_wp_error( $result ) ) {
       return new WP_REST_Response( [ 'success' => false, 'message' => $result->get_error_message() ], 200 );
     }
-    return new WP_REST_Response( [ 'success' => true, 'message' => __( 'Test email sent.', 'meow-mailer' ) ], 200 );
+    return new WP_REST_Response( [
+      'success' => true,
+      'message' => $target === 'fallback'
+        ? __( 'Test email sent through the fallback.', 'meow-mailer' )
+        : __( 'Test email sent.', 'meow-mailer' ),
+    ], 200 );
   }
 
   public function oauth_auth_url( $request ) {

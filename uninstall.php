@@ -11,6 +11,7 @@ delete_option( 'mwmail_options' );
 delete_option( 'mwmail_db_logs_version' );
 delete_option( 'mwmail_failures_seen' );
 delete_option( 'mwmail_last_alert' );
+delete_option( 'mwmail_last_rescue_alert' );
 
 // Multisite: the shared configuration and its flag live at network level.
 if ( is_multisite() ) {

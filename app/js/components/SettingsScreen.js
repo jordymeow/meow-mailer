@@ -6,7 +6,7 @@ import {
 } from '@neko-ui';
 
 import { useCoreContext } from '@app/contexts/core';
-import { PROVIDERS } from '@app/providers';
+import { PROVIDERS, fallbackChoices, isProviderConfigured } from '@app/providers';
 import ProviderFields from './ProviderFields';
 import ProviderPicker from './ProviderPicker';
 import SwitchSetting from './SwitchSetting';
@@ -102,12 +102,12 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
   // Showing them beats letting someone discover the restriction from a failed send.
   const senderAddresses = ((options.providers || {})[options.provider] || {}).addresses || [];
 
-  const sendTest = async () => {
+  const sendTest = async (target = 'provider') => {
     setTestBusy(true);
     setNotice(null);
     try {
-      await sendTestEmail(testTo, testFormat);
-      setNotice({ variant: 'success', text: t('Test email sent. Open the Logs to see the result.') });
+      const res = await sendTestEmail(testTo, testFormat, target);
+      setNotice({ variant: 'success', text: `${res.message} ${t('Open the Logs to see the result.')}` });
       onChanged();
     } catch (err) {
       setNotice({ variant: 'danger', text: err.message });
@@ -137,6 +137,13 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
   const toggleGroup = (group, value) => applyNetwork(shared, { ...sharedGroups, [group]: value });
 
   const provider = options.provider;
+  const fallback = options.fallback_provider || 'none';
+  const hasFallback = fallback !== 'none' && provider !== 'none';
+
+  // A fallback pointing at a provider whose credentials were never filled in is worse
+  // than none: it reads as covered, and it is not. 'wordpress' needs no credentials.
+  const fallbackUnconfigured = hasFallback && fallback !== 'wordpress'
+    && !isProviderConfigured(fallback, (options.providers || {})[fallback]);
 
   // Nothing chosen yet: the dropdown is a poor first impression, so the block
   // shows a picker instead until there is something to configure.
@@ -151,12 +158,19 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
   // field collapses to nothing in a narrow column. Let the row wrap instead.
   const testEmailBar = (
     <NekoToolbar style={{ flexWrap: 'wrap' }}>
-      <NekoInput name="test_to" value={testTo} placeholder={t('Send a test email to…')} onChange={setTestTo} onEnter={sendTest} style={{ flex: 1, minWidth: 170 }} />
+      <NekoInput name="test_to" value={testTo} placeholder={t('Send a test email to…')} onChange={setTestTo} onEnter={() => sendTest('provider')} style={{ flex: 1, minWidth: 170 }} />
       <NekoSelect scrolldown name="test_format" value={testFormat} onChange={setTestFormat} style={{ width: 100 }}>
         <NekoOption value="html" label={t('HTML')} />
         <NekoOption value="plain" label={t('Plain')} />
       </NekoSelect>
-      <NekoButton className="secondary" icon="mail" disabled={testBusy || !testTo || provider === 'none'} onClick={sendTest}>{t('Send Test')}</NekoButton>
+      <NekoButton className="secondary" icon="mail" disabled={testBusy || !testTo || provider === 'none'} onClick={() => sendTest('provider')}>{t('Send Test')}</NekoButton>
+      {/* The fallback is only ever used when things are already going wrong, which is
+          the worst moment to discover its credentials expired months ago. */}
+      {hasFallback && (
+        <NekoButton className="secondary" icon="mail" disabled={testBusy || !testTo} onClick={() => sendTest('fallback')}>
+          {t('Test Fallback')}
+        </NekoButton>
+      )}
     </NekoToolbar>
   );
 
@@ -178,6 +192,35 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
                 </NekoSelect>
               </NekoSettings>
               <ProviderFields providerKey={provider} />
+
+              <NekoSpacer />
+              <NekoSettings title={t('Fallback')}>
+                <NekoSelect scrolldown name="fallback_provider" value={fallback} onChange={(v) => updateOption(v, 'fallback_provider')}
+                  description={t('Used only when the provider above refuses an email, so nothing is lost to a bad moment. Set it up like any other provider by selecting it above first. WordPress needs no setup at all: it hands the email to your server, which is imperfect but always there.')}>
+                  {fallbackChoices(provider).map((f) => <NekoOption key={f.key} value={f.key} label={t(f.label)} />)}
+                </NekoSelect>
+              </NekoSettings>
+
+              {fallbackUnconfigured && (
+                <>
+                  <NekoMessage variant="danger">
+                    {t('This fallback has no credentials yet, so it cannot rescue anything. Select it in Provider above, fill it in, then switch back.')}
+                  </NekoMessage>
+                  <NekoSpacer />
+                </>
+              )}
+
+              {/* Deliverability, not paranoia: a provider that is not authorized for
+                  your domain sends mail that passes SPF/DKIM for nobody, and it lands
+                  in spam while the log cheerfully reads "sent". */}
+              {hasFallback && fallback !== 'wordpress' && !fallbackUnconfigured && (
+                <>
+                  <NekoMessage variant="warning">
+                    {t('Your fallback needs its own SPF and DKIM records for your domain, exactly like your main provider. Without them, rescued email is delivered but usually lands in spam.')}
+                  </NekoMessage>
+                  <NekoSpacer />
+                </>
+              )}
 
               {/* Sending a test is the last step of setting a provider up, so it
                   lives here rather than in a block of its own. */}

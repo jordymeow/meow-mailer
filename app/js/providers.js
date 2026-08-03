@@ -174,6 +174,16 @@ export const PROVIDER_LABELS = PROVIDERS.reduce((acc, p) => {
 
 export const getProvider = (key) => PROVIDERS.find((p) => p.key === key);
 
+// What can stand in when the main provider fails. 'offline' is excluded (it does not
+// send), and so is whichever provider is already active: retrying the one that just
+// refused only costs another round trip. 'wordpress' is the zero-setup choice.
+export const fallbackChoices = (activeKey) => [
+  { key: 'none', label: 'No fallback' },
+  { key: 'wordpress', label: 'WordPress (server mail)' },
+  ...PROVIDERS.filter((p) => !['none', 'offline', activeKey].includes(p.key))
+    .map((p) => ({ key: p.key, label: p.label })),
+];
+
 // Whether the active provider has the credentials it needs to send.
 export const isProviderConfigured = (key, creds = {}) => {
   if (key === 'none' || key === 'offline') {

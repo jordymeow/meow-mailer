@@ -148,11 +148,18 @@ class Meow_MWMAIL_Modules_Mailer {
     }
 
     foreach ( $this->queue as $item ) {
-      $result = $this->send_with_provider( $item['provider'], $item['email'] );
-      $status = is_wp_error( $result ) ? 'failed' : 'sent';
-      $error  = is_wp_error( $result ) ? $result->get_error_message() : '';
+      $attempt = $this->send_with_fallback( $item['provider'], $item['email'] );
+      $result  = $attempt['result'];
+      $status  = is_wp_error( $result ) ? 'failed' : 'sent';
+      $error   = is_wp_error( $result ) ? $result->get_error_message() : $attempt['primary_error'];
       if ( $item['log_id'] ) {
-        $this->core->logs->update( $item['log_id'], [ 'status' => $status, 'error' => $error ] );
+        // The row was written as Pending against the primary; if the fallback is the
+        // one that got it out, the log has to say so or it names the wrong sender.
+        $this->core->logs->update( $item['log_id'], [
+          'status'   => $status,
+          'error'    => $error,
+          'provider' => $attempt['provider'],
+        ] );
       }
       $this->fire_mail_action( $result, $item['email'] );
     }
@@ -181,12 +188,15 @@ class Meow_MWMAIL_Modules_Mailer {
       return true;
     }
 
-    $result = $this->send_with_provider( $provider_key, $email );
+    $attempt = $this->send_with_fallback( $provider_key, $email );
+    $result  = $attempt['result'];
 
     if ( $logs_enabled ) {
       $status = is_wp_error( $result ) ? 'failed' : 'sent';
-      $error  = is_wp_error( $result ) ? $result->get_error_message() : '';
-      $this->log_email( $email, $status, $error, $provider_key, $store_body );
+      // On a rescue the row reads Sent, but it keeps the primary's error so the log
+      // still shows which provider let you down and why.
+      $error  = is_wp_error( $result ) ? $result->get_error_message() : $attempt['primary_error'];
+      $this->log_email( $email, $status, $error, $attempt['provider'], $store_body );
     }
 
     $this->fire_mail_action( $result, $email );
@@ -216,6 +226,74 @@ class Meow_MWMAIL_Modules_Mailer {
       $this->own_action = false;
     }
   }
+
+  #region Fallback
+
+  /**
+   * Send through $provider_key, and if that fails, through the configured fallback.
+   * One extra attempt, immediately, and never more than that.
+   *
+   * Deliberately no transient/permanent distinction: a bad API key, a rate limit and
+   * a provider outage all mean the same thing here, which is "ask the other one". A
+   * permanent failure (an address that does not exist) simply fails twice, and the
+   * log keeps both errors.
+   *
+   * @return array  result (true|WP_Error), provider (the one that ended up sending),
+   *                primary_error (empty unless the fallback rescued the email).
+   */
+  private function send_with_fallback( $provider_key, $email ) {
+    $result = $this->send_with_provider( $provider_key, $email );
+    if ( ! is_wp_error( $result ) ) {
+      return [ 'result' => $result, 'provider' => $provider_key, 'primary_error' => '' ];
+    }
+
+    $fallback = $this->fallback_for( $provider_key );
+    if ( $fallback === null ) {
+      return [ 'result' => $result, 'provider' => $provider_key, 'primary_error' => '' ];
+    }
+
+    $primary_error = $result->get_error_message();
+    $result        = $this->send_with_provider( $fallback, $email );
+
+    if ( is_wp_error( $result ) ) {
+      // Both are down. Report it as one failure, naming both, rather than hiding the
+      // primary behind whatever the backup happened to say.
+      return [
+        'result'   => new WP_Error( $result->get_error_code(), sprintf(
+          /* translators: 1: error from the main provider, 2: error from the fallback provider. */
+          __( '%1$s (the fallback failed too: %2$s)', 'meow-mailer' ),
+          $primary_error,
+          $result->get_error_message()
+        ) ),
+        'provider'      => $provider_key,
+        'primary_error' => '',
+      ];
+    }
+
+    if ( $this->core->alerts ) {
+      $this->core->alerts->on_rescued( $primary_error );
+    }
+
+    return [ 'result' => true, 'provider' => $fallback, 'primary_error' => $primary_error ];
+  }
+
+  /**
+   * The fallback to use when $provider_key fails, or null when there is none worth
+   * trying. Falling back to the provider that just failed, or to a mode that does not
+   * send at all, would only cost the visitor another round trip.
+   */
+  private function fallback_for( $provider_key ) {
+    $fallback = $this->core->get_option( 'fallback_provider', 'none' );
+    if ( ! is_string( $fallback ) || $fallback === '' ) {
+      return null;
+    }
+    if ( in_array( $fallback, [ 'none', 'offline' ], true ) || $fallback === $provider_key ) {
+      return null;
+    }
+    return $fallback;
+  }
+
+  #endregion
 
   private function send_with_provider( $provider_key, $email ) {
     $class = 'Meow_MWMAIL_Mailers_' . ucfirst( $provider_key );

@@ -16,6 +16,11 @@ class Meow_MWMAIL_Modules_Alerts {
   const LAST_ALERT_OPTION = 'mwmail_last_alert';
   const SUMMARY_HOOK      = 'mwmail_weekly_summary';
 
+  // The rescue alert keeps its own window rather than sharing the one above. They
+  // throttle each other otherwise, and a rescue would be able to swallow the alert
+  // for a real outage happening twenty minutes later.
+  const LAST_RESCUE_OPTION = 'mwmail_last_rescue_alert';
+
   // One alert per hour at most. A provider outage fails every email the site tries
   // to send, and a mailbox with 400 identical alerts is worse than none.
   const ALERT_INTERVAL = HOUR_IN_SECONDS;
@@ -63,6 +68,47 @@ class Meow_MWMAIL_Modules_Alerts {
     $message = is_wp_error( $error ) ? $error->get_error_message() : '';
 
     $this->send_alert( $count, $message );
+  }
+
+  /**
+   * The fallback just delivered an email the main provider refused. Nothing is lost,
+   * so this is not a failure alert, but it still has to be said: otherwise the primary
+   * can stay broken for weeks while every log row happily reads "sent".
+   */
+  public function on_rescued( $primary_error ) {
+    if ( $this->sending || ! $this->core->get_option( 'alerts_enabled', false ) ) {
+      return;
+    }
+
+    $last = (int) get_option( self::LAST_RESCUE_OPTION, 0 );
+    if ( $last && ( time() - $last ) < self::ALERT_INTERVAL ) {
+      return;
+    }
+    update_option( self::LAST_RESCUE_OPTION, time(), false );
+
+    $site    = $this->site_name();
+    /* translators: %s: the site name. */
+    $subject = sprintf( __( '[%s] Your email provider is failing', 'meow-mailer' ), $site );
+
+    $lines = [
+      /* translators: %s: the site name. */
+      sprintf( __( 'The email provider configured on %s is refusing to send, and the fallback is delivering in its place.', 'meow-mailer' ), $site ),
+      '',
+      __( 'Your email is still going out, so there is nothing urgent to do. It is worth a look all the same, because the fallback is only meant to cover a bad moment, not to carry the site.', 'meow-mailer' ),
+    ];
+    if ( $primary_error !== '' ) {
+      /* translators: %s: the error reported by the main email provider. */
+      $lines[] = sprintf( __( 'What the provider said: %s', 'meow-mailer' ), $primary_error );
+    }
+    $lines[] = '';
+    $lines[] = __( 'The full log is here:', 'meow-mailer' );
+    $lines[] = admin_url( 'admin.php?page=mwmail_settings&nekoTab=logs' );
+    $lines[] = '';
+    $lines[] = __( 'You are getting this because failure alerts are on in Meow Mailer. You can turn them off in its settings.', 'meow-mailer' );
+
+    // Unrouted, like the failure alert: the provider that just failed is the last
+    // thing that should be carrying the news of its own failure.
+    $this->deliver( $subject, implode( "\n", $lines ), 'alerts_email', true );
   }
 
   private function send_alert( $count, $message ) {

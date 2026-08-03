@@ -19,6 +19,7 @@ So I decided to build the simplest and most honest email plugin I could for Word
 That is Meow Mailer, and all of this is free:
 
 * **One provider, set up once.** Pick the one you use and forget about it. No confusing multi provider routing.
+* **A fallback for when it breaks, free.** Name a second provider (or plain WordPress, which needs no setup) and it steps in only when the first one refuses an email. Your mail still goes out, the log tells you exactly who failed and why, and an alert lets you know your main provider needs a look.
 * **A real email log, free.** Every email in a clean table with recipient, subject, provider and status (sent, failed, offline, pending). Click any row to read the full message, see the error, and resend it. Many plugins charge for this. Here it is free.
 * **Stays out of the way.** Until you pick a provider, Meow Mailer doesn't change how your email is sent, so activating it never breaks what already works. It still logs everything WordPress sends on its own, so you get the log from the moment you activate it.
 * **Never miss a failure.** A dashboard warning appears when emails fail, so silent problems don't go unnoticed. Dismiss it once you have had a look and it stays away until a new email fails.
@@ -66,7 +67,13 @@ You choose a single provider. Generic SMTP talks only to the server you configur
 
 = Can I use more than one provider at a time? =
 
-No, that's on purpose. One active provider keeps configuration simple and predictable. You can switch provider any time in Settings.
+Not for routing, no, and that's on purpose. One active provider keeps configuration simple and predictable, and you can switch any time in Settings. What you can do is name a second one as a fallback: it never touches your email until the main provider refuses one, so nothing is lost to a bad afternoon.
+
+= What should I pick as a fallback? =
+
+If you have a second provider account, use that. If you don't, pick WordPress: it hands the email to your own server, which is nobody's idea of good deliverability, but it is always there and it needs no setup at all. Delivered imperfectly beats not delivered when it's a password reset.
+
+If you do use a second provider, publish its SPF and DKIM records for your domain, exactly like your main one. Otherwise the rescued email is accepted, delivered, and quietly filed as spam, which is harder to notice than a plain failure. Test it with the **Test Fallback** button rather than waiting to find out during an outage.
 
 = Does it store my email password? =
 

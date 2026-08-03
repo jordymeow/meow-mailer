@@ -96,7 +96,7 @@ class Meow_MWMAIL_Core {
    * own emails.
    */
   const NETWORK_GROUPS = [
-    'provider' => [ 'provider', 'providers' ],
+    'provider' => [ 'provider', 'fallback_provider', 'providers' ],
     'sender'   => [ 'from_email', 'from_name', 'force_from', 'reply_to' ],
     'delivery' => [ 'logs_enabled', 'log_body', 'log_retention_days', 'send_in_background' ],
   ];
@@ -215,6 +215,9 @@ class Meow_MWMAIL_Core {
       // 'none' = stay out of the way (don't touch wp_mail). 'offline' = log only,
       // never send. Anything else = route through that provider.
       'provider'           => 'none',
+      // Only ever used when the provider above fails on a given email. 'none' = no
+      // fallback, 'wordpress' = let WordPress send it the way it would without us.
+      'fallback_provider'  => 'none',
       'from_email'         => '',
       'from_name'          => '',
       'force_from'         => false,

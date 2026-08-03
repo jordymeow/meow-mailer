@@ -35,6 +35,6 @@ export const exportLogs = async (filters, sort) => (await post('/logs/export', {
 export const fetchStats = async (days) => await post('/logs/stats', { days });
 
 // Tools
-export const sendTestEmail = async (to, format) => await post('/mail/test', { to, format });
+export const sendTestEmail = async (to, format, target = 'provider') => await post('/mail/test', { to, format, target });
 export const getOAuthUrl = async (provider) => await post('/oauth/auth-url', { provider });
 export const disconnectOAuth = async (provider) => (await post('/oauth/disconnect', { provider })).options;

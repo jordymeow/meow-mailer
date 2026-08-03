@@ -43,6 +43,8 @@ const LogModal = ({ id, onClose, onResent }) => {
   };
 
   const st = log ? statusOf(log.status) : null;
+  // Delivered, but with an error recorded: only the fallback path writes that pair.
+  const rescued = !!(log && log.status === 'sent' && log.error);
   const isHtml = log && /<[a-z][\s\S]*>/i.test(log.body || '');
   // Only the message is stored, so a resend needs a body and never carries the files.
   const canResend = !!(log && log.body);
@@ -60,7 +62,13 @@ const LogModal = ({ id, onClose, onResent }) => {
       <Row label={t('Subject')} value={log.subject} />
       {log.attachments ? <Row label={t('Attachments')} value={<>{log.attachments}
         <em style={{ color: 'var(--neko-gray-50)' }}> — {t('not included in a resend')}</em></>} /> : null}
-      {log.error ? <Row label={t('Error')} value={<span style={{ color: 'var(--neko-red)' }}>{log.error}</span>} /> : null}
+      {/* An error on a delivered email is not a failure: it is what the main provider
+          said before the fallback stepped in. Shown as such, or it reads as a bug. */}
+      {log.error ? (rescued
+        ? <Row label={t('Fallback')} value={<span style={{ color: 'var(--neko-orange)' }}>
+            {t('Sent by the fallback because the main provider failed:')} {log.error}
+          </span>} />
+        : <Row label={t('Error')} value={<span style={{ color: 'var(--neko-red)' }}>{log.error}</span>} />) : null}
 
       <div style={{ marginTop: 15 }}>
         <div style={{ fontWeight: 600, color: 'var(--neko-gray-50)', marginBottom: 6 }}>{t('Content')}</div>
