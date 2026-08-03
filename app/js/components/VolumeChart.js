@@ -42,7 +42,9 @@ const dayLabel = (day) => {
 };
 
 const Legend = () => (
-  <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
+  // Never wraps: this sits in a fixed-height row, so a second line would be clipped
+  // rather than shown. Three short labels fit the narrowest column it is used in.
+  <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'nowrap' }}>
     {SERIES.map((s) => (
       <span key={s.key} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--neko-gray-50)' }}>
         <span style={{ width: 10, height: 10, borderRadius: 3, background: s.color, flex: '0 0 auto' }} />
@@ -130,11 +132,20 @@ const VolumeChart = ({ series, emptyMessage }) => {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-        <Legend />
-        <span style={{ fontSize: 12, color: 'var(--neko-gray-50)', textAlign: 'right', minHeight: 16 }}>
-          {readout}
-        </span>
+      {/* The readout takes the legend's place instead of sitting beside it. Side by
+          side there is no room for both in a sidebar, and the legend wrapped to a
+          second line the moment you hovered, shunting the whole chart down. Swapping
+          them costs nothing: while you are reading a day you are not reading the key.
+          Fixed height so neither can ever change what is below it. */}
+      <div style={{ display: 'flex', alignItems: 'center', height: 20, overflow: 'hidden', marginBottom: 10 }}>
+        {active ? (
+          <span style={{
+            fontSize: 12, color: 'var(--neko-gray-50)',
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          }}>
+            {readout}
+          </span>
+        ) : <Legend />}
       </div>
 
       <div style={{ position: 'relative', height: HEIGHT }}>
