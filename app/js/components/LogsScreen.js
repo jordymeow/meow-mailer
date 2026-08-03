@@ -80,7 +80,8 @@ const COLUMNS = [
   { accessor: 'actions', title: '', width: '46px' },
 ];
 
-const LogsScreen = ({ filters, onClearFilters, onView, onExplainError, reloadSignal, onChanged = () => {} }) => {
+const LogsScreen = ({ filters, onClearFilters, onView, onExplainError, reloadSignal,
+  onChanged = () => {}, onBusy = () => {} }) => {
   const { state, actions } = useCoreContext();
   const { setError } = actions;
   const loggingOff = !state.options.logs_enabled;
@@ -115,6 +116,9 @@ const LogsScreen = ({ filters, onClearFilters, onView, onExplainError, reloadSig
   useEffect(() => { load(); }, [load]);
   // Reload when an action elsewhere (e.g. a resend from the modal) changes the data.
   useEffect(() => { if (reloadSignal) load(); }, [reloadSignal]);
+
+  // The shared Refresh button lives in the filter bar and spins for both panels.
+  useEffect(() => { onBusy(busy); }, [busy]);
 
   const removeSelected = async () => {
     if (!selected.length) return;
@@ -201,11 +205,11 @@ const LogsScreen = ({ filters, onClearFilters, onView, onExplainError, reloadSig
     };
   });
 
-  // No wrapper of its own: MainScreen lays this out beside the statistics.
+  // No wrapper of its own: MainScreen lays this out beside the statistics. No title
+  // either — the filter bar above already says what this is, and a heading over a
+  // table whose columns are labelled is a line of chrome that earns nothing.
   return (
-    <NekoBlock title={t('Email Logs')}
-      action={<NekoButton className="primary" icon="refresh" busy={busy} onClick={load}>{t('Refresh')}</NekoButton>}>
-
+    <NekoBlock>
       <NekoTable
         variant="raw"
         busy={busy}

@@ -1,4 +1,4 @@
-const { useState } = wp.element;
+const { useState, useCallback } = wp.element;
 
 import { NekoPage, NekoHeader, NekoWrapper, NekoColumn, NekoButton, NekoMessage, NekoSpacer } from '@neko-ui';
 
@@ -51,6 +51,14 @@ const MainScreen = () => {
   // MainScreen never unmounts, so switching to Settings and back keeps them.
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
 
+  // The two panels load separately but share one Refresh button, so it spins while
+  // either of them is still working rather than going still with half the screen
+  // stale. Ignoring an unchanged value keeps this from re-rendering in a loop.
+  const [loading, setLoading] = useState({ logs: false, stats: false });
+  const setLoadingFor = useCallback((key, value) => {
+    setLoading((parts) => (parts[key] === value ? parts : { ...parts, [key]: value }));
+  }, []);
+
   // One-time, dismissable feedback invitation (persisted per browser).
   const [feedbackDismissed, setFeedbackDismissed] = useState(() => {
     try { return localStorage.getItem('mwmail_feedback_dismissed') === '1'; } catch (e) { return false; }
@@ -94,7 +102,8 @@ const MainScreen = () => {
           <StatusBar pulse={reloadSignal} />
           {page === 'dashboard' && <>
             <NekoSpacer />
-            <FilterBar filters={filters} onChange={setFilters} />
+            <FilterBar filters={filters} onChange={setFilters}
+              onRefresh={bumpReload} busy={loading.logs || loading.stats} />
           </>}
           <NekoSpacer />
         </NekoColumn>
@@ -108,10 +117,12 @@ const MainScreen = () => {
           <NekoColumn minimal size="3/4">
             <LogsScreen filters={filters} onClearFilters={() => setFilters(DEFAULT_FILTERS)}
               onView={setOpenLogId} onExplainError={setErrorLog}
-              reloadSignal={reloadSignal} onChanged={bumpReload} />
+              reloadSignal={reloadSignal} onChanged={bumpReload}
+              onBusy={(v) => setLoadingFor('logs', v)} />
           </NekoColumn>
           <NekoColumn minimal size="1/4">
-            <DashboardScreen filters={filters} reloadSignal={reloadSignal} />
+            <DashboardScreen filters={filters} reloadSignal={reloadSignal}
+              onBusy={(v) => setLoadingFor('stats', v)} />
           </NekoColumn>
         </NekoWrapper>
       )}

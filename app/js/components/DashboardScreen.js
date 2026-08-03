@@ -67,7 +67,7 @@ const ErrorRow = ({ error, total, share }) => (
   </div>
 );
 
-const DashboardScreen = ({ filters, reloadSignal }) => {
+const DashboardScreen = ({ filters, reloadSignal, onBusy = () => {} }) => {
   const { state, actions } = useCoreContext();
   const { setError } = actions;
 
@@ -89,6 +89,9 @@ const DashboardScreen = ({ filters, reloadSignal }) => {
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { if (reloadSignal) load(); }, [reloadSignal]);
+
+  // The shared Refresh button lives in the filter bar and spins for both panels.
+  useEffect(() => { onBusy(busy); }, [busy]);
 
   const totals = (stats && stats.totals) || { sent: 0, failed: 0, offline: 0, rate: null };
   const attempted = totals.sent + totals.failed;
@@ -123,7 +126,7 @@ const DashboardScreen = ({ filters, reloadSignal }) => {
 
   if (!state.options.logs_enabled) {
     return (
-      <NekoBlock title={t('Overview')}>
+      <NekoBlock>
         <NekoEmpty inline icon="eye-off" title={t('Logging is turned off')}
           subtitle={t('Statistics are built from the log, so there is nothing to show until logging is back on.')} />
       </NekoBlock>
@@ -133,7 +136,9 @@ const DashboardScreen = ({ filters, reloadSignal }) => {
   // No wrapper of its own: MainScreen lays this out beside the log.
   return (
     <>
-        <NekoBlock title={t('Overview')} busy={busy}>
+        {/* No title: the tiles name themselves, and "Overview" over four labelled
+            cards is a heading that only repeats what is already under it. */}
+        <NekoBlock busy={busy}>
           {/* Two by two rather than a flexible row: this sits in a side column, and
               a wrapping row of four leaves an orphan tile on its own line. */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10, marginBottom: 14 }}>

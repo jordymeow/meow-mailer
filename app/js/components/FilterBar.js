@@ -22,7 +22,7 @@ export const hasActiveFilters = (filters) =>
  * choices rather than a date picker: the chart draws a bar per day, so the useful
  * ranges are the ones that still fit across a column.
  */
-const FilterBar = ({ filters, onChange, busy }) => {
+const FilterBar = ({ filters, onChange, onRefresh, busy }) => {
   const [searchInput, setSearchInput] = useState(filters.search);
 
   // Typing shouldn't fire four queries per keystroke, so the text lands after a
@@ -62,14 +62,22 @@ const FilterBar = ({ filters, onChange, busy }) => {
         <NekoOption value="30" label={t('Last 30 days')} />
         <NekoOption value="90" label={t('Last 90 days')} />
       </NekoSelect>
-      {/* Only once there is something to clear: a permanently greyed button is one
-          more thing to read past on a toolbar that is already four controls wide. */}
-      {hasActiveFilters(filters) && (
+      {/* Refreshes the whole screen, which is why it sits here rather than on one of
+          the panels: they all read the same rows. */}
+      <NekoButton className="primary" icon="refresh" busy={busy} onClick={onRefresh}>
+        {t('Refresh')}
+      </NekoButton>
+      {/* Hidden rather than dropped when there is nothing to clear. The search field
+          flexes, so a button that comes and goes drags every control after it
+          sideways — and it appears exactly when you have just used one of them. */}
+      <span style={{ visibility: hasActiveFilters(filters) ? 'visible' : 'hidden' }}
+        aria-hidden={!hasActiveFilters(filters)}>
         <NekoButton className="secondary" icon="close" disabled={busy}
+          tabIndex={hasActiveFilters(filters) ? undefined : -1}
           onClick={() => onChange({ ...DEFAULT_FILTERS, days: filters.days })}>
           {t('Clear')}
         </NekoButton>
-      )}
+      </span>
     </NekoToolbar>
   );
 };
