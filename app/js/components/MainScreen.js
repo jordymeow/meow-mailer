@@ -8,6 +8,7 @@ import SettingsScreen from './SettingsScreen';
 import LogModal from './LogModal';
 import ErrorModal from './ErrorModal';
 import StatusBar from './StatusBar';
+import FilterBar, { DEFAULT_FILTERS } from './FilterBar';
 import { wrapperTop, wrapperBody } from '@app/layout';
 import { t } from '@app/i18n';
 
@@ -45,6 +46,10 @@ const MainScreen = () => {
   const [errorLog, setErrorLog] = useState(null);
   const [reloadSignal, setReloadSignal] = useState(0);
   const bumpReload = () => setReloadSignal((s) => s + 1);
+
+  // The dashboard's filters live here, above both columns, because they narrow both.
+  // MainScreen never unmounts, so switching to Settings and back keeps them.
+  const [filters, setFilters] = useState(DEFAULT_FILTERS);
 
   // One-time, dismissable feedback invitation (persisted per browser).
   const [feedbackDismissed, setFeedbackDismissed] = useState(() => {
@@ -87,21 +92,26 @@ const MainScreen = () => {
           </>}
 
           <StatusBar pulse={reloadSignal} />
+          {page === 'dashboard' && <>
+            <NekoSpacer />
+            <FilterBar filters={filters} onChange={setFilters} />
+          </>}
           <NekoSpacer />
         </NekoColumn>
       </NekoWrapper>
 
-      {/* The statistics summarize the log, so they share one screen. The log takes
-          the wider column because its table has six columns to fit; the numbers and
-          the chart read fine in a narrower one. */}
+      {/* The statistics summarize the log, so they share one screen — and one set of
+          filters, applied above. The log takes the wider column because its table has
+          six columns to fit; the numbers and the chart read fine in a narrower one. */}
       {page === 'dashboard' && (
         <NekoWrapper style={wrapperBody}>
           <NekoColumn minimal size="3/4">
-            <LogsScreen onView={setOpenLogId} onExplainError={setErrorLog}
+            <LogsScreen filters={filters} onClearFilters={() => setFilters(DEFAULT_FILTERS)}
+              onView={setOpenLogId} onExplainError={setErrorLog}
               reloadSignal={reloadSignal} onChanged={bumpReload} />
           </NekoColumn>
           <NekoColumn minimal size="1/4">
-            <DashboardScreen reloadSignal={reloadSignal} />
+            <DashboardScreen filters={filters} reloadSignal={reloadSignal} />
           </NekoColumn>
         </NekoWrapper>
       )}

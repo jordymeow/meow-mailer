@@ -87,7 +87,7 @@ class Meow_MWMAIL_Rest {
       $params  = $request->get_json_params();
       $page    = max( 1, intval( $params['page'] ?? 1 ) );
       $limit   = intval( $params['limit'] ?? 20 );
-      $filters = is_array( $params['filters'] ?? null ) ? $params['filters'] : [];
+      $filters = $this->read_filters( $params['filters'] ?? [] );
       $sort    = $params['sort'] ?? null;
       $offset  = ( $page - 1 ) * $limit;
 
@@ -96,6 +96,8 @@ class Meow_MWMAIL_Rest {
         'success' => true,
         'total'   => $result['total'],
         'logs'    => $result['data'],
+        // Unfiltered on purpose: this feeds the status bar, which answers "is my
+        // email working?" on every screen and must not move when the view narrows.
         'stats'   => $this->core->logs->count_by_status(),
       ], 200 );
     } catch ( Throwable $e ) {
@@ -125,7 +127,7 @@ class Meow_MWMAIL_Rest {
 
   public function logs_export( $request ) {
     $params  = $request->get_json_params();
-    $filters = is_array( $params['filters'] ?? null ) ? $params['filters'] : [];
+    $filters = $this->read_filters( $params['filters'] ?? [] );
 
     // limit 0 = all matching rows; the list query already omits the heavy body column.
     $result  = $this->core->logs->select( 0, 0, $filters, $params['sort'] ?? null );
@@ -143,17 +145,18 @@ class Meow_MWMAIL_Rest {
    * for the period, why things failed, and which providers carried the volume.
    */
   public function logs_stats( $request ) {
-    $days = intval( $request->get_json_params()['days'] ?? 30 );
-    $days = in_array( $days, [ 7, 30, 90 ], true ) ? $days : 30;
+    $params  = $request->get_json_params();
+    $filters = $this->read_filters( $params['filters'] ?? [] );
+    $days    = $filters['days'];
 
-    $stats  = $this->core->logs->count_by_status_since( $days );
+    $stats  = $this->core->logs->count_by_status( $filters );
     $sent   = (int) ( $stats['sent'] ?? 0 );
     $failed = (int) ( $stats['failed'] ?? 0 );
 
     return new WP_REST_Response( [
       'success'   => true,
       'days'      => $days,
-      'series'    => $this->core->logs->daily_series( $days ),
+      'series'    => $this->core->logs->daily_series( $days, $filters ),
       'totals'    => [
         'sent'    => $sent,
         'failed'  => $failed,
@@ -163,9 +166,29 @@ class Meow_MWMAIL_Rest {
         // rate: it answers "of the emails we really tried to send, how many left".
         'rate'    => ( $sent + $failed ) > 0 ? round( ( $sent / ( $sent + $failed ) ) * 100, 1 ) : null,
       ],
-      'errors'    => $this->core->logs->top_errors_since( $days, 5 ),
-      'providers' => $this->core->logs->count_by_provider_since( $days ),
+      'errors'    => $this->core->logs->top_errors( $filters, 5 ),
+      'providers' => $this->core->logs->count_by_provider( $filters ),
     ], 200 );
+  }
+
+  /**
+   * The dashboard's filters, normalized. The log table, the totals, the chart and
+   * the error ranking are all handed the very same array, so whatever the admin
+   * picks narrows every panel at once instead of only the one it sits in.
+   */
+  private function read_filters( $filters ) {
+    $filters = is_array( $filters ) ? $filters : [];
+    $days    = intval( $filters['days'] ?? 30 );
+
+    return [
+      'status'   => (string) ( $filters['status'] ?? '' ),
+      'provider' => (string) ( $filters['provider'] ?? '' ),
+      'search'   => (string) ( $filters['search'] ?? '' ),
+      // Whitelisted rather than clamped: these are the three the UI offers, and the
+      // chart draws a bar per day, so an arbitrary number would be a way to ask for
+      // a 365-bar chart (or a 365-day scan) from the browser.
+      'days'     => in_array( $days, [ 7, 30, 90 ], true ) ? $days : 30,
+    ];
   }
 
   private function csv_row( $fields ) {

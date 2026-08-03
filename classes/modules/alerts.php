@@ -146,7 +146,7 @@ class Meow_MWMAIL_Modules_Alerts {
       return;
     }
 
-    $stats  = $this->core->logs->count_by_status_since( 7 );
+    $stats  = $this->core->logs->count_by_status( [ 'days' => 7 ] );
     $sent   = (int) ( $stats['sent'] ?? 0 );
     $failed = (int) ( $stats['failed'] ?? 0 );
     $total  = array_sum( array_map( 'intval', $stats ) );
@@ -177,7 +177,7 @@ class Meow_MWMAIL_Modules_Alerts {
       $lines[] = sprintf( _n( '%d captured in offline mode, not delivered', '%d captured in offline mode, not delivered', $offline, 'meow-mailer' ), $offline );
     }
 
-    $errors = $failed > 0 ? $this->core->logs->top_errors_since( 7 ) : [];
+    $errors = $failed > 0 ? $this->core->logs->top_errors( [ 'days' => 7 ] ) : [];
     if ( $errors ) {
       $lines[] = '';
       $lines[] = __( 'Most common errors:', 'meow-mailer' );

@@ -32,7 +32,7 @@ export const deleteLogs = async (ids) => await post('/logs/delete', { ids });
 export const clearLogs = async () => await post('/logs/clear');
 export const resendLog = async (id) => await post('/logs/resend', { id });
 export const exportLogs = async (filters, sort) => (await post('/logs/export', { filters, sort })).csv;
-export const fetchStats = async (days) => await post('/logs/stats', { days });
+export const fetchStats = async (filters) => await post('/logs/stats', { filters });
 
 // Tools
 export const sendTestEmail = async (to, format, target = 'provider') => await post('/mail/test', { to, format, target });

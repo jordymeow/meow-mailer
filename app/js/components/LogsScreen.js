@@ -1,20 +1,21 @@
 const { useState, useEffect, useCallback } = wp.element;
 
 import {
-  NekoBlock, NekoTable, NekoPaging, NekoToolbar, NekoSelect, NekoOption,
-  NekoInput, NekoButton, NekoIcon, NekoSpacer, NekoEmpty,
+  NekoBlock, NekoTable, NekoPaging, NekoButton, NekoIcon, NekoSpacer, NekoEmpty,
 } from '@neko-ui';
 
 import { useCoreContext } from '@app/contexts/core';
 import { fetchLogs, deleteLogs, clearLogs, exportLogs } from '@app/requests';
-import { PROVIDERS, PROVIDER_LABELS } from '@app/providers';
+import { PROVIDER_LABELS } from '@app/providers';
+import { hasActiveFilters } from './FilterBar';
 import { t } from '@app/i18n';
 
 const LIMIT = 20;
 
-// Module-scoped so the user's filters/page/sort survive a tab switch (NekoTab
-// unmounts inactive content). Reset only on a full page reload.
-let viewState = { page: 1, status: '', provider: '', search: '', searchInput: '', sort: { accessor: 'created', by: 'desc' } };
+// Module-scoped so the page and sort survive a screen switch (the dashboard is
+// unmounted while Settings is open). The filters are not here: they belong to
+// MainScreen, which stays mounted and shares them with the statistics.
+let viewState = { page: 1, sort: { accessor: 'created', by: 'desc' } };
 
 export const statusOf = (status) => {
   switch (status) {
@@ -79,24 +80,24 @@ const COLUMNS = [
   { accessor: 'actions', title: '', width: '46px' },
 ];
 
-const LogsScreen = ({ onView, onExplainError, reloadSignal, onChanged = () => {} }) => {
+const LogsScreen = ({ filters, onClearFilters, onView, onExplainError, reloadSignal, onChanged = () => {} }) => {
   const { state, actions } = useCoreContext();
   const { setError } = actions;
   const loggingOff = !state.options.logs_enabled;
 
   const [page, setPage] = useState(viewState.page);
-  const [filters, setFilters] = useState({ status: viewState.status, provider: viewState.provider, search: viewState.search });
-  const [searchInput, setSearchInput] = useState(viewState.searchInput);
   const [sort, setSort] = useState(viewState.sort);
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState([]);
 
-  // Remember the view so a tab switch doesn't lose the user's filters/page.
-  useEffect(() => {
-    viewState = { page, status: filters.status, provider: filters.provider, search: filters.search, searchInput, sort };
-  }, [page, filters, searchInput, sort]);
+  // Remember the view so a screen switch doesn't lose the user's page/sort.
+  useEffect(() => { viewState = { page, sort }; }, [page, sort]);
+
+  // A narrower filter usually means fewer pages, so staying on page 7 would land on
+  // an empty table that looks like "no results" rather than "you are past the end".
+  useEffect(() => { setPage(1); }, [filters]);
 
   const load = useCallback(async () => {
     setBusy(true);
@@ -114,17 +115,6 @@ const LogsScreen = ({ onView, onExplainError, reloadSignal, onChanged = () => {}
   useEffect(() => { load(); }, [load]);
   // Reload when an action elsewhere (e.g. a resend from the modal) changes the data.
   useEffect(() => { if (reloadSignal) load(); }, [reloadSignal]);
-
-  // Live search, debounced so we don't fetch on every keystroke.
-  const applySearch = () => { setPage(1); setFilters((f) => ({ ...f, search: searchInput })); };
-  useEffect(() => {
-    const id = setTimeout(() => {
-      if (searchInput !== filters.search) {
-        applySearch();
-      }
-    }, 400);
-    return () => clearTimeout(id);
-  }, [searchInput]);
 
   const removeSelected = async () => {
     if (!selected.length) return;
@@ -167,20 +157,15 @@ const LogsScreen = ({ onView, onExplainError, reloadSignal, onChanged = () => {}
     }
   };
 
-  const hasFilters = !!(filters.status || filters.provider || filters.search);
-  const clearFilters = () => {
-    setPage(1);
-    setSearchInput('');
-    setFilters({ status: '', provider: '', search: '' });
-  };
+  const hasFilters = hasActiveFilters(filters);
 
   // Filters first: with logging off but older emails still on record, blaming the
   // setting would be wrong, because the rows exist and simply don't match.
   let empty;
   if (hasFilters) {
     empty = <NekoEmpty inline icon="filter" title={t('Nothing matches these filters')}
-      subtitle={t('Try another status, provider or search term.')}
-      action={<NekoButton className="secondary" onClick={clearFilters}>{t('Clear filters')}</NekoButton>} />;
+      subtitle={t('Try another status, provider, period or search term.')}
+      action={<NekoButton className="secondary" onClick={onClearFilters}>{t('Clear filters')}</NekoButton>} />;
   }
   else if (loggingOff) {
     empty = <NekoEmpty inline icon="eye-off" title={t('Logging is turned off')}
@@ -220,24 +205,6 @@ const LogsScreen = ({ onView, onExplainError, reloadSignal, onChanged = () => {}
   return (
     <NekoBlock title={t('Email Logs')}
       action={<NekoButton className="primary" icon="refresh" busy={busy} onClick={load}>{t('Refresh')}</NekoButton>}>
-
-      <NekoToolbar>
-        <NekoInput name="search" value={searchInput} placeholder={t('Search subject or recipient…')}
-          onChange={setSearchInput} onEnter={applySearch} style={{ flex: 1, minWidth: 200 }} />
-        <NekoSelect scrolldown name="status" value={filters.status} onChange={(v) => { setPage(1); setFilters((f) => ({ ...f, status: v })); }} style={{ width: 130 }}>
-          <NekoOption value="" label={t('All statuses')} />
-          <NekoOption value="sent" label={t('Sent')} />
-          <NekoOption value="failed" label={t('Failed')} />
-          <NekoOption value="offline" label={t('Offline')} />
-          <NekoOption value="pending" label={t('Pending')} />
-        </NekoSelect>
-        <NekoSelect scrolldown name="provider" value={filters.provider} onChange={(v) => { setPage(1); setFilters((f) => ({ ...f, provider: v })); }} style={{ width: 160 }}>
-          <NekoOption value="" label={t('All providers')} />
-          {PROVIDERS.map((p) => <NekoOption key={p.key} value={p.key} label={t(p.label)} />)}
-        </NekoSelect>
-      </NekoToolbar>
-
-      <NekoSpacer />
 
       <NekoTable
         variant="raw"

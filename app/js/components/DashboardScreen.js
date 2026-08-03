@@ -1,15 +1,12 @@
 const { useState, useEffect, useCallback } = wp.element;
 
-import { NekoBlock, NekoSelect, NekoOption, NekoEmpty } from '@neko-ui';
+import { NekoBlock, NekoEmpty } from '@neko-ui';
 
 import { useCoreContext } from '@app/contexts/core';
 import { fetchStats } from '@app/requests';
 import { PROVIDER_LABELS } from '@app/providers';
 import VolumeChart from './VolumeChart';
 import { t } from '@app/i18n';
-
-// Survives a tab switch, like the logs view does.
-let viewDays = 30;
 
 /**
  * The four headline numbers, as cards.
@@ -70,26 +67,25 @@ const ErrorRow = ({ error, total, share }) => (
   </div>
 );
 
-const DashboardScreen = ({ reloadSignal }) => {
+const DashboardScreen = ({ filters, reloadSignal }) => {
   const { state, actions } = useCoreContext();
   const { setError } = actions;
 
-  const [days, setDays] = useState(viewDays);
   const [stats, setStats] = useState(null);
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => { viewDays = days; }, [days]);
+  const days = filters.days;
 
   const load = useCallback(async () => {
     setBusy(true);
     try {
-      setStats(await fetchStats(days));
+      setStats(await fetchStats(filters));
     } catch (err) {
       setError(err.message);
     } finally {
       setBusy(false);
     }
-  }, [days, setError]);
+  }, [filters, setError]);
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { if (reloadSignal) load(); }, [reloadSignal]);
@@ -102,22 +98,28 @@ const DashboardScreen = ({ reloadSignal }) => {
   const worst = errors.length ? errors[0].total : 1;
   const providers = ((stats && stats.providers) || []).filter((p) => p.provider !== 'offline');
 
+  // Filtering to one status makes a success rate meaningless: it can only ever come
+  // out as 100% or 0%, and 0% in red would read as an outage when all it means is
+  // that you asked to see failures. So the tile steps aside and says why.
+  const statusFiltered = !!filters.status;
+
   // A rate needs something to divide. Until an email has actually been attempted,
   // a big "0%" would read as a problem rather than as an empty log.
-  const rateValue = totals.rate === null ? '—' : `${totals.rate}%`;
+  const rateValue = statusFiltered || totals.rate === null ? '—' : `${totals.rate}%`;
   // Blue while things are fine, because a healthy rate is not news. It only takes a
   // warning colour once it is worth looking at, which is what makes that worth
   // noticing at all.
-  const rateTone = totals.rate === null || totals.rate >= 99 ? 'blue'
+  const rateTone = statusFiltered || totals.rate === null || totals.rate >= 99 ? 'blue'
     : (totals.rate >= 90 ? 'orange' : 'red');
 
-  const rangeSelect = (
-    <NekoSelect scrolldown name="days" value={String(days)} onChange={(v) => setDays(parseInt(v, 10))} style={{ width: 150 }}>
-      <NekoOption value="7" label={t('Last 7 days')} />
-      <NekoOption value="30" label={t('Last 30 days')} />
-      <NekoOption value="90" label={t('Last 90 days')} />
-    </NekoSelect>
-  );
+  let rateHint;
+  if (statusFiltered) {
+    rateHint = t('not meaningful for one status');
+  } else if (attempted > 0) {
+    rateHint = `${totals.sent} ${t('of')} ${attempted} ${t('attempted')}`;
+  } else {
+    rateHint = t('nothing sent yet');
+  }
 
   if (!state.options.logs_enabled) {
     return (
@@ -131,7 +133,7 @@ const DashboardScreen = ({ reloadSignal }) => {
   // No wrapper of its own: MainScreen lays this out beside the log.
   return (
     <>
-        <NekoBlock title={t('Overview')} busy={busy} action={rangeSelect}>
+        <NekoBlock title={t('Overview')} busy={busy}>
           {/* Two by two rather than a flexible row: this sits in a side column, and
               a wrapping row of four leaves an orphan tile on its own line. */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10, marginBottom: 14 }}>
@@ -139,10 +141,7 @@ const DashboardScreen = ({ reloadSignal }) => {
                 provider accepted the email, never that it reached an inbox. This is
                 the share of attempts that left without an error, so it is named for
                 that, and the difference from the Sent count beside it is clear. */}
-            <Tile label={t('Success Rate')} value={rateValue} tone={rateTone}
-              hint={attempted > 0
-                ? `${totals.sent} ${t('of')} ${attempted} ${t('attempted')}`
-                : t('nothing sent yet')} />
+            <Tile label={t('Success Rate')} value={rateValue} tone={rateTone} hint={rateHint} />
             <Tile label={t('Sent')} value={totals.sent} tone="green" hint={t('left without error')} />
             {/* The one card that steps back at zero. Elsewhere a colour with nothing
                 behind it is merely quiet; a red one reads as an alarm. */}
@@ -156,7 +155,7 @@ const DashboardScreen = ({ reloadSignal }) => {
 
         {errors.length > 0 && (
           <NekoBlock title={t('Why emails failed')} busy={busy}
-            subtitle={t('The most common errors in this period. Fixing the top one usually fixes most of them.')}>
+            subtitle={t('The most common errors among the emails shown. Fixing the top one usually fixes most of them.')}>
             {errors.map((row, i) => (
               <ErrorRow key={i} error={row.error} total={row.total} share={Math.round((row.total / worst) * 100)} />
             ))}
@@ -165,7 +164,7 @@ const DashboardScreen = ({ reloadSignal }) => {
 
         {providers.length > 1 && (
           <NekoBlock title={t('Providers')} busy={busy}
-            subtitle={t('Which services carried your email in this period.')}>
+            subtitle={t('Which services carried the emails shown.')}>
             {providers.map((row) => (
               <div key={row.provider} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--neko-gray-90)' }}>
                 <span>{PROVIDER_LABELS[row.provider] || row.provider}</span>

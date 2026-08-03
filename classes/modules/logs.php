@@ -30,17 +30,14 @@ class Meow_MWMAIL_Modules_Logs {
   #region Read
 
   /**
-   * @param array $filters  status, provider, search, date_from, date_to
+   * The WHERE clause every read shares. The table, the totals, the chart and the
+   * error ranking all describe the same set of emails, so they all have to be
+   * filtered by the same code: one query growing its own conditions is how a
+   * dashboard ends up showing two different numbers for the same thing.
+   *
+   * @param array $filters  status, provider, search, days, date_from, date_to
    */
-  public function select( $offset = 0, $limit = 20, $filters = [], $sort = null ) {
-    if ( ! $this->check_db() ) {
-      throw new Exception( esc_html__( 'Could not access the database.', 'meow-mailer' ) );
-    }
-
-    $offset = max( 0, intval( $offset ) );
-    $limit  = intval( $limit );
-    $sort   = ! empty( $sort ) ? $sort : [ 'accessor' => 'created', 'by' => 'desc' ];
-
+  private function filter_clause( $filters ) {
     $where = [ '1=1' ];
     if ( ! empty( $filters['status'] ) ) {
       $where[] = $this->wpdb->prepare( 'status = %s', $filters['status'] );
@@ -52,13 +49,45 @@ class Meow_MWMAIL_Modules_Logs {
       $like    = '%' . $this->wpdb->esc_like( $filters['search'] ) . '%';
       $where[] = $this->wpdb->prepare( '( subject LIKE %s OR email_to LIKE %s )', $like, $like );
     }
+    if ( ! empty( $filters['days'] ) ) {
+      $where[] = $this->wpdb->prepare( 'created >= %s', self::days_cutoff( $filters['days'] ) );
+    }
     if ( ! empty( $filters['date_from'] ) ) {
       $where[] = $this->wpdb->prepare( 'created >= %s', $filters['date_from'] );
     }
     if ( ! empty( $filters['date_to'] ) ) {
       $where[] = $this->wpdb->prepare( 'created <= %s', $filters['date_to'] );
     }
-    $where_sql = implode( ' AND ', $where );
+    return implode( ' AND ', $where );
+  }
+
+  /**
+   * Midnight at the start of the oldest day in a "last N days" range, counting today
+   * as one of them. Whole days rather than a rolling N×24h on purpose: the chart is
+   * drawn in day buckets, so a rolling cutoff would put a part-day of email in the
+   * totals that the oldest bar does not show.
+   *
+   * Rows are stored in site-local time, so the cutoff is formatted from a local
+   * timestamp. gmdate() (not date()) is what keeps that from being shifted twice.
+   */
+  private static function days_cutoff( $days ) {
+    $days = max( 1, min( 365, intval( $days ) ) );
+    return gmdate( 'Y-m-d 00:00:00', current_time( 'timestamp' ) - ( ( $days - 1 ) * DAY_IN_SECONDS ) );
+  }
+
+  /**
+   * @param array $filters  status, provider, search, days, date_from, date_to
+   */
+  public function select( $offset = 0, $limit = 20, $filters = [], $sort = null ) {
+    if ( ! $this->check_db() ) {
+      throw new Exception( esc_html__( 'Could not access the database.', 'meow-mailer' ) );
+    }
+
+    $offset = max( 0, intval( $offset ) );
+    $limit  = intval( $limit );
+    $sort   = ! empty( $sort ) ? $sort : [ 'accessor' => 'created', 'by' => 'desc' ];
+
+    $where_sql = $this->filter_clause( $filters );
 
     // Whitelist the sort column/direction to avoid injection through the accessor.
     $allowed_sort = array_keys( MWMAIL_LOG_COLUMNS );
@@ -105,14 +134,21 @@ class Meow_MWMAIL_Modules_Logs {
     return $this->wpdb->get_row( $this->wpdb->prepare( "SELECT * FROM {$this->table_name} WHERE id = %d", intval( $id ) ), ARRAY_A );
   }
 
-  public function count_by_status() {
+  /**
+   * Counts per status. No filters means the whole table, which is what the status
+   * bar shows; pass the dashboard's filters to describe the same set as the table.
+   *
+   * @return array  status => count
+   */
+  public function count_by_status( $filters = [] ) {
     if ( ! $this->check_db() ) {
       return [];
     }
+    $where_sql = $this->filter_clause( $filters );
     // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-    $rows  = $this->wpdb->get_results( "SELECT status, COUNT(*) AS total FROM {$this->table_name} GROUP BY status", ARRAY_A );
+    $rows  = $this->wpdb->get_results( "SELECT status, COUNT(*) AS total FROM {$this->table_name} WHERE {$where_sql} GROUP BY status", ARRAY_A );
     $stats = [];
-    foreach ( $rows as $row ) {
+    foreach ( (array) $rows as $row ) {
       $stats[ $row['status'] ] = (int) $row['total'];
     }
     return $stats;
@@ -132,41 +168,30 @@ class Meow_MWMAIL_Modules_Logs {
   }
 
   /**
-   * Counts per status over the last $days, for the weekly summary.
+   * The most frequent error messages among the emails the filters describe. A panel
+   * that says "12 failed" without saying why is one more click before anything is
+   * learned.
    *
-   * @return array  status => count
-   */
-  public function count_by_status_since( $days ) {
-    if ( ! $this->check_db() ) {
-      return [];
-    }
-    $cutoff = gmdate( 'Y-m-d H:i:s', current_time( 'timestamp' ) - ( intval( $days ) * DAY_IN_SECONDS ) );
-    // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-    $rows  = $this->wpdb->get_results( $this->wpdb->prepare( "SELECT status, COUNT(*) AS total FROM {$this->table_name} WHERE created >= %s GROUP BY status", $cutoff ), ARRAY_A );
-    $stats = [];
-    foreach ( (array) $rows as $row ) {
-      $stats[ $row['status'] ] = (int) $row['total'];
-    }
-    return $stats;
-  }
-
-  /**
-   * The most frequent error messages over the last $days. A summary that says
-   * "12 failed" without saying why is one more click before anything is learned.
+   * The status condition is forced: only a failure carries an error, so ranking them
+   * under a "sent" filter would always be empty, and under no filter at all it would
+   * be the same list either way.
    *
    * @return array  list of [ 'error' => string, 'total' => int ]
    */
-  public function top_errors_since( $days, $limit = 3 ) {
+  public function top_errors( $filters = [], $limit = 3 ) {
     if ( ! $this->check_db() ) {
       return [];
     }
-    $cutoff = gmdate( 'Y-m-d H:i:s', current_time( 'timestamp' ) - ( intval( $days ) * DAY_IN_SECONDS ) );
-    // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-    $rows = $this->wpdb->get_results( $this->wpdb->prepare(
-      "SELECT error, COUNT(*) AS total FROM {$this->table_name} WHERE status = 'failed' AND created >= %s AND error <> '' GROUP BY error ORDER BY total DESC LIMIT %d",
-      $cutoff,
-      max( 1, intval( $limit ) )
-    ), ARRAY_A );
+    $where_sql = $this->filter_clause( array_merge( $filters, [ 'status' => 'failed' ] ) );
+    // The clause is already prepared, so the LIMIT is prepared on its own and pasted
+    // in. Feeding a built clause back through prepare() would have it read the % in a
+    // search term's LIKE pattern as a placeholder and mangle the query.
+    $limit_sql = $this->wpdb->prepare( ' LIMIT %d', max( 1, intval( $limit ) ) );
+    // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+    $rows = $this->wpdb->get_results(
+      "SELECT error, COUNT(*) AS total FROM {$this->table_name} WHERE {$where_sql} AND error <> '' GROUP BY error ORDER BY total DESC{$limit_sql}",
+      ARRAY_A
+    );
     return array_map( function ( $row ) {
       return [ 'error' => (string) $row['error'], 'total' => (int) $row['total'] ];
     }, (array) $rows );
@@ -179,7 +204,7 @@ class Meow_MWMAIL_Modules_Logs {
    *
    * @return array  list of [ 'day' => 'Y-m-d', 'sent' => int, 'failed' => int, 'offline' => int, 'pending' => int ]
    */
-  public function daily_series( $days = 30 ) {
+  public function daily_series( $days = 30, $filters = [] ) {
     $days  = max( 1, min( 365, intval( $days ) ) );
     $empty = [ 'sent' => 0, 'failed' => 0, 'offline' => 0, 'pending' => 0 ];
 
@@ -195,12 +220,12 @@ class Meow_MWMAIL_Modules_Logs {
       return array_values( $series );
     }
 
-    $cutoff = gmdate( 'Y-m-d 00:00:00', $today - ( ( $days - 1 ) * DAY_IN_SECONDS ) );
+    $where_sql = $this->filter_clause( array_merge( $filters, [ 'days' => $days ] ) );
     // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-    $rows = $this->wpdb->get_results( $this->wpdb->prepare(
-      "SELECT DATE(created) AS day, status, COUNT(*) AS total FROM {$this->table_name} WHERE created >= %s GROUP BY day, status",
-      $cutoff
-    ), ARRAY_A );
+    $rows = $this->wpdb->get_results(
+      "SELECT DATE(created) AS day, status, COUNT(*) AS total FROM {$this->table_name} WHERE {$where_sql} GROUP BY day, status",
+      ARRAY_A
+    );
 
     foreach ( (array) $rows as $row ) {
       $day    = (string) $row['day'];
@@ -212,17 +237,17 @@ class Meow_MWMAIL_Modules_Logs {
     return array_values( $series );
   }
 
-  /** The providers that actually sent something recently, with their volume. */
-  public function count_by_provider_since( $days ) {
+  /** The providers that carried the emails the filters describe, with their volume. */
+  public function count_by_provider( $filters = [] ) {
     if ( ! $this->check_db() ) {
       return [];
     }
-    $cutoff = gmdate( 'Y-m-d H:i:s', current_time( 'timestamp' ) - ( intval( $days ) * DAY_IN_SECONDS ) );
+    $where_sql = $this->filter_clause( $filters );
     // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-    $rows = $this->wpdb->get_results( $this->wpdb->prepare(
-      "SELECT provider, COUNT(*) AS total FROM {$this->table_name} WHERE created >= %s AND provider <> '' GROUP BY provider ORDER BY total DESC",
-      $cutoff
-    ), ARRAY_A );
+    $rows = $this->wpdb->get_results(
+      "SELECT provider, COUNT(*) AS total FROM {$this->table_name} WHERE {$where_sql} AND provider <> '' GROUP BY provider ORDER BY total DESC",
+      ARRAY_A
+    );
     return array_map( function ( $row ) {
       return [ 'provider' => (string) $row['provider'], 'total' => (int) $row['total'] ];
     }, (array) $rows );

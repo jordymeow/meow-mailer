@@ -69,7 +69,16 @@ const StatusBar = ({ pulse }) => {
         {namedProvider && <span style={{ fontWeight: 700 }}>{PROVIDER_LABELS[options.provider]}</span>}
         <span style={{ color: 'var(--neko-gray-50)', fontSize: 13 }}>{hint}</span>
       </div>
-      <div style={{ display: 'flex', gap: 22 }}>
+      {/* Named because the dashboard below shows the same three words for whatever
+          the filters currently select. Two different "Failed" numbers on one screen
+          reads as a bug unless it says which is which. */}
+      <div style={{ display: 'flex', gap: 22, alignItems: 'center' }}>
+        <span style={{
+          fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
+          color: 'var(--neko-gray-60)', whiteSpace: 'nowrap',
+        }}>
+          {t('All time')}
+        </span>
         <Stat label={t('Sent')} value={stats.sent} color="var(--neko-green)" />
         <Stat label={t('Failed')} value={stats.failed} color="var(--neko-red)" />
         <Stat label={t('Offline')} value={stats.offline} color="var(--neko-gray-50)" />
