@@ -4,11 +4,26 @@ import { NekoSettings, NekoInput, NekoSelect, NekoOption, NekoSwitch, NekoButton
 
 import { useCoreContext } from '@app/contexts/core';
 import { getProvider } from '@app/providers';
-import { getOAuthUrl, disconnectOAuth } from '@app/requests';
+import { getOAuthUrl, disconnectOAuth, revealSecret } from '@app/requests';
 import { secretMask as SECRET_MASK } from '@app/settings';
 import { t } from '@app/i18n';
 
-const Field = ({ field, value, onChange }) => {
+const Field = ({ field, value, providerKey, onChange }) => {
+  const { actions } = useCoreContext();
+
+  // What the eye uncovered, or null while it is still hidden. A saved secret is not
+  // in the settings payload, so revealing it means asking the server for that one
+  // field rather than toggling an input that only holds a row of bullets.
+  const [revealed, setRevealed] = useState(null);
+
+  const reveal = async () => {
+    try {
+      setRevealed(await revealSecret(providerKey, field.name));
+    } catch (err) {
+      actions.setError(err.message);
+    }
+  };
+
   const control = () => {
     switch (field.type) {
       case 'select':
@@ -22,16 +37,27 @@ const Field = ({ field, value, onChange }) => {
       case 'number':
         return <NekoInput type="number" name={field.name} value={value ?? ''} placeholder={field.placeholder} onBlur={onChange} onEnter={onChange} />;
       case 'password': {
-        // A stored secret is never sent to the browser: what sits in this field is
-        // the mask, a literal row of bullets. NekoInput's reveal button would
-        // faithfully uncover those bullets and look broken, so a saved secret shows
-        // a padlock instead (any icon suppresses the toggle). Type a new value and
-        // it behaves like a normal password field again.
+        // What sits in this field for a saved secret is the mask, a literal row of
+        // bullets, so NekoInput's own toggle would faithfully uncover those and look
+        // broken. Supplying an icon suppresses that toggle and lets the eye do the
+        // real thing: fetch the value, then show it as plain text.
         const saved = value === SECRET_MASK;
+        if (saved && revealed === null) {
+          return <NekoInput type="password" name={field.name} value={value ?? ''} placeholder={field.placeholder}
+            onBlur={onChange} onEnter={onChange}
+            iconFilled="eye" onFilledIconClick={reveal}
+            description={t('Saved and hidden. Click the eye to see it, or type a new one to replace it.')} />;
+        }
+        if (revealed !== null) {
+          return <NekoInput type="text" name={field.name} value={revealed} placeholder={field.placeholder}
+            onBlur={(v) => { setRevealed(v); onChange(v); }} onEnter={onChange}
+            iconFilled="eye-off" onFilledIconClick={() => setRevealed(null)}
+            description={t('Showing the saved value. Click the eye to hide it again.')} />;
+        }
+        // Nothing saved yet: an ordinary password field, whose own toggle works
+        // because whatever is in it is what the user just typed.
         return <NekoInput type="password" name={field.name} value={value ?? ''} placeholder={field.placeholder}
-          onBlur={onChange} onEnter={onChange}
-          iconFilled={saved ? 'lock' : undefined}
-          description={saved ? t('Saved. It is never sent back to your browser, so it cannot be shown here. Type a new one to replace it.') : undefined} />;
+          onBlur={onChange} onEnter={onChange} />;
       }
       default:
         return <NekoInput name={field.name} value={value ?? ''} placeholder={field.placeholder} onBlur={onChange} onEnter={onChange} />;
@@ -113,9 +139,10 @@ const ProviderFields = ({ providerKey }) => {
     <>
       {provider.fields.map((field) => (
         <Field
-          key={field.name}
+          key={`${providerKey}-${field.name}`}
           field={field}
           value={creds[field.name]}
+          providerKey={providerKey}
           onChange={(value) => actions.updateProviderOption(value, field.name, providerKey)}
         />
       ))}

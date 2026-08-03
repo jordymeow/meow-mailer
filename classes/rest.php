@@ -36,6 +36,7 @@ class Meow_MWMAIL_Rest {
     register_rest_route( $this->namespace, '/notice/dismiss', [ 'methods' => 'POST', 'callback' => [ $this, 'notice_dismiss' ], 'permission_callback' => $perm ] );
 
     register_rest_route( $this->namespace, '/mail/test',         [ 'methods' => 'POST', 'callback' => [ $this, 'mail_test' ],        'permission_callback' => $perm ] );
+    register_rest_route( $this->namespace, '/secrets/reveal',    [ 'methods' => 'POST', 'callback' => [ $this, 'secrets_reveal' ],  'permission_callback' => $edit ] );
     register_rest_route( $this->namespace, '/oauth/auth-url',    [ 'methods' => 'POST', 'callback' => [ $this, 'oauth_auth_url' ],   'permission_callback' => $edit ] );
     register_rest_route( $this->namespace, '/oauth/disconnect',  [ 'methods' => 'POST', 'callback' => [ $this, 'oauth_disconnect' ], 'permission_callback' => $edit ] );
   }
@@ -308,6 +309,36 @@ class Meow_MWMAIL_Rest {
         ? __( 'Test email sent through the fallback.', 'meow-mailer' )
         : __( 'Test email sent.', 'meow-mailer' ),
     ], 200 );
+  }
+
+  /**
+   * Hand back one stored credential, so the eye beside it can show what is saved.
+   *
+   * Secrets are still kept out of the settings payload: they travel only when an
+   * admin asks for this one field, rather than every key the site holds riding along
+   * with every page load. Same permission as changing them, which on a network means
+   * a shared provider can only be revealed where it can be edited.
+   */
+  public function secrets_reveal( $request ) {
+    $params   = $request->get_json_params();
+    $provider = (string) ( $params['provider'] ?? '' );
+    $field    = (string) ( $params['field'] ?? '' );
+
+    // Whitelisted, or the route would read back any option the plugin stores rather
+    // than the one credential behind the eye. OAuth tokens are excluded on top: the
+    // UI never offers to reveal them, so nothing should be able to ask.
+    $allowed = array_diff( $this->core->secret_fields(), [ 'access_token', 'refresh_token' ] );
+    if ( ! in_array( $field, $allowed, true ) ) {
+      return new WP_REST_Response( [ 'success' => false, 'message' => __( 'That field cannot be revealed.', 'meow-mailer' ) ], 200 );
+    }
+
+    $options = $this->core->get_all_options();
+    $value   = $options['providers'][ $provider ][ $field ] ?? '';
+    if ( ! is_string( $value ) || $value === '' ) {
+      return new WP_REST_Response( [ 'success' => false, 'message' => __( 'Nothing is saved in that field.', 'meow-mailer' ) ], 200 );
+    }
+
+    return new WP_REST_Response( [ 'success' => true, 'value' => $value ], 200 );
   }
 
   public function oauth_auth_url( $request ) {
