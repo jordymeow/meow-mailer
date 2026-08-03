@@ -363,7 +363,7 @@ class Meow_MWMAIL_Modules_Mailer {
     }
     $to = array_filter( array_map( 'trim', $to ) );
 
-    $from_email = $from_name = '';
+    $from_email = $from_name = $return_path = '';
     $content_type = 'text/plain';
     $charset      = get_bloginfo( 'charset' );
     $custom_headers = [];
@@ -396,6 +396,12 @@ class Meow_MWMAIL_Modules_Mailer {
           } else {
             $content_type = trim( $content );
           }
+          break;
+        case 'return-path':
+          // Taken as the envelope sender rather than passed along as a header: as a
+          // header it is rewritten by the receiving server at delivery and does
+          // nothing, which is the trap anyone setting one falls into.
+          $return_path = trim( $content );
           break;
         case 'cc':
         case 'bcc':
@@ -431,6 +437,11 @@ class Meow_MWMAIL_Modules_Mailer {
     if ( empty( $reply_to ) && ! empty( $options['reply_to'] ) ) {
       $reply_to[] = $options['reply_to'];
     }
+    // A header on the message wins over the setting: it is per-email and deliberate,
+    // where the setting is the site-wide default.
+    if ( $return_path === '' && ! empty( $options['return_path'] ) ) {
+      $return_path = $options['return_path'];
+    }
 
     // Allow core's wp_mail_from / wp_mail_from_name filters to keep working.
     $from_email = apply_filters( 'wp_mail_from', $from_email ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- core WordPress hook
@@ -447,6 +458,7 @@ class Meow_MWMAIL_Modules_Mailer {
       'reply_to'     => array_values( array_filter( $reply_to ) ),
       'from_email'   => $from_email,
       'from_name'    => $from_name,
+      'return_path'  => $return_path,
       'content_type' => apply_filters( 'wp_mail_content_type', $content_type ), // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- core WordPress hook
       'charset'      => apply_filters( 'wp_mail_charset', $charset ), // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- core WordPress hook
       'custom_headers' => $custom_headers,

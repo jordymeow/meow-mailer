@@ -46,6 +46,24 @@ abstract class Meow_MWMAIL_Mailers_Base {
 
     $mail->setFrom( $email['from_email'], $email['from_name'], false );
 
+    /**
+     * The envelope sender: the address a mail server returns bounces to, which can
+     * differ from the visible From. Filterable so a plugin can give each message its
+     * own bounce address (VERP and the like) without touching what recipients see.
+     *
+     * Only Generic SMTP acts on it, since it becomes the SMTP MAIL FROM. Gmail and
+     * Amazon SES take a finished message and put their own envelope around it, so it
+     * is inert there rather than wrong. Left empty, the server falls back to the From
+     * address by itself, which is the behaviour every install had before this existed.
+     *
+     * @param string $return_path
+     * @param array  $email  the normalized email
+     */
+    $return_path = apply_filters( 'mwmail_return_path', $email['return_path'] ?? '', $email );
+    if ( ! empty( $return_path ) && is_email( $return_path ) ) {
+      $mail->Sender = $return_path;
+    }
+
     foreach ( $email['to'] as $addr ) {
       $this->add_address( $mail, 'to', $addr );
     }

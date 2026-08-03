@@ -75,6 +75,12 @@ If you have a second provider account, use that. If you don't, pick WordPress: i
 
 If you do use a second provider, publish its SPF and DKIM records for your domain, exactly like your main one. Otherwise the rescued email is accepted, delivered, and quietly filed as spam, which is harder to notice than a plain failure. Test it with the **Test Fallback** button rather than waiting to find out during an outage.
 
+= Can I send bounces to a different address? =
+
+Yes. Set a **Return Path** in Settings and non-delivery reports go there instead of to your From address, which is left exactly as recipients see it. Leave it empty and bounces follow the From address, as they always have.
+
+This is the SMTP envelope sender, so it applies to Generic SMTP. The API providers put their own envelope around your message and handle bounces on their own side, so the field does nothing there. If you need a different bounce address per email, filter `mwmail_return_path`, which receives the address and the message it belongs to.
+
 = Does it store my email password? =
 
 For SMTP and API providers, credentials are stored in the WordPress database. You can instead define them as PHP constants in `wp-config.php` (e.g. `MWMAIL_SMTP_PASSWORD`) to keep them out of the database. Gmail, Microsoft 365 and Zoho Mail use OAuth 2.0, so no password is ever stored.

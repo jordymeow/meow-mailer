@@ -97,7 +97,7 @@ class Meow_MWMAIL_Core {
    */
   const NETWORK_GROUPS = [
     'provider' => [ 'provider', 'fallback_provider', 'providers' ],
-    'sender'   => [ 'from_email', 'from_name', 'force_from', 'reply_to' ],
+    'sender'   => [ 'from_email', 'from_name', 'force_from', 'reply_to', 'return_path' ],
     'delivery' => [ 'logs_enabled', 'log_body', 'log_retention_days', 'send_in_background' ],
   ];
 
@@ -222,6 +222,9 @@ class Meow_MWMAIL_Core {
       'from_name'          => '',
       'force_from'         => false,
       'reply_to'           => '',
+      // The envelope sender, where bounces are returned. Empty means the From
+      // address, which is what a mail server uses when nothing says otherwise.
+      'return_path'        => '',
       'logs_enabled'       => true,
       'log_body'           => true,
       'log_retention_days' => 0, // 0 = keep forever

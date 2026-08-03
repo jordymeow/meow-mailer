@@ -260,6 +260,10 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
               <NekoInput name="reply_to" value={options.reply_to} placeholder={t('(optional)')} onBlur={updateOption} onEnter={updateOption}
                 description={t('Where replies should go, if different from the From address.')} />
             </NekoSettings>
+            <NekoSettings title={t('Return Path')}>
+              <NekoInput name="return_path" value={options.return_path} placeholder={t('(same as From)')} onBlur={updateOption} onEnter={updateOption}
+                description={t('Where bounces and non-delivery reports go, if you keep a mailbox for them. Left empty they follow the From address, which is what happens today. Generic SMTP only: the API providers handle bounces on their own side.')} />
+            </NekoSettings>
           </NekoBlock>
         )}
 
