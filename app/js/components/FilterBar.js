@@ -62,22 +62,20 @@ const FilterBar = ({ filters, onChange, onRefresh, busy }) => {
         <NekoOption value="30" label={t('Last 30 days')} />
         <NekoOption value="90" label={t('Last 90 days')} />
       </NekoSelect>
-      {/* Refreshes the whole screen, which is why it sits here rather than on one of
-          the panels: they all read the same rows. */}
-      <NekoButton className="primary" icon="refresh" busy={busy} onClick={onRefresh}>
-        {t('Refresh')}
-      </NekoButton>
-      {/* Hidden rather than dropped when there is nothing to clear. The search field
-          flexes, so a button that comes and goes drags every control after it
-          sideways — and it appears exactly when you have just used one of them. */}
-      <span style={{ visibility: hasActiveFilters(filters) ? 'visible' : 'hidden' }}
-        aria-hidden={!hasActiveFilters(filters)}>
+      {/* Before Refresh, not after it. The search field is the one that flexes, so
+          whatever appears here is paid for out of its width and Refresh stays pinned
+          to the right edge instead of being shoved off it. */}
+      {hasActiveFilters(filters) && (
         <NekoButton className="secondary" icon="close" disabled={busy}
-          tabIndex={hasActiveFilters(filters) ? undefined : -1}
           onClick={() => onChange({ ...DEFAULT_FILTERS, days: filters.days })}>
           {t('Clear')}
         </NekoButton>
-      </span>
+      )}
+      {/* Refreshes the whole screen, which is why it sits here rather than on one of
+          the panels: they all read the same rows. Last, so it ends at the right edge. */}
+      <NekoButton className="primary" icon="refresh" busy={busy} onClick={onRefresh}>
+        {t('Refresh')}
+      </NekoButton>
     </NekoToolbar>
   );
 };
