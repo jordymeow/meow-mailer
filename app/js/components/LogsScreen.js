@@ -81,7 +81,7 @@ const COLUMNS = [
   { accessor: 'actions', title: '', width: '46px' },
 ];
 
-const LogsScreen = ({ filters, onClearFilters, onView, onExplainError, reloadSignal,
+const LogsScreen = ({ filters, onView, onExplainError, reloadSignal,
   onChanged = () => {}, onBusy = () => {} }) => {
   const { state, actions } = useCoreContext();
   const { setError } = actions;
@@ -147,9 +147,10 @@ const LogsScreen = ({ filters, onClearFilters, onView, onExplainError, reloadSig
   // setting would be wrong, because the rows exist and simply don't match.
   let empty;
   if (hasFilters) {
+    // No button to clear them: the filter bar sits a few centimetres above with its
+    // own Clear, and a second one here would be the same action twice on one screen.
     empty = <NekoEmpty inline icon="filter" title={t('Nothing matches these filters')}
-      subtitle={t('Try another status, provider, period or search term.')}
-      action={<NekoButton className="secondary" onClick={onClearFilters}>{t('Clear filters')}</NekoButton>} />;
+      subtitle={t('Try another status, provider, period or search term.')} />;
   }
   else if (loggingOff) {
     empty = <NekoEmpty inline icon="eye-off" title={t('Logging is turned off')}

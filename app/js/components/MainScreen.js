@@ -115,7 +115,7 @@ const MainScreen = () => {
       {page === 'dashboard' && (
         <NekoWrapper style={wrapperBody}>
           <NekoColumn minimal size="3/4">
-            <LogsScreen filters={filters} onClearFilters={() => setFilters(DEFAULT_FILTERS)}
+            <LogsScreen filters={filters}
               onView={setOpenLogId} onExplainError={setErrorLog}
               reloadSignal={reloadSignal} onChanged={bumpReload}
               onBusy={(v) => setLoadingFor('logs', v)} />

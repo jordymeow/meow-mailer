@@ -263,6 +263,10 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
           </NekoBlock>
         )}
 
+        {/* Under the provider it moves and the credentials it carries, since that is
+            what an export is mostly a copy of. */}
+        <MaintenanceBlock onLogsCleared={onChanged} />
+
       </NekoColumn>
 
       {/* Sidebar: the options you set once and forget */}
@@ -334,8 +338,6 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
             {t('Password reset emails are never affected. Turning those off would lock people out of the site.')}
           </NekoMessage>
         </NekoBlock>
-
-        <MaintenanceBlock onLogsCleared={onChanged} />
 
         {showNetworkBlock && (
           <NekoBlock title={t('Multisite')} busy={sharedBusy}
