@@ -133,7 +133,13 @@ const LogsScreen = ({ filters, onClearFilters, onView, onExplainError, reloadSig
   };
 
   const clearAll = async () => {
-    if (!window.confirm(t('Delete ALL log entries? This cannot be undone.'))) return;
+    // It empties the table whatever the filters are showing, so when they are
+    // narrowing the view the confirmation has to say so: the count on screen can be
+    // two rows while the button is about to take every one of them.
+    const warning = hasActiveFilters(filters)
+      ? t('This deletes every log entry, not only the ones your filters are showing. This cannot be undone.')
+      : t('Delete ALL log entries? This cannot be undone.');
+    if (!window.confirm(warning)) return;
     try {
       await clearLogs();
       setSelected([]);
@@ -229,7 +235,10 @@ const LogsScreen = ({ filters, onClearFilters, onView, onExplainError, reloadSig
         <NekoButton className="danger" disabled={!selected.length} onClick={removeSelected}>
           {selected.length ? `${t('Delete')} (${selected.length})` : t('Delete')}
         </NekoButton>
-        <NekoButton className="secondary" disabled={!total} onClick={clearAll}>{t('Clear All')}</NekoButton>
+        {/* Red, and named for what it does. It used to be a quiet "Clear All", which
+            since the filter bar gained a Clear of its own read like a bigger version
+            of that harmless button rather than the one that empties the table. */}
+        <NekoButton className="danger" disabled={!total} onClick={clearAll}>{t('Delete All')}</NekoButton>
         <NekoButton className="secondary" icon="download" disabled={!total} onClick={exportCsv}>{t('Export CSV')}</NekoButton>
         <div style={{ flex: 1 }} />
         <NekoPaging currentPage={page} limit={LIMIT} total={total} onClick={setPage} />
