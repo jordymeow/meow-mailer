@@ -1,29 +1,63 @@
 const { useState, useEffect } = wp.element;
 
-import { NekoStatus } from '@neko-ui';
+import { NekoStatus, NekoIcon } from '@neko-ui';
 
 import { useCoreContext } from '@app/contexts/core';
 import { PROVIDER_LABELS, isProviderConfigured } from '@app/providers';
 import { fetchLogs } from '@app/requests';
+import { num } from '@app/format';
 import { t } from '@app/i18n';
 
+const Name = ({ children }) => (
+  <strong style={{ fontWeight: 700, color: 'var(--neko-gray-40)' }}>{children}</strong>
+);
+
 /**
- * The one-line answer to "is my email working?", shown above every screen. It
- * replaces both the old Status block and the banner that used to say the same
- * thing in different words.
+ * Put a node where a translated string has its %s. The sentence stays one unit for
+ * translators, rather than being glued together from fragments that only line up in
+ * English, and the provider still gets to stand out inside it.
+ */
+const fill = (template, node) => {
+  const [before, after = ''] = String(template).split('%s');
+  return <>{before}{node}{after}</>;
+};
+
+/**
+ * The one-line answer to "is my email working?", shown above every screen.
+ *
+ * Everything it has to say is said in one sentence: which provider carries the mail,
+ * what happens if that provider refuses, and whether any of it is being recorded.
+ * Those used to be three separate things on the bar, which read as three things to
+ * work out instead of one state to take in.
  */
 export const deliveryState = (options) => {
   const provider = options.provider;
+  const providerName = PROVIDER_LABELS[provider] || provider;
+
   if (provider === 'none') {
-    return { status: 'paused', label: t('Inactive'), hint: t('WordPress sends email on its own. Pick a provider to route and log it.') };
+    return { status: 'paused', label: t('Inactive'),
+      sentence: [t('WordPress is sending email on its own. Pick a provider to route and log it.')] };
   }
   if (provider === 'offline') {
-    return { status: 'paused', label: t('Offline'), hint: t('Every email is captured in the log, but never delivered.') };
+    return { status: 'paused', label: t('Offline mode'),
+      sentence: [t('Every email is written to the log and none of them are delivered.')] };
   }
   if (!isProviderConfigured(provider, options.providers[provider])) {
-    return { status: 'warning', label: t('Not configured'), hint: t('Finish setting up the provider before sending.') };
+    return { status: 'warning', label: t('Not configured'),
+      sentence: [fill(t('Finish setting %s up before sending.'), <Name>{providerName}</Name>)] };
   }
-  return { status: 'ok', label: t('Sending'), hint: t('All WordPress email is routed and logged.') };
+
+  const fallback = options.fallback_provider;
+  const sentence = [fill(t('All WordPress email goes through %s.'), <Name>{providerName}</Name>)];
+
+  if (fallback && fallback !== 'none' && fallback !== provider) {
+    sentence.push(fill(t('If it refuses one, %s takes over.'), <Name>{PROVIDER_LABELS[fallback] || fallback}</Name>));
+  } else {
+    sentence.push(t('There is no fallback if it fails.'));
+  }
+  sentence.push(options.logs_enabled ? t('Everything is logged.') : t('Nothing is being logged.'));
+
+  return { status: 'ok', label: t('Sending'), sentence };
 };
 
 const STATUS_ACCENTS = {
@@ -32,10 +66,17 @@ const STATUS_ACCENTS = {
   paused:  'var(--neko-gray-60)',
 };
 
-const Stat = ({ label, value, color }) => (
-  <div style={{ textAlign: 'right', minWidth: 58 }}>
-    <div style={{ fontSize: 20, fontWeight: 700, lineHeight: 1.1, color }}>{value || 0}</div>
-    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0, textTransform: 'uppercase', color: 'var(--neko-gray-50)' }}>{label}</div>
+const CAPTION = {
+  fontSize: 10, fontWeight: 700, letterSpacing: 0,
+  textTransform: 'uppercase', color: 'var(--neko-gray-50)',
+};
+
+// Each carries its own explanation: "Sent" and "Failed" speak for themselves, but
+// nobody guesses what "Offline" counts without being told once.
+const Stat = ({ label, value, color, hint }) => (
+  <div style={{ textAlign: 'right', minWidth: 58 }} title={hint}>
+    <div style={{ fontSize: 20, fontWeight: 700, lineHeight: 1.1, color }}>{num(value)}</div>
+    <div style={CAPTION}>{label}</div>
   </div>
 );
 
@@ -50,8 +91,7 @@ const StatusBar = ({ pulse }) => {
       .catch(() => {});
   }, [pulse, options.provider]);
 
-  const { status, label, hint } = deliveryState(options);
-  const namedProvider = options.provider !== 'none' && options.provider !== 'offline';
+  const { status, label, sentence } = deliveryState(options);
 
   // Same palette NekoStatus uses, so the accent and the chip always agree.
   const accent = STATUS_ACCENTS[status] || 'var(--neko-blue)';
@@ -65,23 +105,28 @@ const StatusBar = ({ pulse }) => {
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
         <NekoStatus status={status} iconSize={18}>{label}</NekoStatus>
-        {/* 'none' and 'offline' aren't providers, and the chip already named them. */}
-        {namedProvider && <span style={{ fontWeight: 700 }}>{PROVIDER_LABELS[options.provider]}</span>}
-        <span style={{ color: 'var(--neko-gray-50)', fontSize: 13 }}>{hint}</span>
-      </div>
-      {/* Named because the dashboard below shows the same three words for whatever
-          the filters currently select. Two different "Failed" numbers on one screen
-          reads as a bug unless it says which is which. */}
-      <div style={{ display: 'flex', gap: 22, alignItems: 'center' }}>
-        <span style={{
-          fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-          color: 'var(--neko-gray-60)', whiteSpace: 'nowrap',
-        }}>
-          {t('All time')}
+        <span style={{ color: 'var(--neko-gray-50)', fontSize: 13 }}>
+          {sentence.map((part, i) => <span key={i}>{part}{i < sentence.length - 1 ? ' ' : ''}</span>)}
         </span>
-        <Stat label={t('Sent')} value={stats.sent} color="var(--neko-green)" />
-        <Stat label={t('Failed')} value={stats.failed} color="var(--neko-red)" />
-        <Stat label={t('Offline')} value={stats.offline} color="var(--neko-gray-50)" />
+      </div>
+      {/* Labelled because the dashboard below shows the same words for whatever the
+          filters currently select. Two different "Failed" numbers on one screen reads
+          as a bug unless it says which is which. */}
+      <div style={{ display: 'flex', gap: 22, alignItems: 'center' }}>
+        <div style={{ textAlign: 'center' }} title={t('Counted over the whole log, whatever the dashboard is filtered to.')}>
+          <NekoIcon icon="database" width={19} height={19} color="var(--neko-gray-60)" />
+          <div style={{ ...CAPTION, color: 'var(--neko-gray-60)', whiteSpace: 'nowrap' }}>{t('All time')}</div>
+        </div>
+        <Stat label={t('Sent')} value={stats.sent} color="var(--neko-green)"
+          hint={t('Handed to the provider without an error.')} />
+        <Stat label={t('Failed')} value={stats.failed} color="var(--neko-red)"
+          hint={t('The provider refused them, or could not be reached.')} />
+        {/* Only once it means something. Most sites never turn Offline mode on, and a
+            permanent "0 OFFLINE" is a word to puzzle over for no reason. */}
+        {stats.offline > 0 && (
+          <Stat label={t('Offline')} value={stats.offline} color="var(--neko-gray-50)"
+            hint={t('Captured by Offline mode and deliberately never delivered.')} />
+        )}
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ import { useCoreContext } from '@app/contexts/core';
 import { fetchStats } from '@app/requests';
 import { PROVIDER_LABELS } from '@app/providers';
 import VolumeChart from './VolumeChart';
+import { num } from '@app/format';
 import { t } from '@app/i18n';
 
 /**
@@ -59,7 +60,7 @@ const ErrorRow = ({ error, total, share }) => (
   <div style={{ padding: '7px 0', borderBottom: '1px solid var(--neko-gray-90)' }}>
     <div style={{ display: 'flex', gap: 10, alignItems: 'baseline' }}>
       <span style={{ flex: 1, wordBreak: 'break-word', fontSize: 13 }}>{error}</span>
-      <span style={{ fontWeight: 700, fontSize: 13 }}>{total}</span>
+      <span style={{ fontWeight: 700, fontSize: 13 }}>{num(total)}</span>
     </div>
     <div style={{ height: 4, borderRadius: 2, background: 'var(--neko-gray-90)', marginTop: 5 }}>
       <div style={{ width: `${share}%`, height: '100%', borderRadius: 2, background: 'var(--neko-red)' }} />
@@ -119,7 +120,7 @@ const DashboardScreen = ({ filters, reloadSignal, onBusy = () => {} }) => {
   if (statusFiltered) {
     rateHint = t('not meaningful for one status');
   } else if (attempted > 0) {
-    rateHint = `${totals.sent} ${t('of')} ${attempted} ${t('attempted')}`;
+    rateHint = `${num(totals.sent)} ${t('of')} ${num(attempted)} ${t('attempted')}`;
   } else {
     rateHint = t('nothing sent yet');
   }
@@ -146,12 +147,14 @@ const DashboardScreen = ({ filters, reloadSignal, onBusy = () => {} }) => {
                 provider accepted the email, never that it reached an inbox. This is
                 the share of attempts that left without an error, so it is named for
                 that, and the difference from the Sent count beside it is clear. */}
+            {/* The two derived figures lead, because they are the ones you read to
+                judge the period. The raw counts they are derived from sit under them. */}
             <Tile label={t('Success Rate')} value={rateValue} tone={rateTone} hint={rateHint} />
-            <Tile label={t('Sent')} value={totals.sent} tone="green" hint={t('left without error')} />
+            <Tile label={t('Per Day')} value={num(perDay)} tone="purple" hint={t('on average')} />
+            <Tile label={t('Sent')} value={num(totals.sent)} tone="green" hint={t('left without error')} />
             {/* The one card that steps back at zero. Elsewhere a colour with nothing
                 behind it is merely quiet; a red one reads as an alarm. */}
-            <Tile label={t('Failed')} value={totals.failed} tone={totals.failed > 0 ? 'red' : 'grey'} />
-            <Tile label={t('Per Day')} value={perDay} tone="purple" hint={t('on average')} />
+            <Tile label={t('Failed')} value={num(totals.failed)} tone={totals.failed > 0 ? 'red' : 'grey'} />
           </div>
 
           <VolumeChart series={stats ? stats.series : []}
@@ -173,7 +176,7 @@ const DashboardScreen = ({ filters, reloadSignal, onBusy = () => {} }) => {
             {providers.map((row) => (
               <div key={row.provider} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--neko-gray-90)' }}>
                 <span>{PROVIDER_LABELS[row.provider] || row.provider}</span>
-                <strong>{row.total}</strong>
+                <strong>{num(row.total)}</strong>
               </div>
             ))}
           </NekoBlock>
