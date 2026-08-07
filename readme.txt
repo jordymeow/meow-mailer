@@ -1,6 +1,7 @@
 === Meow Mailer - Free SMTP, Everything Included ===
 Contributors: TigrouMeow
 Tags: smtp, email, mailer, email log, deliverability
+Donate link: https://www.patreon.com/meowapps
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.1
