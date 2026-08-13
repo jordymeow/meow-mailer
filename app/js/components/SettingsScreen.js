@@ -11,7 +11,7 @@ import ProviderFields from './ProviderFields';
 import ProviderPicker from './ProviderPicker';
 import SwitchSetting from './SwitchSetting';
 import MaintenanceBlock from './MaintenanceBlock';
-import { sendTestEmail, setNetworkMode } from '@app/requests';
+import { sendTestEmail, setNetworkMode, testWebhook } from '@app/requests';
 import { network } from '@app/settings';
 import { wrapperBody } from '@app/layout';
 import { t } from '@app/i18n';
@@ -72,6 +72,8 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
   const [testTo, setTestTo] = useState('');
   const [testFormat, setTestFormat] = useState('html');
   const [testBusy, setTestBusy] = useState(false);
+  const [webhookBusy, setWebhookBusy] = useState(false);
+  const [webhookNotice, setWebhookNotice] = useState(null);
   const [notice, setNotice] = useState(null);
   const [shared, setShared] = useState(!!network.enabled);
   const [sharedGroups, setSharedGroups] = useState({
@@ -114,6 +116,21 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
       setNotice({ variant: 'danger', text: err.message });
     } finally {
       setTestBusy(false);
+    }
+  };
+
+  // The real alert is posted without waiting for an answer, so a wrong URL never
+  // reports itself. This is the only place it can.
+  const sendWebhookTest = async () => {
+    setWebhookBusy(true);
+    setWebhookNotice(null);
+    try {
+      const res = await testWebhook(options.alerts_webhook || '');
+      setWebhookNotice({ variant: res.success ? 'success' : 'danger', text: res.message });
+    } catch (err) {
+      setWebhookNotice({ variant: 'danger', text: err.message });
+    } finally {
+      setWebhookBusy(false);
     }
   };
 
@@ -327,6 +344,27 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
                 onBlur={updateOption} onEnter={updateOption}
                 description={t('Where the summary goes. Leave empty to use the site admin address.')} />
             </NekoSettings>
+          )}
+          {/* Last in the block, because it carries whichever of the two above are on,
+              and nothing else. Individual emails are never posted anywhere. */}
+          {(options.alerts_enabled || options.summary_enabled) && (
+            <NekoSettings title={t('Also Post To')}>
+              <NekoInput name="alerts_webhook" value={options.alerts_webhook} placeholder={t('https://hooks.slack.com/services/…')}
+                onBlur={updateOption} onEnter={updateOption}
+                description={t('Optional. Send the same alerts and summary to a chat service as well, so the news does not travel by email at all. Paste the webhook URL your service gives you: Slack and Discord are recognised from the URL and get the message they expect, everything else receives plain JSON. Microsoft Teams retired its old incoming webhooks, so there it means a Power Automate workflow with the "When a Teams webhook request is received" trigger.')} />
+            </NekoSettings>
+          )}
+          {(options.alerts_enabled || options.summary_enabled) && !!options.alerts_webhook && (
+            <>
+              <NekoToolbar style={{ justifyContent: 'flex-end' }}>
+                <NekoButton className="secondary" icon="bell" disabled={webhookBusy} onClick={sendWebhookTest}>
+                  {t('Test Webhook')}
+                </NekoButton>
+              </NekoToolbar>
+              {/* Posted without waiting for a reply, so this is the only moment a
+                  wrong URL or a revoked hook can say anything. */}
+              {webhookNotice && <NekoMessage variant={webhookNotice.variant}>{webhookNotice.text}</NekoMessage>}
+            </>
           )}
         </NekoBlock>
 

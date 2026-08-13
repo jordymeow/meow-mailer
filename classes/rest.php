@@ -40,6 +40,7 @@ class Meow_MWMAIL_Rest {
     register_rest_route( $this->namespace, '/notice/dismiss', [ 'methods' => 'POST', 'callback' => [ $this, 'notice_dismiss' ], 'permission_callback' => $perm ] );
 
     register_rest_route( $this->namespace, '/mail/test',         [ 'methods' => 'POST', 'callback' => [ $this, 'mail_test' ],        'permission_callback' => $perm ] );
+    register_rest_route( $this->namespace, '/webhook/test',      [ 'methods' => 'POST', 'callback' => [ $this, 'webhook_test' ],     'permission_callback' => $edit ] );
     register_rest_route( $this->namespace, '/secrets/reveal',    [ 'methods' => 'POST', 'callback' => [ $this, 'secrets_reveal' ],  'permission_callback' => $edit ] );
     register_rest_route( $this->namespace, '/oauth/auth-url',    [ 'methods' => 'POST', 'callback' => [ $this, 'oauth_auth_url' ],   'permission_callback' => $edit ] );
     register_rest_route( $this->namespace, '/oauth/disconnect',  [ 'methods' => 'POST', 'callback' => [ $this, 'oauth_disconnect' ], 'permission_callback' => $edit ] );
@@ -355,6 +356,28 @@ class Meow_MWMAIL_Rest {
         ? __( 'Test email sent through the fallback.', 'meow-mailer' )
         : __( 'Test email sent.', 'meow-mailer' ),
     ], 200 );
+  }
+
+  /**
+   * Post a sample alert to the webhook and report what came back. The real alert is
+   * sent non-blocking and cannot tell anyone it failed, so this is the only place a
+   * wrong URL or a revoked Slack hook shows itself.
+   */
+  public function webhook_test( $request ) {
+    $params = $request->get_json_params();
+    $url    = trim( (string) ( $params['url'] ?? '' ) );
+    if ( $url === '' ) {
+      $url = trim( (string) $this->core->get_option( 'alerts_webhook', '' ) );
+    }
+    if ( $url === '' ) {
+      return new WP_REST_Response( [ 'success' => false, 'message' => __( 'Please provide a webhook URL.', 'meow-mailer' ) ], 200 );
+    }
+
+    $result = $this->core->alerts->test_webhook( $url );
+    if ( is_wp_error( $result ) ) {
+      return new WP_REST_Response( [ 'success' => false, 'message' => $result->get_error_message() ], 200 );
+    }
+    return new WP_REST_Response( [ 'success' => true, 'message' => __( 'Test sent. Check that it arrived.', 'meow-mailer' ) ], 200 );
   }
 
   /**

@@ -38,6 +38,7 @@ export const fetchStats = async (filters) => await post('/logs/stats', { filters
 
 // Tools
 export const sendTestEmail = async (to, format, target = 'provider') => await post('/mail/test', { to, format, target });
+export const testWebhook = async (url) => await post('/webhook/test', { url });
 export const revealSecret = async (provider, field) => (await post('/secrets/reveal', { provider, field })).value;
 export const getOAuthUrl = async (provider) => await post('/oauth/auth-url', { provider });
 export const disconnectOAuth = async (provider) => (await post('/oauth/disconnect', { provider })).options;

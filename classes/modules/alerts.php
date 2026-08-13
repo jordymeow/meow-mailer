@@ -10,6 +10,10 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
  * breaks, the provider is usually the thing that broke, and an alert routed through
  * it would vanish exactly when it mattered. It is handed to WordPress instead, which
  * falls back to the server's own mail. Not glamorous, but independent.
+ *
+ * For the same reason there is an optional webhook, which leaves email out of it
+ * entirely and posts the alert to Slack, Discord, Teams or anything else that
+ * accepts a JSON POST.
  */
 class Meow_MWMAIL_Modules_Alerts {
 
@@ -109,6 +113,13 @@ class Meow_MWMAIL_Modules_Alerts {
     // Unrouted, like the failure alert: the provider that just failed is the last
     // thing that should be carrying the news of its own failure.
     $this->deliver( $subject, implode( "\n", $lines ), 'alerts_email', true );
+
+    /* translators: %s: the site name. */
+    $text = sprintf( __( '[%s] Your email provider is failing, and the fallback is delivering in its place.', 'meow-mailer' ), $site );
+    if ( $primary_error !== '' ) {
+      $text .= ' ' . $primary_error;
+    }
+    $this->send_webhook( 'rescued', $text, [ 'error' => $primary_error ] );
   }
 
   private function send_alert( $count, $message ) {
@@ -135,6 +146,120 @@ class Meow_MWMAIL_Modules_Alerts {
     $lines[] = __( 'You are getting this because failure alerts are on in Meow Mailer. You can turn them off in its settings.', 'meow-mailer' );
 
     $this->deliver( $subject, implode( "\n", $lines ), 'alerts_email', true );
+
+    /* translators: 1: the site name, 2: number of emails that failed in the last hour. */
+    $text = sprintf( _n( '[%1$s] Email is failing: %2$d email failed in the last hour.', '[%1$s] Email is failing: %2$d emails failed in the last hour.', $count, 'meow-mailer' ), $site, $count );
+    if ( $message !== '' ) {
+      $text .= ' ' . $message;
+    }
+    $this->send_webhook( 'failure', $text, [ 'failed' => $count, 'error' => $message ] );
+  }
+
+  #endregion
+
+  #region Webhook
+
+  /**
+   * The same news, posted to a chat service: the two failure alerts and the weekly
+   * summary, and nothing else. Each one is sent from the place that decided to send
+   * the email, so they inherit its throttle and an outage is one message, not four
+   * hundred. Individual emails deliberately never reach here: it would be a request
+   * per email, and it would post who the site writes to and about what.
+   *
+   * Slack and Discord each insist on their own key, and everything else (a Power
+   * Automate flow for Teams, Zapier, Make, n8n, a homemade endpoint) gets a plain
+   * object with the pieces separated so it can be read field by field. The URL says
+   * which is which, so there is nothing for anyone to choose.
+   */
+  public function send_webhook( $event, $text, $extra = [] ) {
+    $url = trim( (string) $this->core->get_option( 'alerts_webhook', '' ) );
+    if ( $url === '' || ! preg_match( '#^https?://#i', $url ) ) {
+      return false;
+    }
+
+    $payload = $this->webhook_payload( $url, $event, $text, $extra );
+    if ( empty( $payload ) ) {
+      return false;
+    }
+
+    // Non-blocking on purpose. This fires inside the request that just failed to
+    // send an email, and that request should not also wait on a chat server. It
+    // means a broken webhook URL fails silently, which is why there is a test.
+    wp_remote_post( $url, [
+      'timeout'    => 5,
+      'blocking'   => false,
+      'headers'    => [ 'Content-Type' => 'application/json' ],
+      'body'       => wp_json_encode( $payload ),
+      'user-agent' => 'MeowMailer/' . MWMAIL_VERSION,
+    ] );
+    return true;
+  }
+
+  /**
+   * The body the endpoint at this URL expects. Slack and Discord are recognised by
+   * host and each gets its one key; everything else gets the pieces separately, so
+   * a Power Automate flow or an n8n node can build its own message out of them.
+   */
+  private function webhook_payload( $url, $event, $text, $extra = [] ) {
+    $host = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
+    $logs = admin_url( 'admin.php?page=mwmail_settings&nekoTab=logs' );
+
+    if ( $host === 'slack.com' || substr( $host, -10 ) === '.slack.com' ) {
+      $payload = [ 'text' => $text . "\n" . $logs ];
+    }
+    elseif ( preg_match( '#(^|\.)(discord|discordapp)\.com$#', $host ) ) {
+      $payload = [ 'content' => $text . "\n" . $logs ];
+    }
+    else {
+      $payload = array_merge( [
+        'site'  => $this->site_name(),
+        'url'   => home_url(),
+        'event' => $event,
+        'text'  => $text,
+        'logs'  => $logs,
+      ], $extra );
+    }
+
+    return apply_filters( 'mwmail_alert_webhook', $payload, $event, $url );
+  }
+
+  /**
+   * The test does wait for an answer, unlike the real thing: the whole point is to
+   * find out whether the URL works before an outage is the one asking.
+   */
+  public function test_webhook( $url ) {
+    $url = trim( (string) $url );
+    if ( ! preg_match( '#^https?://#i', $url ) ) {
+      return new WP_Error( 'mwmail_webhook_url', __( 'The webhook URL must start with http:// or https://.', 'meow-mailer' ) );
+    }
+
+    /* translators: %s: the site name. */
+    $text    = sprintf( __( '[%s] Meow Mailer test. This is what a failure alert will look like. 🐱', 'meow-mailer' ), $this->site_name() );
+    $payload = $this->webhook_payload( $url, 'test', $text );
+
+    $response = wp_remote_post( $url, [
+      'timeout'    => 10,
+      'headers'    => [ 'Content-Type' => 'application/json' ],
+      'body'       => wp_json_encode( $payload ),
+      'user-agent' => 'MeowMailer/' . MWMAIL_VERSION,
+    ] );
+
+    if ( is_wp_error( $response ) ) {
+      return $response;
+    }
+    $code = (int) wp_remote_retrieve_response_code( $response );
+    if ( $code < 200 || $code >= 300 ) {
+      // Slack and Discord answer with a short reason worth repeating ("no_service",
+      // "invalid_payload"). A wrong URL usually answers with a whole HTML error page,
+      // which is not, so only a short reply makes it into the message.
+      $body = trim( preg_replace( '/\s+/', ' ', (string) wp_remote_retrieve_body( $response ) ) );
+      if ( strpos( $body, '<' ) !== false || mb_strlen( $body ) > 200 ) {
+        $body = '';
+      }
+      /* translators: 1: HTTP status code, 2: what the server replied, often empty. */
+      return new WP_Error( 'mwmail_webhook_http', trim( sprintf( __( 'The webhook answered with HTTP %1$d. %2$s', 'meow-mailer' ), $code, $body ) ) );
+    }
+    return true;
   }
 
   #endregion
@@ -195,6 +320,10 @@ class Meow_MWMAIL_Modules_Alerts {
     // Unlike an alert, this one goes through the provider like any other email. It
     // is not urgent, and arriving normally is itself a sign that sending works.
     $this->deliver( $subject, implode( "\n", $lines ), 'summary_email', false );
+
+    /* translators: 1: the site name, 2: number of emails sent, 3: number that failed. */
+    $text = sprintf( __( '[%1$s] Email summary for the past week: %2$d sent, %3$d failed.', 'meow-mailer' ), $site, $sent, $failed );
+    $this->send_webhook( 'summary', $text, [ 'sent' => $sent, 'failed' => $failed, 'offline' => $offline ] );
   }
 
   #endregion

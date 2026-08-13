@@ -231,6 +231,7 @@ class Meow_MWMAIL_Core {
       'send_in_background' => false,
       'alerts_enabled'     => false,
       'alerts_email'       => '', // empty = the site admin address
+      'alerts_webhook'     => '', // empty = no webhook, the alerts and summary go by email only
       'summary_enabled'    => false,
       'summary_email'      => '', // empty = the site admin address
       'blocked_notifications' => [], // keys from Meow_MWMAIL_Modules_Notifications
