@@ -5,7 +5,7 @@ Donate link: https://www.patreon.com/meowapps
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.2.0
+Stable tag: 0.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -125,6 +125,10 @@ Both use OAuth 2.0, so no password is stored. Create an OAuth app (Google Cloud 
 Meow Mailer is open source. The full source, including the React code used to build the admin interface, lives [on GitHub](https://github.com/jordymeow/meow-mailer).
 
 == Changelog ==
+
+= 0.2.1 (2026/08/13) =
+* Add: Webhook support for sending failure alerts and the weekly summary to Slack, Discord or Teams.
+* Update: Shared dashboard now includes the merged Health tab and AI site analysis.
 
 = 0.2.0 (2026/08/03) =
 * Add: Return Path setting so bounces go to their own mailbox, settable per message via the `mwmail_return_path` filter.
