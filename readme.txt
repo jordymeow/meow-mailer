@@ -5,7 +5,7 @@ Donate link: https://www.patreon.com/meowapps
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.2.2
+Stable tag: 0.2.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -126,6 +126,12 @@ Both use OAuth 2.0, so no password is stored. Create an OAuth app (Google Cloud 
 Meow Mailer is open source. The full source, including the React code used to build the admin interface, lives [on GitHub](https://github.com/jordymeow/meow-mailer).
 
 == Changelog ==
+
+= 0.2.3 (2026/08/16) =
+* Update: Delivery status now displays as a full-width strip in the header.
+* Update: Renamed the "Sending" delivery state to "Active".
+* Update: Meow Apps menu shows the full plugin name.
+* Update: Tidied up various strings.
 
 = 0.2.2 (2026/08/16) =
 * Add: One-click importer that detects WP Mail SMTP or Easy WP SMTP settings and copies them over.
