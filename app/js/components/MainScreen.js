@@ -84,6 +84,10 @@ const MainScreen = () => {
         <HeaderActions page={page} onNavigate={navigate} />
       </NekoHeader>
 
+      {/* Glued to the header on purpose: it reads as the header's status line,
+          so every message and banner stays below it. */}
+      <StatusBar pulse={reloadSignal} />
+
       <NekoWrapper style={wrapperTop}>
         <NekoColumn minimal fullWidth>
           {!feedbackDismissed && <>
@@ -103,17 +107,15 @@ const MainScreen = () => {
           {/* Lands on the settings so the imported provider can be reviewed and tested. */}
           <ImporterBanner onImported={() => { bumpReload(); navigate('settings'); }} />
 
-          <StatusBar pulse={reloadSignal} />
           {page === 'dashboard' && <>
-            <NekoSpacer />
             <FilterBar filters={filters} onChange={setFilters}
               onRefresh={bumpReload} busy={loading.logs || loading.stats} />
+            <NekoSpacer />
           </>}
-          <NekoSpacer />
         </NekoColumn>
       </NekoWrapper>
 
-      {/* The statistics summarize the log, so they share one screen — and one set of
+      {/* The statistics summarize the log, so they share one screen and one set of
           filters, applied above. The log takes the wider column because its table has
           six columns to fit; the numbers and the chart read fine in a narrower one. */}
       {page === 'dashboard' && (

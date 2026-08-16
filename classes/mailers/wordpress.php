@@ -6,7 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
  * Not a provider: this is WordPress sending the email the way it would if the plugin
  * were not installed. Only reachable as a fallback, and it is the one choice that
  * needs no account, no credentials and no DNS record. Deliverability is whatever the
- * server offers, which is rarely good, but it is always there — and for a password
+ * server offers, which is rarely good, but it is always there. And for a password
  * reset, delivered imperfectly beats not delivered.
  *
  * It assembles the message itself rather than calling wp_mail() again. Core applies

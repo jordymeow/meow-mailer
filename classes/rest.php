@@ -69,7 +69,7 @@ class Meow_MWMAIL_Rest {
    * The whole configuration as it really is, credentials included, so the file can
    * stand a site back up on its own. That is the point of an export, and a backup
    * that quietly leaves the API keys out is one you find out about at the worst
-   * moment — so the UI says plainly what the file holds instead.
+   * moment. So the UI says plainly what the file holds instead.
    */
   public function settings_export() {
     return new WP_REST_Response( [

@@ -354,7 +354,7 @@ class Meow_MWMAIL_Mailers_Zoho extends Meow_MWMAIL_Mailers_Base {
     if ( empty( $parts ) ) {
       $parts[] = substr( (string) $body, 0, 300 );
     }
-    return sprintf( 'HTTP %d — %s', $code, implode( ' / ', $parts ) );
+    return sprintf( 'HTTP %d: %s', $code, implode( ' / ', $parts ) );
   }
 
   #endregion

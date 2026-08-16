@@ -1,15 +1,14 @@
 const { useState, useEffect } = wp.element;
 
-import { NekoStatus, NekoIcon } from '@neko-ui';
-
 import { useCoreContext } from '@app/contexts/core';
 import { PROVIDER_LABELS, isProviderConfigured } from '@app/providers';
 import { fetchLogs } from '@app/requests';
 import { num } from '@app/format';
 import { t } from '@app/i18n';
+import HeaderStrip from './HeaderStrip';
 
 const Name = ({ children }) => (
-  <strong style={{ fontWeight: 700, color: 'var(--neko-gray-40)' }}>{children}</strong>
+  <strong style={{ fontWeight: 700, color: 'white' }}>{children}</strong>
 );
 
 /**
@@ -57,28 +56,8 @@ export const deliveryState = (options) => {
   }
   sentence.push(options.logs_enabled ? t('Everything is logged.') : t('Nothing is being logged.'));
 
-  return { status: 'ok', label: t('Sending'), sentence };
+  return { status: 'ok', label: t('Active'), sentence };
 };
-
-const STATUS_ACCENTS = {
-  ok:      'var(--neko-green)',
-  warning: 'var(--neko-orange)',
-  paused:  'var(--neko-gray-60)',
-};
-
-const CAPTION = {
-  fontSize: 10, fontWeight: 700, letterSpacing: 0,
-  textTransform: 'uppercase', color: 'var(--neko-gray-50)',
-};
-
-// Each carries its own explanation: "Sent" and "Failed" speak for themselves, but
-// nobody guesses what "Offline" counts without being told once.
-const Stat = ({ label, value, color, hint }) => (
-  <div style={{ textAlign: 'right', minWidth: 58 }} title={hint}>
-    <div style={{ fontSize: 20, fontWeight: 700, lineHeight: 1.1, color }}>{num(value)}</div>
-    <div style={CAPTION}>{label}</div>
-  </div>
-);
 
 const StatusBar = ({ pulse }) => {
   const { state } = useCoreContext();
@@ -93,42 +72,26 @@ const StatusBar = ({ pulse }) => {
 
   const { status, label, sentence } = deliveryState(options);
 
-  // Same palette NekoStatus uses, so the accent and the chip always agree.
-  const accent = STATUS_ACCENTS[status] || 'var(--neko-blue)';
-
+  // Labelled "All time" because the dashboard below shows the same words for
+  // whatever the filters currently select. Two different "Failed" numbers on
+  // one screen reads as a bug unless it says which is which.
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap',
-      background: 'white', borderRadius: 'var(--neko-radius-md, 10px)', padding: '14px 20px',
-      border: '1px solid var(--neko-gray-90)', borderLeft: `3px solid ${accent}`,
-      boxShadow: 'var(--neko-shadow-sm, 0 1px 3px rgba(0,0,0,.08))',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-        <NekoStatus status={status} iconSize={18}>{label}</NekoStatus>
-        <span style={{ color: 'var(--neko-gray-50)', fontSize: 13 }}>
-          {sentence.map((part, i) => <span key={i}>{part}{i < sentence.length - 1 ? ' ' : ''}</span>)}
-        </span>
-      </div>
-      {/* Labelled because the dashboard below shows the same words for whatever the
-          filters currently select. Two different "Failed" numbers on one screen reads
-          as a bug unless it says which is which. */}
-      <div style={{ display: 'flex', gap: 22, alignItems: 'center' }}>
-        <div style={{ textAlign: 'center' }} title={t('Counted over the whole log, whatever the dashboard is filtered to.')}>
-          <NekoIcon icon="database" width={19} height={19} color="var(--neko-gray-60)" />
-          <div style={{ ...CAPTION, color: 'var(--neko-gray-60)', whiteSpace: 'nowrap' }}>{t('All time')}</div>
-        </div>
-        <Stat label={t('Sent')} value={stats.sent} color="var(--neko-green)"
-          hint={t('Handed to the provider without an error.')} />
-        <Stat label={t('Failed')} value={stats.failed} color="var(--neko-red)"
-          hint={t('The provider refused them, or could not be reached.')} />
-        {/* Only once it means something. Most sites never turn Offline mode on, and a
-            permanent "0 OFFLINE" is a word to puzzle over for no reason. */}
-        {stats.offline > 0 && (
-          <Stat label={t('Offline')} value={stats.offline} color="var(--neko-gray-50)"
-            hint={t('Captured by Offline mode and deliberately never delivered.')} />
-        )}
-      </div>
-    </div>
+    <HeaderStrip status={status} label={label} right={<>
+      <HeaderStrip.Stat icon="database" label={t('All time')}
+        hint={t('Counted over the whole log, whatever the dashboard is filtered to.')} />
+      <HeaderStrip.Stat label={t('Sent')} value={num(stats.sent)} tone="success"
+        hint={t('Handed to the provider without an error.')} />
+      <HeaderStrip.Stat label={t('Failed')} value={num(stats.failed)} tone="danger"
+        hint={t('The provider refused them, or could not be reached.')} />
+      {/* Only once it means something. Most sites never turn Offline mode on, and a
+          permanent "0 OFFLINE" is a word to puzzle over for no reason. */}
+      {stats.offline > 0 && (
+        <HeaderStrip.Stat label={t('Offline')} value={num(stats.offline)}
+          hint={t('Captured by Offline mode and deliberately never delivered.')} />
+      )}
+    </>}>
+      {sentence.map((part, i) => <span key={i}>{part}{i < sentence.length - 1 ? ' ' : ''}</span>)}
+    </HeaderStrip>
   );
 };
 

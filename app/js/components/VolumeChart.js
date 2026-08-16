@@ -164,9 +164,8 @@ const VolumeChart = ({ series, emptyMessage }) => {
                 style={{
                   flex: '1 1 0', minWidth: 0, height: '100%', display: 'flex', flexDirection: 'column',
                   justifyContent: 'flex-end', gap: GAP,
-                  // The column is the hit area, so a quiet day with a 1px bar is
-                  // still hoverable.
-                  cursor: totals[i] > 0 ? 'default' : 'default',
+                  // The full column is the hit area, so a quiet day with a 1px bar
+                  // is still hoverable.
                   opacity: hover === null || hover === i ? 1 : 0.45,
                   transition: 'opacity 120ms ease',
                 }}>

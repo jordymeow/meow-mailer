@@ -41,7 +41,7 @@ const StatusCell = ({ status, label, onExplain }) => {
   const { icon, color } = STATUS_ICONS[status] || { icon: 'info-outline', color: 'var(--neko-gray-60)' };
   const clickable = !!onExplain;
   return (
-    <span title={clickable ? `${label} — ${t('click to find out why')}` : label}
+    <span title={clickable ? `${label}. ${t('Click to find out why.')}` : label}
       aria-label={label}
       role={clickable ? 'button' : undefined}
       tabIndex={clickable ? 0 : undefined}
@@ -187,8 +187,8 @@ const LogsScreen = ({ filters, onView, onExplainError, reloadSignal,
   });
 
   // No wrapper of its own: MainScreen lays this out beside the statistics. No title
-  // either — the filter bar above already says what this is, and a heading over a
-  // table whose columns are labelled is a line of chrome that earns nothing.
+  // either, since the filter bar above already says what this is, and a heading over
+  // a table whose columns are labelled is a line of chrome that earns nothing.
   return (
     <NekoBlock>
       <NekoTable

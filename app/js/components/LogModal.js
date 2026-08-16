@@ -61,7 +61,7 @@ const LogModal = ({ id, onClose, onResent }) => {
       {log.reply_to ? <Row label={t('Reply-To')} value={log.reply_to} /> : null}
       <Row label={t('Subject')} value={log.subject} />
       {log.attachments ? <Row label={t('Attachments')} value={<>{log.attachments}
-        <em style={{ color: 'var(--neko-gray-50)' }}> — {t('not included in a resend')}</em></>} /> : null}
+        <em style={{ color: 'var(--neko-gray-50)' }}> ({t('not included in a resend')})</em></>} /> : null}
       {/* An error on a delivered email is not a failure: it is what the main provider
           said before the fallback stepped in. Shown as such, or it reads as a bug. */}
       {log.error ? (rescued

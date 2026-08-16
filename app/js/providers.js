@@ -19,7 +19,7 @@ export const PROVIDERS = [
     label: 'Generic SMTP',
     // Named on purpose: people look for their own mail host in this list, and read
     // its absence as "not supported" even though Generic SMTP covers all of them.
-    description: 'Any SMTP server — Zoho Mail, Fastmail, Infomaniak, OVH, or the one your host gave you. Works everywhere.',
+    description: 'Any SMTP server: Zoho Mail, Fastmail, Infomaniak, OVH, or the one your host gave you. Works everywhere.',
     fields: [
       { name: 'host', label: 'Host', type: 'text', placeholder: 'smtp.example.com' },
       { name: 'port', label: 'Port', type: 'number', placeholder: '587' },

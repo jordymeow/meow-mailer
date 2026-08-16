@@ -497,7 +497,7 @@ class Meow_MWMAIL_Modules_Mailer {
    * and again by the logs: only the "To" is stored as its own column, so this is
    * what makes the other recipients visible in the admin instead of looking dropped.
    *
-   * @return array  cc, bcc, reply_to — each a list of addresses.
+   * @return array  cc, bcc, reply_to, each a list of addresses.
    */
   public static function extra_recipients( $headers ) {
     $out = [ 'cc' => [], 'bcc' => [], 'reply_to' => [] ];
