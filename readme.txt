@@ -20,6 +20,7 @@ So I decided to build the simplest and most honest email plugin I could for Word
 That is Meow Mailer, and all of this is free:
 
 * **One provider, set up once.** Pick the one you use and forget about it. No confusing multi provider routing.
+* **Import from your current SMTP plugin.** Already set up with WP Mail SMTP or Easy WP SMTP? Meow Mailer notices and copies the provider, credentials and sender over in one click, so switching never means digging out your API keys again.
 * **A fallback for when it breaks, free.** Name a second provider (or plain WordPress, which needs no setup) and it steps in only when the first one refuses an email. Your mail still goes out, the log tells you exactly who failed and why, and an alert lets you know your main provider needs a look.
 * **A real email log, free.** Every email in a clean table with recipient, subject, provider and status (sent, failed, offline, pending). Click any row to read the full message, see the error, and resend it. Many plugins charge for this. Here it is free.
 * **Stays out of the way.** Until you pick a provider, Meow Mailer doesn't change how your email is sent, so activating it never breaks what already works. It still logs everything WordPress sends on its own, so you get the log from the moment you activate it.

@@ -28,6 +28,9 @@ class Meow_MWMAIL_Rest {
     // network with a shared provider, only where that provider can be edited.
     register_rest_route( $this->namespace, '/settings/export', [ 'methods' => 'POST', 'callback' => [ $this, 'settings_export' ], 'permission_callback' => $edit ] );
     register_rest_route( $this->namespace, '/settings/import', [ 'methods' => 'POST', 'callback' => [ $this, 'settings_import' ], 'permission_callback' => $edit ] );
+    // Copies another mail plugin's settings (credentials included) into ours, so
+    // it takes the same permission as writing credentials by hand.
+    register_rest_route( $this->namespace, '/importer/import', [ 'methods' => 'POST', 'callback' => [ $this, 'importer_import' ], 'permission_callback' => $edit ] );
 
     register_rest_route( $this->namespace, '/logs/list',   [ 'methods' => 'POST', 'callback' => [ $this, 'logs_list' ],   'permission_callback' => $perm ] );
     register_rest_route( $this->namespace, '/logs/get',     [ 'methods' => 'POST', 'callback' => [ $this, 'logs_get' ],     'permission_callback' => $perm ] );
@@ -102,6 +105,26 @@ class Meow_MWMAIL_Rest {
     $this->core->update_options( $merged );
 
     return new WP_REST_Response( [ 'success' => true, 'options' => $this->core->get_masked_options() ], 200 );
+  }
+
+  /**
+   * One-click switch: read another mail plugin's stored settings and copy them
+   * into ours. The secrets never visit the browser; the response only carries
+   * the masked options, exactly like a normal save.
+   */
+  public function importer_import( $request ) {
+    $source   = (string) ( $request->get_json_params()['source'] ?? '' );
+    $importer = new Meow_MWMAIL_Modules_Importer( $this->core );
+    $result   = $importer->import( $source );
+    if ( is_wp_error( $result ) ) {
+      return new WP_REST_Response( [ 'success' => false, 'message' => $result->get_error_message() ], 200 );
+    }
+    return new WP_REST_Response( [
+      'success'  => true,
+      'provider' => $result['provider'],
+      'warnings' => $result['warnings'],
+      'options'  => $this->core->get_masked_options(),
+    ], 200 );
   }
 
   public function settings_reset() {

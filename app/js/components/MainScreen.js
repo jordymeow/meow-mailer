@@ -8,6 +8,7 @@ import SettingsScreen from './SettingsScreen';
 import LogModal from './LogModal';
 import ErrorModal from './ErrorModal';
 import StatusBar from './StatusBar';
+import ImporterBanner from './ImporterBanner';
 import FilterBar, { DEFAULT_FILTERS } from './FilterBar';
 import { wrapperTop, wrapperBody } from '@app/layout';
 import { t } from '@app/i18n';
@@ -98,6 +99,9 @@ const MainScreen = () => {
             </NekoMessage>
             <NekoSpacer />
           </>}
+
+          {/* Lands on the settings so the imported provider can be reviewed and tested. */}
+          <ImporterBanner onImported={() => { bumpReload(); navigate('settings'); }} />
 
           <StatusBar pulse={reloadSignal} />
           {page === 'dashboard' && <>

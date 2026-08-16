@@ -7,5 +7,6 @@ const restNonce = window.mwmail.rest_nonce;
 const options = window.mwmail.options;
 const network = window.mwmail.network || {};
 const secretMask = window.mwmail.secret_mask || '';
+const importer = window.mwmail.importer || [];
 
-export { prefix, domain, apiUrl, restUrl, pluginUrl, restNonce, options, network, secretMask };
+export { prefix, domain, apiUrl, restUrl, pluginUrl, restNonce, options, network, secretMask, importer };

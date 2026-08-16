@@ -24,6 +24,7 @@ export const updateSettings = async (options) => (await post('/settings/update',
 export const resetSettings = async () => (await post('/settings/reset')).options;
 export const exportSettings = async () => (await post('/settings/export')).export;
 export const importSettings = async (data) => (await post('/settings/import', { export: data })).options;
+export const importFromPlugin = async (source) => await post('/importer/import', { source });
 export const setNetworkMode = async (enabled, groups) => await post('/settings/network', { enabled, groups });
 
 // Logs
