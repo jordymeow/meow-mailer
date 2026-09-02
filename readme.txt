@@ -3,7 +3,7 @@ Contributors: TigrouMeow
 Tags: smtp, email, mailer, email log, deliverability
 Donate link: https://www.patreon.com/meowapps
 Requires at least: 6.0
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 8.1
 Stable tag: 0.2.3
 License: GPLv2 or later
