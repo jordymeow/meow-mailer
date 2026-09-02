@@ -13,19 +13,6 @@ const spin = keyframes`
 //
 // Capped at a readable measure too: full width this ran to 1169px, about twice
 // the line length anyone can comfortably track back to the next line.
-const StyledTabIntro = Styled.p`
-  margin: 0 2px 12px;
-  max-width: 78ch;
-  font-size: 13px;
-  line-height: 1.55;
-  color: rgba(255, 255, 255, 0.78);
-
-  a {
-    color: #7dedff;
-    text-decoration: none;
-  }
-`;
-
 // The note from Jordy, signed at the foot of the Meow Apps tab. It used to be a
 // white NekoIntro card above the tab bar, which followed you onto Health and
 // Settings and cost 108px on every screen. Down here on the blue workspace a
@@ -1672,7 +1659,7 @@ const StyledErrorLogs = Styled.div`
 `;
 
 export { focusRing };
-export { StyledSettingAction, StyledIntro, StyledHealth, StyledTabIntro, StyledPluginGrid, StyledPluginGroups, StyledPluginCard,
+export { StyledSettingAction, StyledIntro, StyledHealth, StyledPluginGrid, StyledPluginGroups, StyledPluginCard,
   StyledArticleGrid, StyledArticleCard, StyledFurtherReading,
   StyledPhpInfo, StyledErrorLogs, logTone,
   StyledSpeedTests, StyledSpeedTest };

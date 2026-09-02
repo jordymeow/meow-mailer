@@ -107,7 +107,7 @@ const BoardHeader = ( { installedPlugins, node = null, partners = [], states = n
         { label: 'Running', value: running, of: slugs.length,
           hint: `${running} of your ${slugs.length} Meow plugins are installed and active.` },
         { label: 'Working together', value: liveLinks, of: SYNERGIES.length,
-          hint: 'Pairs of Meow plugins that make each other better — '
+          hint: 'Pairs of Meow plugins that make each other better. '
             + `${liveLinks} of ${SYNERGIES.length} pairs have both halves running.` },
         { label: 'Things it can do', value: liveJourneys, of: '∞',
           hint: `${liveJourneys} of the ${JOURNEYS.length} journeys drawn on this board are live on `
@@ -175,17 +175,17 @@ const BoardHeader = ( { installedPlugins, node = null, partners = [], states = n
           {/* Three zeroes is not a summary of your site, it's a summary of what
               we haven't loaded yet. */}
           {ready && room.stats !== 'none' && (
-          <div className="header-stats">
-            {( room.stats === 'all' ? summary.stats : summary.stats.slice( 0, 1 ) ).map( stat => (
-              <div key={stat.label} className="stat" title={stat.hint}>
-                <span className="stat-value">
-                  <b>{stat.value}</b><i>/</i>
-                  <em className={typeof stat.of === 'number' ? '' : 'is-endless'}>{stat.of}</em>
-                </span>
-                <span className="stat-label">{stat.label}</span>
-              </div>
-            ) )}
-          </div>
+            <div className="header-stats">
+              {( room.stats === 'all' ? summary.stats : summary.stats.slice( 0, 1 ) ).map( stat => (
+                <div key={stat.label} className="stat" title={stat.hint}>
+                  <span className="stat-value">
+                    <b>{stat.value}</b><i>/</i>
+                    <em className={typeof stat.of === 'number' ? '' : 'is-endless'}>{stat.of}</em>
+                  </span>
+                  <span className="stat-label">{stat.label}</span>
+                </div>
+              ) )}
+            </div>
           )}
         </div>
       )}

@@ -938,8 +938,6 @@ const Board = ( { installedPlugins, view, onView } ) => {
     const layer = LAYERS.find( l => l.id === hoveredLayer );
     return layer ? new Set( layer.items ) : null;
   }, [hoveredLayer] );
-  const pluginNodes = Object.values( nodes ).filter( n => n.kind === 'plugin' );
-  const installedCount = pluginNodes.filter( n => states[n.id] ).length;
 
 
   const readout = useMemo( () => {
@@ -991,7 +989,7 @@ const Board = ( { installedPlugins, view, onView } ) => {
                  row shows every link it takes part in, exactly as hovering it
                  does. Without this a keyboard user could never see them. */
               tabIndex={0}
-              aria-label={`${panel.title} — ${panel.blurb} Shows what this layer connects to.`}
+              aria-label={`${panel.title}. ${panel.blurb} Shows what this layer connects to.`}
               onMouseEnter={() => setHoveredLayer( panel.id )}
               onMouseLeave={() => setHoveredLayer( null )}
               onFocus={() => setHoveredLayer( panel.id )}
@@ -1121,8 +1119,8 @@ const Board = ( { installedPlugins, view, onView } ) => {
                      running. Only the spoken string is corrected here: the
                      accent maths keys off the same map and treats an unknown
                      state as absent, which is the right look while waiting. */
-                  ? `${node.name} — ${statusHint( installedPlugins ? state : 'unknown' )}. ${node.desc}`
-                  : `${node.name} — ${node.desc}`}
+                  ? `${node.name}. ${statusHint( installedPlugins ? state : 'unknown' )}. ${node.desc}`
+                  : `${node.name}. ${node.desc}`}
                 onMouseEnter={() => { setHovered( node.id ); setHoveredLayer( null ); }}
                 onMouseLeave={() => setHovered( null )}
                 onFocus={() => setHovered( node.id )}

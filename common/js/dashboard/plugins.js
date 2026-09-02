@@ -282,7 +282,7 @@ const FEATURE_ICONS = [
   [/retina|webp|avif|image|thumbnail|regenerate/i, 'retina'],
   [/scan|detect/i, 'search'],
   [/mode|control|size|engine/i, 'cog'],
-]
+];
 
 const getFeatureIcon = ( text ) => {
   const hit = FEATURE_ICONS.find( ( [re] ) => re.test( text ) );

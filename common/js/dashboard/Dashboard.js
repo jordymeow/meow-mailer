@@ -4,7 +4,7 @@ const { useState, useEffect, useMemo, useCallback, useRef } = wp.element;
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 // NekoUI
-import { NekoTypo, NekoPage, NekoHeader, NekoWrapper, NekoTab, NekoTabs, NekoBlock, NekoButton,
+import { NekoPage, NekoHeader, NekoWrapper, NekoTab, NekoTabs, NekoBlock, NekoButton,
   NekoColumn, NekoSettings, NekoCheckboxGroup, NekoCheckbox, NekoInput,
   NekoMessage } from '@neko-ui';
 import { nekoFetch } from '@neko-ui';
@@ -17,7 +17,7 @@ import { BoardHeader } from './BoardHeader';
 import { StyledViewArea } from './Board.styled';
 import { FAMILIES, FAMILY_OF, PLUGINS, buildNodes, getAccent, getInstallState, getFeatureIcon,
   getPartners, statusHint, freeUrl, proUrl } from './plugins';
-import { StyledSettingAction, StyledIntro, StyledHealth, StyledTabIntro, StyledPluginGrid, StyledPluginGroups, StyledPluginCard, StyledErrorLogs, logTone,
+import { StyledSettingAction, StyledIntro, StyledHealth, StyledPluginGrid, StyledPluginGroups, StyledPluginCard, StyledErrorLogs, logTone,
   StyledArticleGrid, StyledArticleCard, StyledFurtherReading, StyledSpeedTests,
   StyledPhpInfo } from './Dashboard.styled';
 
@@ -304,7 +304,6 @@ const Analysis = ( { status, busy, error, verdict, step, open = true } ) => {
   // rather than a list you could scan. The headline is the recommendation; the
   // reasoning is there when you want it.
   const [openFindings, setOpenFindings] = useState( () => new Set() );
-  const findingCount = ( verdict?.findings || [] ).length;
   const toggleFinding = i => setOpenFindings( prev => {
     const next = new Set( prev );
     if ( next.has( i ) ) next.delete( i ); else next.add( i );
@@ -320,8 +319,8 @@ const Analysis = ( { status, busy, error, verdict, step, open = true } ) => {
         <div>
           <strong>Have this site looked over</strong>
           <span>
-            AI Engine can read everything on this page — your PHP settings, how fast the server
-            answers, what the error log says — and tell you in plain words what is worth fixing.
+            AI Engine can read everything on this page (your PHP settings, how fast the server
+            answers, what the error log says) and tell you in plain words what is worth fixing.
             {' '}It's free, and runs on your own AI provider key.
           </span>
         </div>
@@ -399,7 +398,7 @@ const Analysis = ( { status, busy, error, verdict, step, open = true } ) => {
           {error}
           <span>
             This uses the <b>JSON</b> row under “Default Environments for AI” in AI Engine's
-            settings — not the Default one. If that row has no model set, it falls back to
+            settings, not the Default one. If that row has no model set, it falls back to
             whatever the environment itself is pointing at.
           </span>
         </div>
@@ -568,7 +567,7 @@ const ErrorLogs = ({ entries, loaded, failed, compact = false }) => {
                    a server rule blocking the REST API. Try again, and if it keeps failing, read the
                    log from your hosting control panel instead.`
                 : ( loaded
-                  ? `Nothing was written to your PHP error log — or your host doesn't allow reading
+                  ? `Nothing was written to your PHP error log, or your host doesn't allow reading
                      it remotely. If you expected entries here, check your hosting control panel.`
                   : 'Read the tail of your PHP error log to see recent warnings and fatal errors.' )}
             </span>
@@ -752,22 +751,22 @@ const PhpInfo = ({ html, compact = false, onSummary }) => {
           filter effect needs its host element and the six values in the overview
           are read out of these very rows. */}
       <div className={compact ? 'php-rest is-hidden' : 'php-rest'}>
-      <div className="php-bar">
-        <NekoInput className="php-search" value={query} onChange={setQuery}
-          placeholder="Search directives, extensions, values…" />
-        {/* While searching this counts rows only. Naming sections too read as
+        <div className="php-bar">
+          <NekoInput className="php-search" value={query} onChange={setQuery}
+            placeholder="Search directives, extensions, values…" />
+          {/* While searching this counts rows only. Naming sections too read as
             "1 of 632 rows in 0 sections" whenever the hit was in the main
             configuration table, which sits under the h1 and belongs to none. */}
-        <span className="php-count">
-          {query.trim()
-            ? `${counts.shown} matching ${counts.shown === 1 ? 'row' : 'rows'}`
-            : `${counts.total} rows across ${counts.sections} sections`}
-        </span>
-      </div>
-      <div className="php-body" ref={hostRef} dangerouslySetInnerHTML={{ __html: html }} />
-      {query.trim() !== '' && counts.shown === 0 && (
-        <div className="php-blank">Nothing matches “{query.trim()}”.</div>
-      )}
+          <span className="php-count">
+            {query.trim()
+              ? `${counts.shown} matching ${counts.shown === 1 ? 'row' : 'rows'}`
+              : `${counts.total} rows across ${counts.sections} sections`}
+          </span>
+        </div>
+        <div className="php-body" ref={hostRef} dangerouslySetInnerHTML={{ __html: html }} />
+        {query.trim() !== '' && counts.shown === 0 && (
+          <div className="php-blank">Nothing matches “{query.trim()}”.</div>
+        )}
       </div>
     </StyledPhpInfo>
   );
@@ -830,12 +829,6 @@ const SPEED_TESTS = [
   { request: 'sql_request', title: 'SQL Request Time', short: 'Database', max: 2800, good: 500, ok: 2000,
     hint: 'Counts every post in your database. Should land close to the empty request time.' },
 ];
-
-const jsxTextPerformance =
-  <StyledTabIntro>
-    These tests time your own server, not your visitors' connection. Run them, then
-    switch some plugins off and run them again to see what your setup is costing you.
-  </StyledTabIntro>;
 
 const ARTICLES = [
   { emoji: '🔍', title: 'SEO Checklist & Optimization',
@@ -1229,27 +1222,27 @@ const Dashboard = () => {
                     node={readout.node} partners={readout.partners} states={states}
                     view={view} onView={handleView} />
                 )}
-              {view === 'board' && (
-                <Board installedPlugins={installedPlugins} view={view} onView={handleView} />
-              )}
-              {view === 'grid' && (
-                <StyledPluginGroups>
-                  {pluginGroups.map(group => (
-                    <section key={group.key} className={`plugin-group is-${group.key}`}>
-                      <header className="group-head">
-                        <h3>{group.label}<b>{group.items.length}</b></h3>
-                        <span className="head-note">{group.note}</span>
-                      </header>
-                      <StyledPluginGrid>
-                        {group.items.map(({ plugin, state }) => (
-                          <PluginCard key={plugin.slug} plugin={plugin} installState={state}
-                            onPoint={handlePoint} />
-                        ))}
-                      </StyledPluginGrid>
-                    </section>
-                  ))}
-                </StyledPluginGroups>
-              )}
+                {view === 'board' && (
+                  <Board installedPlugins={installedPlugins} view={view} onView={handleView} />
+                )}
+                {view === 'grid' && (
+                  <StyledPluginGroups>
+                    {pluginGroups.map(group => (
+                      <section key={group.key} className={`plugin-group is-${group.key}`}>
+                        <header className="group-head">
+                          <h3>{group.label}<b>{group.items.length}</b></h3>
+                          <span className="head-note">{group.note}</span>
+                        </header>
+                        <StyledPluginGrid>
+                          {group.items.map(({ plugin, state }) => (
+                            <PluginCard key={plugin.slug} plugin={plugin} installState={state}
+                              onPoint={handlePoint} />
+                          ))}
+                        </StyledPluginGrid>
+                      </section>
+                    ))}
+                  </StyledPluginGroups>
+                )}
               </StyledViewArea>
               {/* Signed at the foot of the board rather than standing in front of
                   it. Above the tab bar it followed you onto Health and Settings
