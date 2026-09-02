@@ -5,7 +5,7 @@ Donate link: https://www.patreon.com/meowapps
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.2.3
+Stable tag: 0.2.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -126,6 +126,16 @@ Both use OAuth 2.0, so no password is stored. Create an OAuth app (Google Cloud 
 Meow Mailer is open source. The full source, including the React code used to build the admin interface, lives [on GitHub](https://github.com/jordymeow/meow-mailer).
 
 == Changelog ==
+
+= 0.2.4 (2026/09/02) =
+* Add: Mailgun support to the settings importer, including its wp-config constants.
+* Add: Warning when another plugin has taken over wp_mail and bypasses this plugin.
+* Add: Warning when the From address uses a different domain.
+* Update: The server-mail test no longer reports that delivery succeeded.
+* Update: Synced the shared common library with the updated dashboard, and tested up to WordPress 7.1.
+* 🎵 Discuss with others about Meow Mailer on [the Discord](https://discord.gg/bHDGh38).
+* 🌴 Keep us motivated with [a little review here](https://wordpress.org/support/plugin/meow-mailer/reviews/). Thank you!
+* 🥰 If you want to help us, check our [Patreon](https://www.patreon.com/meowapps). Thank you!
 
 = 0.2.3 (2026/08/16) =
 * Update: Delivery status now displays as a full-width strip in the header.
