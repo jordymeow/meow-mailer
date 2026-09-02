@@ -106,6 +106,9 @@ class Meow_MWMAIL_Admin extends MeowKit_MWMAIL_Admin {
       // Other mail plugins whose settings we can take over. Names and provider
       // keys only: their credentials stay server-side until an import is asked for.
       'importer'   => ( new Meow_MWMAIL_Modules_Importer( $this->core ) )->detect(),
+      // Set only when another plugin has taken wp_mail() over, which stops us from
+      // ever being called. Nothing else in the UI can tell the user this.
+      'wp_mail_owner' => Meow_MWMAIL_Modules_Mailer::wp_mail_owner(),
     ] );
   }
 

@@ -295,6 +295,43 @@ class Meow_MWMAIL_Modules_Mailer {
 
   #endregion
 
+  /**
+   * Who owns wp_mail(). Core declares it as a pluggable function, so any plugin or
+   * mu-plugin that loads earlier can define its own, and core's version is then never
+   * loaded at all. When that happens `pre_wp_mail` never fires and this plugin is
+   * bypassed entirely: provider and fallback alike, silently, with nothing to show
+   * for it. It is the one failure mode the logs cannot report, because no email ever
+   * reaches them, so it has to be detected rather than waited for.
+   *
+   * @return string|null  Path of the file that claimed wp_mail(), relative to
+   *                      wp-content when it sits there, or null when core owns it.
+   */
+  public static function wp_mail_owner() {
+    if ( ! function_exists( 'wp_mail' ) ) {
+      return null;
+    }
+    try {
+      $file = ( new ReflectionFunction( 'wp_mail' ) )->getFileName();
+    } catch ( Throwable $e ) {
+      return null;
+    }
+    if ( empty( $file ) ) {
+      return null;
+    }
+    $file     = wp_normalize_path( $file );
+    $expected = '/wp-includes/pluggable.php';
+    if ( substr( $file, -strlen( $expected ) ) === $expected ) {
+      return null;
+    }
+    // Shown to a human, so trim the server's directory layout off the front and
+    // leave the part that names the culprit.
+    $content = wp_normalize_path( WP_CONTENT_DIR );
+    if ( strpos( $file, $content ) === 0 ) {
+      $file = ltrim( substr( $file, strlen( $content ) ), '/' );
+    }
+    return $file;
+  }
+
   private function send_with_provider( $provider_key, $email ) {
     $class = 'Meow_MWMAIL_Mailers_' . ucfirst( $provider_key );
     if ( ! class_exists( $class ) ) {

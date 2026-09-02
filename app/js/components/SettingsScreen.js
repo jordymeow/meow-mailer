@@ -12,7 +12,7 @@ import ProviderPicker from './ProviderPicker';
 import SwitchSetting from './SwitchSetting';
 import MaintenanceBlock from './MaintenanceBlock';
 import { sendTestEmail, setNetworkMode, testWebhook } from '@app/requests';
-import { network } from '@app/settings';
+import { network, wpMailOwner } from '@app/settings';
 import { wrapperBody } from '@app/layout';
 import { t } from '@app/i18n';
 
@@ -199,6 +199,20 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
       <NekoColumn minimal size="1/2">
 
         {notice && <><NekoMessage variant={notice.variant}>{notice.text}</NekoMessage><NekoSpacer /></>}
+
+        {/* wp_mail() is pluggable, so a plugin that loads before us can define its own
+            and core's never loads. We are then never called at all, and nothing on this
+            page has any effect. Worth saying loudly: it looks exactly like a provider
+            that refuses to work. */}
+        {wpMailOwner && (
+          <>
+            <NekoMessage variant="danger">
+              <b>{t('Another plugin is sending your email.')}</b>{' '}
+              {t('%s has replaced WordPress\'s own wp_mail function, so Meow Mailer is never called: neither the provider below nor the fallback is used, and the Logs tab stays empty. Deactivate that plugin (or turn off its email feature) for these settings to take effect.').replace('%s', wpMailOwner)}
+            </NekoMessage>
+            <NekoSpacer />
+          </>
+        )}
 
         {lockedProvider ? <LockedBlock title={t('Email Provider')} /> : (
           <NekoBlock title={t('Email Provider')} busy={busy}>
