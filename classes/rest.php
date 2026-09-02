@@ -373,6 +373,18 @@ class Meow_MWMAIL_Rest {
     if ( is_wp_error( $result ) ) {
       return new WP_REST_Response( [ 'success' => false, 'message' => $result->get_error_message() ], 200 );
     }
+    // "Sent" through the server's own mail is a weaker claim than it looks: PHP hands
+    // the message to the local MTA and reports success the moment it is accepted, which
+    // says nothing about whether it left the building. A From address the server is not
+    // authorized for is dropped or filed as spam well after this point, so promising
+    // success here is how people end up trusting a route that delivers nothing.
+    if ( $this->core->mailer->last_provider === 'wordpress' ) {
+      return new WP_REST_Response( [
+        'success' => true,
+        'message' => __( 'Handed to your server. That means it was accepted for sending, not that it was delivered, so check that it actually arrives.', 'meow-mailer' ),
+      ], 200 );
+    }
+
     return new WP_REST_Response( [
       'success' => true,
       'message' => $target === 'fallback'

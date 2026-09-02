@@ -109,6 +109,9 @@ class Meow_MWMAIL_Admin extends MeowKit_MWMAIL_Admin {
       // Set only when another plugin has taken wp_mail() over, which stops us from
       // ever being called. Nothing else in the UI can tell the user this.
       'wp_mail_owner' => Meow_MWMAIL_Modules_Mailer::wp_mail_owner(),
+      // To compare against the From address: mail sent from a domain the site does
+      // not own is the most common reason a "sent" email never arrives.
+      'site_domain' => wp_parse_url( home_url(), PHP_URL_HOST ),
     ] );
   }
 

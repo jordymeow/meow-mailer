@@ -12,7 +12,7 @@ import ProviderPicker from './ProviderPicker';
 import SwitchSetting from './SwitchSetting';
 import MaintenanceBlock from './MaintenanceBlock';
 import { sendTestEmail, setNetworkMode, testWebhook } from '@app/requests';
-import { network, wpMailOwner } from '@app/settings';
+import { network, wpMailOwner, siteDomain } from '@app/settings';
 import { wrapperBody } from '@app/layout';
 import { t } from '@app/i18n';
 
@@ -22,6 +22,20 @@ const canEditGroup = network.can_edit || {};
 const lockedProvider = canEditGroup.provider === false;
 const lockedSender   = canEditGroup.sender === false;
 const lockedDelivery = canEditGroup.delivery === false;
+
+// Whether a From address belongs to the site's own domain. A subdomain either way
+// still counts: a site on blog.example.com sending as hello@example.com is aligned,
+// and so is the reverse. Only a genuinely different domain is worth a warning, since
+// that is the one the receiving server has no reason to trust.
+const bareHost = (host) => String(host || '').toLowerCase().replace(/^www\./, '');
+const sameDomain = (email, site) => {
+  const from = bareHost(String(email || '').split('@')[1]);
+  const host = bareHost(site);
+  if (!from || !host) {
+    return true; // nothing to compare, so nothing to complain about
+  }
+  return from === host || from.endsWith(`.${host}`) || host.endsWith(`.${from}`);
+};
 
 // A section the network owns keeps its place on the page, but shows nothing of
 // its contents: a half-visible form behind a veil reads as broken, and the values
@@ -156,6 +170,12 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
 
   const provider = options.provider;
   const fallback = options.fallback_provider || 'none';
+
+  // Some providers are set up per domain (Mailgun asks for one). When the From address
+  // matches the domain the provider is authorized for, sending from outside the site's
+  // own domain is deliberate and correctly configured, so there is nothing to warn
+  // about. Multi-domain installs (Polylang, multisite) land here legitimately.
+  const providerDomain = ((options.providers || {})[provider] || {}).domain || '';
   const hasFallback = fallback !== 'none' && provider !== 'none';
 
   // A fallback pointing at a provider whose credentials were never filled in is worse
@@ -283,6 +303,19 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
               <>
                 <NekoMessage variant="warning">
                   {t('Contact form plugins usually set their own sender, which overrides the address above. If your forms are not delivered, or land in spam, turn Force From on.')}
+                </NekoMessage>
+                <NekoSpacer />
+              </>
+            ) : null}
+            {/* Sending as a domain the site does not own is the quiet killer: SMTP hosts
+                refuse to authenticate it, and servers that do accept it produce mail that
+                aligns with no SPF or DKIM record, so it is dropped or filed as spam long
+                after everything here has reported success. */}
+            {options.from_email && !sameDomain(options.from_email, siteDomain)
+              && !sameDomain(options.from_email, providerDomain) ? (
+              <>
+                <NekoMessage variant="warning">
+                  {t('This address is not on %s. Providers often refuse to send from a domain you do not own, and mail that does get through usually lands in spam because it matches no SPF or DKIM record. Use an address at your own domain unless you manage that one too.').replace('%s', siteDomain)}
                 </NekoMessage>
                 <NekoSpacer />
               </>

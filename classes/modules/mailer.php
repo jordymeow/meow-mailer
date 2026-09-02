@@ -15,6 +15,11 @@ class Meow_MWMAIL_Modules_Mailer {
   private $bypass = false;       // let WordPress send this one itself
   private $own_action = false;   // we are the ones firing wp_mail_succeeded/failed
 
+  // Which provider actually sent the last dispatched email. The return value only
+  // says whether it went, and after a rescue that is not the same thing: the test
+  // email needs to know who really sent it before it congratulates anyone.
+  public $last_provider = null;
+
   public function __construct( $core ) {
     $this->core = $core;
     add_filter( 'pre_wp_mail', [ $this, 'pre_wp_mail' ], 10, 2 );
@@ -182,6 +187,7 @@ class Meow_MWMAIL_Modules_Mailer {
 
     // Offline provider: never send, just keep a record.
     if ( $provider_key === 'offline' ) {
+      $this->last_provider = 'offline';
       if ( $logs_enabled ) {
         $this->log_email( $email, 'offline', '', 'offline', $store_body );
       }
@@ -190,6 +196,7 @@ class Meow_MWMAIL_Modules_Mailer {
 
     $attempt = $this->send_with_fallback( $provider_key, $email );
     $result  = $attempt['result'];
+    $this->last_provider = $attempt['provider'];
 
     if ( $logs_enabled ) {
       $status = is_wp_error( $result ) ? 'failed' : 'sent';
