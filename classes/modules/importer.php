@@ -13,10 +13,12 @@ class Meow_MWMAIL_Modules_Importer {
   private $core;
 
   // WP Mail SMTP and Easy WP SMTP are made by the same company and store their
-  // settings in the same shape, so one mapper covers both.
+  // settings in the same shape, so one mapper covers both. Mailgun's official
+  // plugin has a shape of its own, hence its own mapper.
   const SOURCES = [
-    'wp-mail-smtp' => [ 'name' => 'WP Mail SMTP', 'option' => 'wp_mail_smtp' ],
-    'easy-wp-smtp' => [ 'name' => 'Easy WP SMTP', 'option' => 'easy_wp_smtp' ],
+    'wp-mail-smtp' => [ 'name' => 'WP Mail SMTP', 'option' => 'wp_mail_smtp', 'mapper' => 'map_wpms' ],
+    'easy-wp-smtp' => [ 'name' => 'Easy WP SMTP', 'option' => 'easy_wp_smtp', 'mapper' => 'map_wpms' ],
+    'mailgun'      => [ 'name' => 'Mailgun',      'option' => 'mailgun',      'mapper' => 'map_mailgun' ],
   ];
 
   public function __construct( $core ) {
@@ -85,6 +87,9 @@ class Meow_MWMAIL_Modules_Importer {
     if ( $source_key === 'easy-wp-smtp' ) {
       return function_exists( 'easy_wp_smtp' );
     }
+    if ( $source_key === 'mailgun' ) {
+      return class_exists( 'Mailgun' );
+    }
     return false;
   }
 
@@ -99,10 +104,11 @@ class Meow_MWMAIL_Modules_Importer {
       return null;
     }
     $data = get_option( $source['option'], null );
-    if ( ! is_array( $data ) || empty( $data['mail']['mailer'] ) ) {
+    if ( ! is_array( $data ) ) {
       return null;
     }
-    return $this->map_wpms( $data );
+    $mapper = $source['mapper'];
+    return $this->$mapper( $data );
   }
 
   /** Their 'yes'/'no' of older versions and the booleans of newer ones, as one bool. */
@@ -110,8 +116,73 @@ class Meow_MWMAIL_Modules_Importer {
     return $value === true || $value === 1 || $value === '1' || $value === 'yes' || $value === 'on';
   }
 
+  /**
+   * A Mailgun plugin setting, whichever way it was set: the plugin lets a
+   * wp-config constant win over the stored option, so we read it the same way
+   * or we would import an empty string over a working setup.
+   */
+  private static function mailgun_setting( $data, $key, $constant ) {
+    if ( defined( $constant ) && constant( $constant ) ) {
+      return constant( $constant );
+    }
+    return $data[ $key ] ?? '';
+  }
+
+  /**
+   * The official Mailgun plugin. It sends either through the HTTP API or through
+   * Mailgun's SMTP endpoint, and those are two different providers here.
+   */
+  private function map_mailgun( $data ) {
+    $region  = strtolower( (string) self::mailgun_setting( $data, 'region', 'MAILGUN_REGION' ) ) === 'eu' ? 'eu' : 'us';
+    $use_api = self::truthy( self::mailgun_setting( $data, 'useAPI', 'MAILGUN_USEAPI' ) );
+
+    if ( $use_api ) {
+      $provider = 'mailgun';
+      $creds    = [
+        'api_key' => (string) self::mailgun_setting( $data, 'apiKey', 'MAILGUN_APIKEY' ),
+        'domain'  => (string) self::mailgun_setting( $data, 'domain', 'MAILGUN_DOMAIN' ),
+        'region'  => $region,
+      ];
+    } else {
+      // SMTP mode: the credentials are a mailbox, not an API key, so this lands
+      // on our plain SMTP provider pointed at Mailgun's endpoint.
+      $sectype  = strtolower( (string) self::mailgun_setting( $data, 'sectype', 'MAILGUN_SECTYPE' ) ) === 'ssl' ? 'ssl' : 'tls';
+      $provider = 'smtp';
+      $creds    = [
+        'host'       => $region === 'eu' ? 'smtp.eu.mailgun.org' : 'smtp.mailgun.org',
+        'port'       => $sectype === 'ssl' ? 465 : 587,
+        'encryption' => $sectype,
+        'autotls'    => true,
+        'auth'       => true,
+        'username'   => (string) self::mailgun_setting( $data, 'username', 'MAILGUN_USERNAME' ),
+        'password'   => (string) self::mailgun_setting( $data, 'password', 'MAILGUN_PASSWORD' ),
+      ];
+      if ( empty( $creds['username'] ) || empty( $creds['password'] ) ) {
+        return null;
+      }
+    }
+
+    foreach ( $this->required_fields( $provider ) as $field ) {
+      if ( empty( $creds[ $field ] ) ) {
+        return null;
+      }
+    }
+
+    return [
+      'provider'   => $provider,
+      'creds'      => $creds,
+      'from_email' => sanitize_email( (string) self::mailgun_setting( $data, 'from-address', 'MAILGUN_FROM_ADDRESS' ) ),
+      'from_name'  => sanitize_text_field( (string) self::mailgun_setting( $data, 'from-name', 'MAILGUN_FROM_NAME' ) ),
+      'force_from' => self::truthy( $data['override-from'] ?? false ),
+      'warnings'   => [],
+    ];
+  }
+
   /** The WP Mail SMTP option shape (shared by Easy WP SMTP). */
   private function map_wpms( $data ) {
+    if ( empty( $data['mail']['mailer'] ) ) {
+      return null;
+    }
     // Mailers with no Meow Mailer equivalent (PHP mail, SMTP.com, SendLayer,
     // SparkPost…) are left out on purpose: an import must never half-work.
     $mailers = [
