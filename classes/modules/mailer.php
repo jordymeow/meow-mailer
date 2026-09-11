@@ -19,6 +19,10 @@ class Meow_MWMAIL_Modules_Mailer {
   // says whether it went, and after a rescue that is not the same thing: the test
   // email needs to know who really sent it before it congratulates anyone.
   public $last_provider = null;
+  // What the main provider answered when the fallback had to step in on the last
+  // dispatch, empty otherwise. The log keeps it too, but the test button needs it
+  // right away: a rescued test that only says "sent" hides the very error being tested for.
+  public $last_error = '';
 
   public function __construct( $core ) {
     $this->core = $core;
@@ -186,6 +190,7 @@ class Meow_MWMAIL_Modules_Mailer {
     $provider_key  = $email['provider'] ?? ( $options['provider'] ?? 'none' );
 
     // Offline provider: never send, just keep a record.
+    $this->last_error = '';
     if ( $provider_key === 'offline' ) {
       $this->last_provider = 'offline';
       if ( $logs_enabled ) {
@@ -197,6 +202,7 @@ class Meow_MWMAIL_Modules_Mailer {
     $attempt = $this->send_with_fallback( $provider_key, $email );
     $result  = $attempt['result'];
     $this->last_provider = $attempt['provider'];
+    $this->last_error    = $attempt['primary_error'];
 
     if ( $logs_enabled ) {
       $status = is_wp_error( $result ) ? 'failed' : 'sent';

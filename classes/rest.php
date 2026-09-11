@@ -376,6 +376,16 @@ class Meow_MWMAIL_Rest {
     if ( is_wp_error( $result ) ) {
       return new WP_REST_Response( [ 'success' => false, 'message' => $result->get_error_message() ], 200 );
     }
+    // The provider refused and the fallback delivered instead. For a real email that is
+    // the fallback doing its job; for a test of the provider it is a failure, and the
+    // reason is the one thing the person clicking the button wanted to see.
+    if ( $target === 'provider' && $this->core->mailer->last_error !== '' ) {
+      return new WP_REST_Response( [
+        'success' => false,
+        /* translators: %s: the error returned by the main email provider. */
+        'message' => sprintf( __( 'Your provider refused it: %s. The fallback delivered this test in its place, so it may still arrive, but the provider itself is not working.', 'meow-mailer' ), rtrim( $this->core->mailer->last_error, '.' ) ),
+      ], 200 );
+    }
     // "Sent" through the server's own mail is a weaker claim than it looks: PHP hands
     // the message to the local MTA and reports success the moment it is accepted, which
     // says nothing about whether it left the building. A From address the server is not
