@@ -345,6 +345,15 @@ class Meow_MWMAIL_Modules_Mailer {
       /* translators: %s: the provider key/slug that was not recognised. */
       return new WP_Error( 'mwmail_no_provider', sprintf( __( 'Unknown email provider: %s', 'meow-mailer' ), $provider_key ) );
     }
+    // Said here, in words, rather than letting the provider reject a password that
+    // is really a blob of ciphertext: that error would look like a wrong password.
+    if ( ! empty( $this->core->unreadable_secrets( $provider_key ) ) ) {
+      return new WP_Error( 'mwmail_encryption', sprintf(
+        /* translators: %s: the provider key/slug. */
+        __( 'The stored credentials for %s cannot be read: they were encrypted with security keys this site no longer has. Enter them again in the settings, or turn credential encryption off.', 'meow-mailer' ),
+        $provider_key
+      ) );
+    }
     try {
       $credentials = $this->core->get_provider_options( $provider_key );
       $mailer      = new $class( $this->core, $credentials );

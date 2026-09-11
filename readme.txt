@@ -88,6 +88,12 @@ This is the SMTP envelope sender, so it applies to Generic SMTP. The API provide
 
 For SMTP and API providers, credentials are stored in the WordPress database. You can instead define them as PHP constants in `wp-config.php` (e.g. `MWMAIL_SMTP_PASSWORD`) to keep them out of the database. Gmail, Microsoft 365 and Zoho Mail use OAuth 2.0, so no password is ever stored.
 
+= Can the stored credentials be encrypted? =
+
+Yes. The Security section of the settings has an Enable Encryption button. Once on, every password, API key and OAuth token is stored encrypted, using the security keys in your `wp-config.php`. This protects against a copy of the database being read (a backup, a dump, a staging clone). It does not protect against someone who can read your files, since the keys are there too.
+
+It is off by default for one reason: if those security keys change (a migration, a restore onto another site, a security plugin rotating them), the stored credentials cannot be read anymore and email stops until you enter them again. The plugin tells you when that happens, in the settings and with an admin notice, rather than failing quietly. Export your settings before moving a site, or define `MWMAIL_ENCRYPTION_KEY` in `wp-config.php` to pin a key that survives rotation.
+
 = What does Offline Mode do? =
 
 When enabled, no email is sent. Every message WordPress tries to send is recorded in the log instead. Ideal for staging sites where you don't want real emails going out.

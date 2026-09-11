@@ -45,6 +45,9 @@ class Meow_MWMAIL_Rest {
     register_rest_route( $this->namespace, '/mail/test',         [ 'methods' => 'POST', 'callback' => [ $this, 'mail_test' ],        'permission_callback' => $perm ] );
     register_rest_route( $this->namespace, '/webhook/test',      [ 'methods' => 'POST', 'callback' => [ $this, 'webhook_test' ],     'permission_callback' => $edit ] );
     register_rest_route( $this->namespace, '/secrets/reveal',    [ 'methods' => 'POST', 'callback' => [ $this, 'secrets_reveal' ],  'permission_callback' => $edit ] );
+    // Rewrites every stored credential, one way or the other, so it is a credential write.
+    register_rest_route( $this->namespace, '/security/status',   [ 'methods' => 'GET',  'callback' => [ $this, 'security_status' ],  'permission_callback' => $perm ] );
+    register_rest_route( $this->namespace, '/security/encrypt',  [ 'methods' => 'POST', 'callback' => [ $this, 'security_encrypt' ], 'permission_callback' => $edit ] );
     register_rest_route( $this->namespace, '/oauth/auth-url',    [ 'methods' => 'POST', 'callback' => [ $this, 'oauth_auth_url' ],   'permission_callback' => $edit ] );
     register_rest_route( $this->namespace, '/oauth/disconnect',  [ 'methods' => 'POST', 'callback' => [ $this, 'oauth_disconnect' ], 'permission_callback' => $edit ] );
   }
@@ -441,8 +444,31 @@ class Meow_MWMAIL_Rest {
     if ( ! is_string( $value ) || $value === '' ) {
       return new WP_REST_Response( [ 'success' => false, 'message' => __( 'Nothing is saved in that field.', 'meow-mailer' ) ], 200 );
     }
+    // What is stored there is ciphertext the site cannot open, and a blob of base64
+    // shown as "your password" would only send someone to their provider to check it.
+    if ( $this->core->is_encrypted_value( $value ) ) {
+      return new WP_REST_Response( [ 'success' => false, 'message' => __( 'This value was encrypted with security keys this site no longer has, so it cannot be shown. Type a new one to replace it.', 'meow-mailer' ) ], 200 );
+    }
 
     return new WP_REST_Response( [ 'success' => true, 'value' => $value ], 200 );
+  }
+
+  public function security_status() {
+    return new WP_REST_Response( [ 'success' => true, 'security' => $this->core->security_state() ], 200 );
+  }
+
+  public function security_encrypt( $request ) {
+    $enabled = ! empty( $request->get_json_params()['enabled'] );
+    $result  = $this->core->set_encryption( $enabled );
+    if ( is_wp_error( $result ) ) {
+      return new WP_REST_Response( [ 'success' => false, 'message' => $result->get_error_message() ], 200 );
+    }
+    return new WP_REST_Response( [
+      'success'  => true,
+      'cleared'  => (object) $result['cleared'],
+      'security' => $this->core->security_state(),
+      'options'  => $this->core->get_masked_options(),
+    ], 200 );
   }
 
   public function oauth_auth_url( $request ) {

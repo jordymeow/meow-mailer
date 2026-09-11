@@ -14,6 +14,7 @@ class Meow_MWMAIL_Admin extends MeowKit_MWMAIL_Admin {
       add_action( 'admin_menu', [ $this, 'app_menu' ] );
       add_action( 'admin_init', [ $this, 'handle_oauth_callback' ] );
       add_action( 'admin_notices', [ $this, 'failure_notice' ] );
+      add_action( 'admin_notices', [ $this, 'encryption_notice' ] );
       if ( $this->core->can_access_settings() ) {
         add_action( 'admin_enqueue_scripts', [ $this, 'admin_enqueue_scripts' ] );
       }
@@ -70,6 +71,33 @@ class Meow_MWMAIL_Admin extends MeowKit_MWMAIL_Admin {
     );
   }
 
+  /**
+   * Encrypted credentials the site can no longer open, typically after a migration
+   * or a security plugin rotating the keys. Every send fails until they are typed
+   * again, and the failures would otherwise only be found in the log. Not dismissible:
+   * it goes away by itself once the credentials are readable again.
+   */
+  public function encryption_notice() {
+    if ( ! current_user_can( 'manage_options' ) ) {
+      return;
+    }
+    // Our own page shows the same thing, in more detail, in the Security section.
+    // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+    if ( sanitize_text_field( wp_unslash( $_GET['page'] ?? '' ) ) === 'mwmail_settings' ) {
+      return;
+    }
+    $state = $this->core->security_state();
+    if ( empty( (array) $state['unreadable'] ) ) {
+      return;
+    }
+    printf(
+      '<div class="notice notice-error"><p><strong>Meow Mailer:</strong> %s <a href="%s">%s</a></p></div>',
+      esc_html__( 'Your stored email credentials cannot be read anymore. They were encrypted with security keys this site no longer has, which happens after a migration, a restore, or a security plugin rotating them. Email fails until you enter them again.', 'meow-mailer' ),
+      esc_url( admin_url( 'admin.php?page=mwmail_settings&nekoTab=settings' ) ),
+      esc_html__( 'Open the settings', 'meow-mailer' )
+    );
+  }
+
   public function app_menu() {
     add_submenu_page( 'meowapps-main-menu', 'Meow Mailer', 'Meow Mailer', 'manage_options',
       'mwmail_settings', [ $this, 'admin_settings' ] );
@@ -102,6 +130,7 @@ class Meow_MWMAIL_Admin extends MeowKit_MWMAIL_Admin {
       // without the two definitions drifting.
       'secret_mask' => Meow_MWMAIL_Core::SECRET_MASK,
       'network'    => $this->core->network_state(),
+      'security'   => $this->core->security_state(),
       'options'    => $this->core->get_masked_options(),
       // Other mail plugins whose settings we can take over. Names and provider
       // keys only: their credentials stay server-side until an import is asked for.

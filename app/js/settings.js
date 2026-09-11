@@ -10,5 +10,6 @@ const secretMask = window.mwmail.secret_mask || '';
 const importer = window.mwmail.importer || [];
 const wpMailOwner = window.mwmail.wp_mail_owner || null;
 const siteDomain = window.mwmail.site_domain || '';
+const security = window.mwmail.security || {};
 
-export { prefix, domain, apiUrl, restUrl, pluginUrl, restNonce, options, network, secretMask, importer, wpMailOwner, siteDomain };
+export { prefix, domain, apiUrl, restUrl, pluginUrl, restNonce, options, network, secretMask, importer, wpMailOwner, siteDomain, security };

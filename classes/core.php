@@ -96,7 +96,7 @@ class Meow_MWMAIL_Core {
    * own emails.
    */
   const NETWORK_GROUPS = [
-    'provider' => [ 'provider', 'fallback_provider', 'providers' ],
+    'provider' => [ 'provider', 'fallback_provider', 'providers', 'encrypt_secrets' ],
     'sender'   => [ 'from_email', 'from_name', 'force_from', 'reply_to', 'return_path' ],
     'delivery' => [ 'logs_enabled', 'log_body', 'log_retention_days', 'send_in_background' ],
   ];
@@ -235,6 +235,10 @@ class Meow_MWMAIL_Core {
       'summary_enabled'    => false,
       'summary_email'      => '', // empty = the site admin address
       'blocked_notifications' => [], // keys from Meow_MWMAIL_Modules_Notifications
+      // Store passwords and API keys encrypted. Off by default: it depends on the
+      // wp-config security keys staying the same, and only set_encryption() may
+      // turn it on, after checking that there is something to encrypt with.
+      'encrypt_secrets'    => false,
       'providers'          => $this->default_providers(),
     ];
   }
@@ -346,7 +350,7 @@ class Meow_MWMAIL_Core {
     foreach ( $defaults['providers'] as $key => $fields ) {
       $options['providers'][ $key ] = array_merge( $fields, $options['providers'][ $key ] ?? [] );
     }
-    return $options;
+    return $this->decrypt_secrets( $options );
   }
 
   public function get_option( $option, $default = null ) {
@@ -383,6 +387,11 @@ class Meow_MWMAIL_Core {
     $secrets = $this->secret_fields();
 
     foreach ( (array) $incoming as $key => $value ) {
+      // Only set_encryption() flips this, after its checks. The client sends the
+      // whole options object back on every save, so it has to be ignored here.
+      if ( $key === 'encrypt_secrets' ) {
+        continue;
+      }
       if ( $key === 'providers' && is_array( $value ) ) {
         foreach ( $value as $provider => $fields ) {
           if ( ! is_array( $fields ) ) {
@@ -421,6 +430,7 @@ class Meow_MWMAIL_Core {
   }
 
   public function update_options( $options ) {
+    $options     = $this->encrypt_secrets( $options );
     $shared_keys = $this->shared_keys();
     if ( empty( $shared_keys ) ) {
       update_option( $this->option_name, $options, false );
@@ -506,6 +516,210 @@ class Meow_MWMAIL_Core {
   public function reset_options() {
     // A site admin resetting only clears the groups their site actually owns.
     return $this->update_options( $this->strip_locked_options( $this->list_options() ) );
+  }
+
+  #endregion
+
+  #region Encryption
+
+  // What an encrypted value starts with in the options row. Anything without it is
+  // plain text, which is how installs from before encryption (and after turning it
+  // off) keep working with no migration step.
+  const CIPHER_PREFIX = 'mwmail:v1:';
+
+  // provider => [ field => reason ] for the stored secrets the current key cannot
+  // open. Refreshed on every read of the options.
+  private $unreadable = [];
+
+  /**
+   * The key the secrets are encrypted with, or null when there is nothing safe to
+   * derive it from. MWMAIL_ENCRYPTION_KEY wins, so a site whose security keys get
+   * rotated can pin one. Otherwise it comes from two of the wp-config security keys,
+   * hashed down to the size libsodium wants. Never wp_salt(): that quietly falls back
+   * to a key stored in the database, which is exactly what this protects against.
+   */
+  private function encryption_key() {
+    if ( defined( 'MWMAIL_ENCRYPTION_KEY' ) && is_string( MWMAIL_ENCRYPTION_KEY ) && MWMAIL_ENCRYPTION_KEY !== '' ) {
+      $material = MWMAIL_ENCRYPTION_KEY;
+    }
+    else {
+      foreach ( [ 'AUTH_KEY', 'SECURE_AUTH_KEY' ] as $name ) {
+        $value = defined( $name ) ? constant( $name ) : '';
+        if ( ! is_string( $value ) || $value === '' || $value === 'put your unique phrase here' ) {
+          return null;
+        }
+      }
+      $material = AUTH_KEY . '|' . SECURE_AUTH_KEY;
+    }
+    return hash( 'sha256', 'mwmail-secrets|' . $material, true );
+  }
+
+  /** Why encryption cannot be turned on here, or null when it can. */
+  public function encryption_blocker() {
+    if ( ! function_exists( 'sodium_crypto_secretbox' ) ) {
+      return __( 'PHP on this server was built without the Sodium extension, which does the encrypting.', 'meow-mailer' );
+    }
+    if ( $this->encryption_key() === null ) {
+      return __( 'AUTH_KEY and SECURE_AUTH_KEY in wp-config.php are missing or still set to their placeholder, so there is nothing safe to derive an encryption key from.', 'meow-mailer' );
+    }
+    return null;
+  }
+
+  // Stored with each value so a key that changed can be told apart from data that
+  // was damaged. Short, since it only has to answer "same key or not".
+  private function key_fingerprint( $key ) {
+    return substr( hash( 'sha256', 'mwmail-fingerprint|' . $key ), 0, 8 );
+  }
+
+  public function is_encrypted_value( $value ) {
+    return is_string( $value ) && strpos( $value, self::CIPHER_PREFIX ) === 0;
+  }
+
+  private function encrypt_value( $value, $key ) {
+    $nonce = random_bytes( SODIUM_CRYPTO_SECRETBOX_NONCEBYTES );
+    $box   = sodium_crypto_secretbox( $value, $nonce, $key );
+    return self::CIPHER_PREFIX . $this->key_fingerprint( $key ) . ':' . base64_encode( $nonce . $box );
+  }
+
+  /**
+   * The plain text behind a stored value, as [ value, error ]. The error is 'key'
+   * when it was encrypted under other security keys, 'corrupt' when the data itself
+   * does not open. Memoized for the request: the options are read many times.
+   */
+  private function decrypt_value( $value, $key ) {
+    static $cache = [];
+    if ( isset( $cache[ $value ] ) ) {
+      return $cache[ $value ];
+    }
+    $opened = [ null, 'corrupt' ];
+    $parts  = explode( ':', substr( $value, strlen( self::CIPHER_PREFIX ) ), 2 );
+    if ( count( $parts ) === 2 && function_exists( 'sodium_crypto_secretbox_open' ) ) {
+      if ( $key === null || $parts[0] !== $this->key_fingerprint( $key ) ) {
+        $opened = [ null, 'key' ];
+      }
+      else {
+        $raw = base64_decode( $parts[1], true );
+        if ( $raw !== false && strlen( $raw ) > SODIUM_CRYPTO_SECRETBOX_NONCEBYTES ) {
+          $nonce = substr( $raw, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES );
+          $plain = sodium_crypto_secretbox_open( substr( $raw, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES ), $nonce, $key );
+          if ( $plain !== false ) {
+            $opened = [ $plain, null ];
+          }
+        }
+      }
+    }
+    $cache[ $value ] = $opened;
+    return $opened;
+  }
+
+  /** Replace the stored ciphertext of every secret by its plain text, noting what will not open. */
+  private function decrypt_secrets( $options ) {
+    $this->unreadable = [];
+    $key = false; // derived on first use, since most installs have nothing encrypted
+    foreach ( $options['providers'] as $provider => $fields ) {
+      foreach ( $this->secret_fields() as $field ) {
+        if ( ! $this->is_encrypted_value( $fields[ $field ] ?? null ) ) {
+          continue;
+        }
+        if ( $key === false ) {
+          $key = $this->encryption_key();
+        }
+        list( $plain, $error ) = $this->decrypt_value( $fields[ $field ], $key );
+        if ( $error ) {
+          // Left exactly as stored, ciphertext and all, so it round-trips through a
+          // save intact and is still there to read the day the right keys come back.
+          $this->unreadable[ $provider ][ $field ] = $error;
+          continue;
+        }
+        $options['providers'][ $provider ][ $field ] = $plain;
+      }
+    }
+    return $options;
+  }
+
+  /** The write-side twin: ciphertext for every secret when encryption is on, else untouched. */
+  private function encrypt_secrets( $options ) {
+    if ( empty( $options['encrypt_secrets'] ) || $this->encryption_blocker() !== null ) {
+      return $options;
+    }
+    $key = $this->encryption_key();
+    foreach ( ( $options['providers'] ?? [] ) as $provider => $fields ) {
+      if ( ! is_array( $fields ) ) {
+        continue;
+      }
+      foreach ( $this->secret_fields() as $field ) {
+        $value = $fields[ $field ] ?? '';
+        if ( ! is_string( $value ) || $value === '' || $this->is_encrypted_value( $value ) ) {
+          continue;
+        }
+        $options['providers'][ $provider ][ $field ] = $this->encrypt_value( $value, $key );
+      }
+    }
+    return $options;
+  }
+
+  /**
+   * The secrets of $provider that cannot be used to send: unreadable in the database
+   * and not overridden by a wp-config constant. Empty means the mailer can go ahead.
+   */
+  public function unreadable_secrets( $provider ) {
+    $this->get_all_options();
+    $fields = [];
+    foreach ( array_keys( $this->unreadable[ $provider ] ?? [] ) as $field ) {
+      if ( ! defined( 'MWMAIL_' . strtoupper( $provider ) . '_' . strtoupper( $field ) ) ) {
+        $fields[] = $field;
+      }
+    }
+    return $fields;
+  }
+
+  /** Everything the admin app and the notices need to show the state of encryption. */
+  public function security_state() {
+    $options = $this->get_all_options();
+    return [
+      'enabled'    => ! empty( $options['encrypt_secrets'] ),
+      'blocker'    => $this->encryption_blocker(),
+      'custom_key' => defined( 'MWMAIL_ENCRYPTION_KEY' ),
+      'unreadable' => (object) $this->unreadable,
+    ];
+  }
+
+  /**
+   * Turn encryption on or off. On rewrites every stored secret as ciphertext, off
+   * puts them back in plain text. A secret the current key cannot open has no plain
+   * text to put back, so turning off clears it, and reports which ones.
+   *
+   * @return array|WP_Error  [ 'cleared' => [ provider => [ field, ... ] ] ]
+   */
+  public function set_encryption( $enabled ) {
+    $enabled = (bool) $enabled;
+    if ( $enabled ) {
+      $blocker = $this->encryption_blocker();
+      if ( $blocker !== null ) {
+        return new WP_Error( 'mwmail_encryption', $blocker );
+      }
+      // A round trip before anything is written, so a broken Sodium build is found
+      // here rather than by the next email.
+      $key = $this->encryption_key();
+      list( $probe, ) = $this->decrypt_value( $this->encrypt_value( 'probe', $key ), $key );
+      if ( $probe !== 'probe' ) {
+        return new WP_Error( 'mwmail_encryption', __( 'Encryption did not pass its self-test on this server, so nothing was changed.', 'meow-mailer' ) );
+      }
+    }
+
+    $options = $this->get_all_options();
+    $cleared = [];
+    if ( ! $enabled ) {
+      foreach ( $this->unreadable as $provider => $fields ) {
+        foreach ( array_keys( $fields ) as $field ) {
+          $options['providers'][ $provider ][ $field ] = '';
+          $cleared[ $provider ][] = $field;
+        }
+      }
+    }
+    $options['encrypt_secrets'] = $enabled;
+    $this->update_options( $options );
+    return [ 'cleared' => $cleared ];
   }
 
   #endregion

@@ -6,16 +6,7 @@ import { useCoreContext } from '@app/contexts/core';
 import { exportSettings, importSettings, clearLogs } from '@app/requests';
 import { download } from '@app/download';
 import { t } from '@app/i18n';
-
-const Row = ({ title, description, children }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 0', borderBottom: '1px solid var(--neko-gray-90)' }}>
-    <div style={{ flex: 1, minWidth: 0 }}>
-      <div style={{ fontWeight: 600 }}>{title}</div>
-      <div style={{ fontSize: 12, color: 'var(--neko-gray-50)', lineHeight: 1.4 }}>{description}</div>
-    </div>
-    <div style={{ flex: '0 0 auto' }}>{children}</div>
-  </div>
-);
+import Row from './SettingRow';
 
 /**
  * The things you do to the plugin rather than with it: move a configuration between

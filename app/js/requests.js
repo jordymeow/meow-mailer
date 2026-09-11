@@ -27,6 +27,10 @@ export const importSettings = async (data) => (await post('/settings/import', { 
 export const importFromPlugin = async (source) => await post('/importer/import', { source });
 export const setNetworkMode = async (enabled, groups) => await post('/settings/network', { enabled, groups });
 
+// Security
+export const fetchSecurity = async () => (await get('/security/status')).security;
+export const setEncryption = async (enabled) => await post('/security/encrypt', { enabled });
+
 // Logs
 export const fetchLogs = async ({ page, limit, filters, sort }) =>
   await post('/logs/list', { page, limit, filters, sort });

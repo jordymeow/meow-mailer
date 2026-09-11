@@ -11,6 +11,7 @@ import ProviderFields from './ProviderFields';
 import ProviderPicker from './ProviderPicker';
 import SwitchSetting from './SwitchSetting';
 import MaintenanceBlock from './MaintenanceBlock';
+import SecurityBlock from './SecurityBlock';
 import { sendTestEmail, setNetworkMode, testWebhook } from '@app/requests';
 import { network, wpMailOwner, siteDomain } from '@app/settings';
 import { wrapperBody } from '@app/layout';
@@ -334,6 +335,10 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
         {/* Under the provider it moves and the credentials it carries, since that is
             what an export is mostly a copy of. */}
         <MaintenanceBlock onLogsCleared={onChanged} />
+
+        {/* Encryption rewrites the credentials, so on a network it belongs to whoever
+            owns the provider group. */}
+        {lockedProvider ? <LockedBlock title={t('Security')} /> : <SecurityBlock />}
 
       </NekoColumn>
 
