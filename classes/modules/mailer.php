@@ -204,6 +204,11 @@ class Meow_MWMAIL_Modules_Mailer {
     $this->last_provider = $attempt['provider'];
     $this->last_error    = $attempt['primary_error'];
 
+    // The mailer filled the route in on its own copy; the log should read as sent.
+    if ( ! empty( $email['test'] ) ) {
+      $email['message'] = str_replace( '{route}', Meow_MWMAIL_Core::provider_label( $attempt['provider'] ), $email['message'] );
+    }
+
     if ( $logs_enabled ) {
       $status = is_wp_error( $result ) ? 'failed' : 'sent';
       // On a rescue the row reads Sent, but it keeps the primary's error so the log
@@ -359,6 +364,9 @@ class Meow_MWMAIL_Modules_Mailer {
         __( 'The stored credentials for %s cannot be read: they were encrypted with security keys this site no longer has. Enter them again in the settings, or turn credential encryption off.', 'meow-mailer' ),
         $provider_key
       ) );
+    }
+    if ( ! empty( $email['test'] ) ) {
+      $email['message'] = str_replace( '{route}', Meow_MWMAIL_Core::provider_label( $provider_key ), $email['message'] );
     }
     try {
       $credentials = $this->core->get_provider_options( $provider_key );
@@ -523,6 +531,9 @@ class Meow_MWMAIL_Modules_Mailer {
       'custom_headers' => $custom_headers,
       'headers_raw'  => $header_lines,
       'provider'     => $atts['provider'] ?? null,
+      // A test email names the route that delivered it, which is only known once the
+      // fallback has or has not stepped in, so the mailer fills it in at send time.
+      'test'         => ! empty( $atts['test'] ),
     ];
   }
 

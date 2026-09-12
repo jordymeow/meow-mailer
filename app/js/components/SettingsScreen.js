@@ -124,6 +124,9 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
     setTestBusy(true);
     setNotice(null);
     try {
+      // The credential just typed is still on its way to the server when the click
+      // lands; testing before it arrives tests the previous one.
+      await actions.settled();
       const res = await sendTestEmail(testTo, testFormat, target);
       setNotice({ variant: 'success', text: `${res.message} ${t('Open the Logs to see the result.')}` });
       onChanged();
@@ -202,11 +205,11 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
         <NekoOption value="html" label={t('HTML')} />
         <NekoOption value="plain" label={t('Plain')} />
       </NekoSelect>
-      <NekoButton className="secondary" icon="mail" disabled={testBusy || !testTo || provider === 'none'} onClick={() => sendTest('provider')}>{t('Send Test')}</NekoButton>
+      <NekoButton className="secondary" icon="mail" disabled={testBusy || busy || !testTo || provider === 'none'} onClick={() => sendTest('provider')}>{t('Send Test')}</NekoButton>
       {/* The fallback is only ever used when things are already going wrong, which is
           the worst moment to discover its credentials expired months ago. */}
       {hasFallback && (
-        <NekoButton className="secondary" icon="mail" disabled={testBusy || !testTo} onClick={() => sendTest('fallback')}>
+        <NekoButton className="secondary" icon="mail" disabled={testBusy || busy || !testTo} onClick={() => sendTest('fallback')}>
           {t('Test Fallback')}
         </NekoButton>
       )}

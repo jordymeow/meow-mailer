@@ -1,4 +1,4 @@
-const { useContext, createContext, useState, useCallback } = wp.element;
+const { useContext, createContext, useState, useCallback, useRef } = wp.element;
 
 import { NekoModal } from '@neko-ui';
 import { options as defaultOptions } from '@app/settings';
@@ -23,23 +23,35 @@ export const CoreContextProvider = ({ children }) => {
     }
   }, []);
 
+  // The save currently in flight, if any. A field saves on blur, and blur fires on
+  // the mousedown of whichever button was clicked next, so "type the password, click
+  // Send Test" fires the save and the test as two parallel requests and the test can
+  // run against the old settings. Anything that acts on the server side of the
+  // options awaits settled() first.
+  const pending = useRef(Promise.resolve());
+  const settled = useCallback(() => pending.current.catch(() => {}), []);
+
   // Persist an optimistic change: show it immediately, then roll back to the
   // previous state if the server rejects it (so the UI never lies about a save).
-  const saveOptions = useCallback(async (next, previous) => {
-    setBusy(true);
-    setOptions(next);
-    try {
-      const saved = await updateSettings(next);
-      setOptions(saved);
-      return saved;
-    } catch (err) {
-      if (previous !== undefined) {
-        setOptions(previous);
+  const saveOptions = useCallback((next, previous) => {
+    const run = (async () => {
+      setBusy(true);
+      setOptions(next);
+      try {
+        const saved = await updateSettings(next);
+        setOptions(saved);
+        return saved;
+      } catch (err) {
+        if (previous !== undefined) {
+          setOptions(previous);
+        }
+        setError(err.message);
+      } finally {
+        setBusy(false);
       }
-      setError(err.message);
-    } finally {
-      setBusy(false);
-    }
+    })();
+    pending.current = run;
+    return run;
   }, []);
 
   const updateOption = useCallback((value, name) => {
@@ -82,7 +94,7 @@ export const CoreContextProvider = ({ children }) => {
 
   const value = {
     state: { options, busy, error },
-    actions: { refreshOptions, saveOptions, updateOption, updateProviderOption, resetOptions, getOption, setOptions, setError, setBusy },
+    actions: { refreshOptions, saveOptions, settled, updateOption, updateProviderOption, resetOptions, getOption, setOptions, setError, setBusy },
   };
 
   return (

@@ -265,6 +265,28 @@ class Meow_MWMAIL_Core {
   /** Providers whose endpoints are authorized through OAuth rather than a key. */
   const OAUTH_PROVIDERS = [ 'gmail', 'outlook', 'zoho' ];
 
+  /** The name a provider goes by in the UI (the same list as PROVIDERS in app/js/providers.js). */
+  public static function provider_label( $key ) {
+    $labels = [
+      'wordpress'  => 'WordPress',
+      'smtp'       => 'Generic SMTP',
+      'mailgun'    => 'Mailgun',
+      'brevo'      => 'Brevo',
+      'sendgrid'   => 'SendGrid',
+      'ses'        => 'Amazon SES',
+      'postmark'   => 'Postmark',
+      'smtp2go'    => 'SMTP2GO',
+      'mailjet'    => 'Mailjet',
+      'resend'     => 'Resend',
+      'mailersend' => 'MailerSend',
+      'maileroo'   => 'Maileroo',
+      'gmail'      => 'Gmail / Google Workspace',
+      'outlook'    => 'Microsoft 365 / Outlook',
+      'zoho'       => 'Zoho Mail',
+    ];
+    return $labels[ $key ] ?? (string) $key;
+  }
+
   /**
    * The saved value that varies a provider's OAuth URLs: the Microsoft tenant, or
    * the Zoho data center. Kept here so the REST builder and the admin callback

@@ -353,14 +353,21 @@ class Meow_MWMAIL_Rest {
       }
     }
 
+    // {route} is filled in by the mailer with whichever provider actually delivered
+    // it. Read in the inbox, that is the only way to tell a working provider from a
+    // fallback that quietly stepped in.
+    /* translators: {route} is replaced by the name of the provider that sent the email. */
+    $route_line = __( 'Delivered through: {route}', 'meow-mailer' );
     if ( $format === 'plain' ) {
       $subject = __( 'Meow Mailer: Plain Text Test', 'meow-mailer' );
-      $message = __( "This is a plain-text test email from Meow Mailer.\n\nIf you received it, your provider is configured correctly. 🐱", 'meow-mailer' );
+      $message = __( "This is a plain-text test email from Meow Mailer.\n\nIf you received it, your provider is configured correctly. 🐱", 'meow-mailer' )
+        . "\n\n" . $route_line;
       $headers = [ 'Content-Type: text/plain; charset=UTF-8' ];
     } else {
       $subject = __( 'Meow Mailer: HTML Test', 'meow-mailer' );
       $message = '<h2 style="margin:0 0 10px;font-family:sans-serif;">' . esc_html__( 'It works! 🐱', 'meow-mailer' ) . '</h2>'
-        . '<p style="font-family:sans-serif;line-height:1.5;">' . esc_html__( 'This is an HTML test email from Meow Mailer. If you can read this with formatting, your provider is configured correctly.', 'meow-mailer' ) . '</p>';
+        . '<p style="font-family:sans-serif;line-height:1.5;">' . esc_html__( 'This is an HTML test email from Meow Mailer. If you can read this with formatting, your provider is configured correctly.', 'meow-mailer' ) . '</p>'
+        . '<p style="font-family:sans-serif;line-height:1.5;color:#666;">' . esc_html( $route_line ) . '</p>';
       $headers = [ 'Content-Type: text/html; charset=UTF-8' ];
     }
 
@@ -370,6 +377,7 @@ class Meow_MWMAIL_Rest {
       'message'  => $message,
       'headers'  => $headers,
       'provider' => $route_to,
+      'test'     => true,
     ] );
 
     $result = $this->core->mailer->dispatch( $email );
