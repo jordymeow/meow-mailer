@@ -85,42 +85,42 @@ class Meow_MWMAIL_Mailers_Zoho extends Meow_MWMAIL_Mailers_Base {
    * @return array|WP_Error
    */
   private function upload_attachments( $email, $token, $account_id ) {
-    $uploaded = [];
+    $files = [];
     foreach ( (array) $email['attachments'] as $name => $path ) {
-      $file = $this->upload_one( $path, is_string( $name ) ? $name : basename( $path ), false, $token, $account_id );
-      if ( is_wp_error( $file ) ) {
-        return $file;
-      }
-      if ( $file ) {
-        $uploaded[] = $file;
-      }
+      $files[] = [ 'path' => $path, 'name' => is_string( $name ) ? $name : basename( $path ), 'inline' => false, 'content' => null ];
     }
     foreach ( ( $email['embeds'] ?? [] ) as $cid => $path ) {
-      $file = $this->upload_one( $path, basename( $path ), true, $token, $account_id );
-      if ( is_wp_error( $file ) ) {
-        return $file;
+      $files[] = [ 'path' => $path, 'name' => basename( $path ), 'inline' => true, 'content' => null ];
+    }
+    // Added through `phpmailer_init`, so the content may only exist in memory.
+    foreach ( self::extra_files( $email ) as $file ) {
+      $files[] = $file;
+    }
+
+    $uploaded = [];
+    foreach ( $files as $file ) {
+      $data = $file['content'] !== null ? $file['content'] : $this->read_file( $file['path'] );
+      if ( $data === null ) {
+        $this->core->log( 'Attachment skipped, not readable: ' . $file['path'] );
+        continue;
       }
-      if ( $file ) {
-        $uploaded[] = $file;
+      $result = $this->upload_one( $data, $file['name'], ! empty( $file['inline'] ), $token, $account_id );
+      if ( is_wp_error( $result ) ) {
+        return $result;
+      }
+      if ( $result ) {
+        $uploaded[] = $result;
       }
     }
     return $uploaded;
   }
 
   /**
-   * @return array|null|WP_Error  null when the file is simply not readable, which
-   *                              matches how the other providers skip bad paths.
+   * Upload one file's bytes and return the handle Zoho wants on the message.
+   *
+   * @return array|null|WP_Error
    */
-  private function upload_one( $path, $filename, $inline, $token, $account_id ) {
-    if ( ! file_exists( $path ) || ! is_readable( $path ) ) {
-      $this->core->log( 'Attachment skipped, not readable: ' . $path );
-      return null;
-    }
-    $data = file_get_contents( $path );
-    if ( $data === false ) {
-      return null;
-    }
-
+  private function upload_one( $data, $filename, $inline, $token, $account_id ) {
     $url = add_query_arg(
       array_filter( [ 'fileName' => rawurlencode( $filename ), 'isInline' => $inline ? 'true' : '' ] ),
       $this->api_url( $account_id . '/messages/attachments' )

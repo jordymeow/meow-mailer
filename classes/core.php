@@ -8,6 +8,7 @@ class Meow_MWMAIL_Core {
   public $rest = null;
   public $logs = null;
   public $mailer = null;
+  public $phpmailer = null;
   public $alerts = null;
   public $notifications = null;
   public $is_rest = false;
@@ -30,9 +31,10 @@ class Meow_MWMAIL_Core {
 
     // The logs module and the mailer dispatcher must exist on every request so that
     // wp_mail() is intercepted wherever it is called.
-    $this->logs   = new Meow_MWMAIL_Modules_Logs( $this );
-    $this->mailer = new Meow_MWMAIL_Modules_Mailer( $this );
-    $this->alerts = new Meow_MWMAIL_Modules_Alerts( $this );
+    $this->logs      = new Meow_MWMAIL_Modules_Logs( $this );
+    $this->mailer    = new Meow_MWMAIL_Modules_Mailer( $this );
+    $this->phpmailer = new Meow_MWMAIL_Modules_Phpmailer( $this );
+    $this->alerts    = new Meow_MWMAIL_Modules_Alerts( $this );
 
     // Also on every request: the core notifications it suppresses are triggered from
     // the front-end (a comment, a registration) as often as from the admin.

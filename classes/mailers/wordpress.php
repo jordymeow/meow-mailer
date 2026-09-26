@@ -23,11 +23,17 @@ class Meow_MWMAIL_Mailers_Wordpress extends Meow_MWMAIL_Mailers_Base {
       // PHP's mail(), which is the transport core uses when nothing reconfigures it.
       $mail->isMail();
 
-      // Unlike the real providers, this one honours phpmailer_init: hosts and
-      // mu-plugins use it to point PHPMailer at their own relay, and that is exactly
-      // what "let WordPress deal with it" is supposed to mean here.
-      // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- core WordPress hook
-      do_action_ref_array( 'phpmailer_init', [ &$mail ] );
+      // Unlike the real providers, this one honours phpmailer_init on the object it
+      // actually sends with: hosts and mu-plugins use it to point PHPMailer at their
+      // own relay, and that is exactly what "let WordPress deal with it" means here.
+      //
+      // Unless the compatibility layer already ran it for this email, in which case
+      // everything it added is on the message already and firing it again would
+      // attach the same invoice twice.
+      if ( empty( $email['phpmailer_init_done'] ) ) {
+        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- core WordPress hook
+        do_action_ref_array( 'phpmailer_init', [ &$mail ] );
+      }
 
       $mail->send();
       return true;

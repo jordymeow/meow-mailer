@@ -24,7 +24,11 @@ abstract class Meow_MWMAIL_Mailers_Base {
   }
 
   protected function is_html( $email ) {
-    return stripos( $email['content_type'], 'text/html' ) !== false;
+    return self::email_is_html( $email );
+  }
+
+  private static function email_is_html( $email ) {
+    return stripos( (string) ( $email['content_type'] ?? '' ), 'text/html' ) !== false;
   }
 
   /**
@@ -32,19 +36,7 @@ abstract class Meow_MWMAIL_Mailers_Base {
    * SMTP and Gmail mailers (which both rely on PHPMailer to assemble the message).
    */
   protected function build_phpmailer( $email ) {
-    require_once ABSPATH . WPINC . '/PHPMailer/PHPMailer.php';
-    require_once ABSPATH . WPINC . '/PHPMailer/SMTP.php';
-    require_once ABSPATH . WPINC . '/PHPMailer/Exception.php';
-
-    $mail = new \PHPMailer\PHPMailer\PHPMailer( true );
-    $mail->CharSet = $email['charset'] ?: 'UTF-8';
-
-    // Left alone, PHPMailer advertises itself and its version in X-Mailer. A site has
-    // no reason to tell recipients which library sent its mail, so drop the header:
-    // PHPMailer omits it entirely when XMailer is whitespace (empty means "default").
-    $mail->XMailer = ' ';
-
-    $mail->setFrom( $email['from_email'], $email['from_name'], false );
+    $mail = self::new_phpmailer( $this->core, $email );
 
     /**
      * The envelope sender: the address a mail server returns bounces to, which can
@@ -64,22 +56,48 @@ abstract class Meow_MWMAIL_Mailers_Base {
       $mail->Sender = $return_path;
     }
 
+    return $mail;
+  }
+
+  /**
+   * The message itself, with no transport and no envelope sender: addresses, body,
+   * headers and files, and nothing that depends on which provider sends it.
+   *
+   * Shared on purpose. The mailers that send through PHPMailer build on it, and so
+   * does the `phpmailer_init` compatibility layer, so the message other plugins get
+   * to inspect is the very same one we are about to send.
+   */
+  public static function new_phpmailer( $core, $email ) {
+    require_once ABSPATH . WPINC . '/PHPMailer/PHPMailer.php';
+    require_once ABSPATH . WPINC . '/PHPMailer/SMTP.php';
+    require_once ABSPATH . WPINC . '/PHPMailer/Exception.php';
+
+    $mail = new \PHPMailer\PHPMailer\PHPMailer( true );
+    $mail->CharSet = $email['charset'] ?: 'UTF-8';
+
+    // Left alone, PHPMailer advertises itself and its version in X-Mailer. A site has
+    // no reason to tell recipients which library sent its mail, so drop the header:
+    // PHPMailer omits it entirely when XMailer is whitespace (empty means "default").
+    $mail->XMailer = ' ';
+
+    $mail->setFrom( $email['from_email'], $email['from_name'], false );
+
     foreach ( $email['to'] as $addr ) {
-      $this->add_address( $mail, 'to', $addr );
+      self::add_address( $core, $mail, 'to', $addr );
     }
     foreach ( $email['cc'] as $addr ) {
-      $this->add_address( $mail, 'cc', $addr );
+      self::add_address( $core, $mail, 'cc', $addr );
     }
     foreach ( $email['bcc'] as $addr ) {
-      $this->add_address( $mail, 'bcc', $addr );
+      self::add_address( $core, $mail, 'bcc', $addr );
     }
     foreach ( $email['reply_to'] as $addr ) {
-      $this->add_address( $mail, 'reply_to', $addr );
+      self::add_address( $core, $mail, 'reply_to', $addr );
     }
 
     $mail->Subject = $email['subject'];
     $mail->Body    = $email['message'];
-    if ( $this->is_html( $email ) ) {
+    if ( self::email_is_html( $email ) ) {
       $mail->isHTML( true );
       $mail->AltBody = wp_strip_all_tags( $email['message'] );
     }
@@ -93,7 +111,7 @@ abstract class Meow_MWMAIL_Mailers_Base {
         try {
           $mail->addAttachment( $path, is_string( $name ) ? $name : '' );
         } catch ( \PHPMailer\PHPMailer\Exception $e ) {
-          $this->core->log( 'Attachment skipped: ' . $e->getMessage() );
+          $core->log( 'Attachment skipped: ' . $e->getMessage() );
         }
       }
     }
@@ -103,16 +121,83 @@ abstract class Meow_MWMAIL_Mailers_Base {
         try {
           $mail->addEmbeddedImage( $path, (string) $cid, basename( $path ) );
         } catch ( \PHPMailer\PHPMailer\Exception $e ) {
-          $this->core->log( 'Embedded image skipped: ' . $e->getMessage() );
+          $core->log( 'Embedded image skipped: ' . $e->getMessage() );
         }
+      }
+    }
+    // Files another plugin added through `phpmailer_init`. Bytes are passed as bytes
+    // and a path as a path, never the one for the other: a PDF built in memory
+    // starts with %PDF, and handing that to a function expecting a file name is how
+    // a generated invoice silently turns into a failed send.
+    foreach ( self::extra_files( $email ) as $file ) {
+      try {
+        if ( $file['inline'] && $file['content'] !== null ) {
+          $mail->addStringEmbeddedImage( $file['content'], $file['cid'], $file['name'], \PHPMailer\PHPMailer\PHPMailer::ENCODING_BASE64, $file['type'] );
+        } else if ( $file['inline'] ) {
+          $mail->addEmbeddedImage( $file['path'], $file['cid'], $file['name'] );
+        } else if ( $file['content'] !== null ) {
+          $mail->addStringAttachment( $file['content'], $file['name'], \PHPMailer\PHPMailer\PHPMailer::ENCODING_BASE64, $file['type'] );
+        } else {
+          $mail->addAttachment( $file['path'], $file['name'] );
+        }
+      } catch ( \PHPMailer\PHPMailer\Exception $e ) {
+        $core->log( 'Attachment from phpmailer_init skipped: ' . $e->getMessage() );
       }
     }
 
     return $mail;
   }
 
-  private function add_address( $mail, $type, $address ) {
-    list( $email, $name ) = $this->split_address( $address );
+  /**
+   * The files another plugin contributed through `phpmailer_init`, normalized and
+   * with the unusable ones dropped. Each entry has either 'content' (bytes) or
+   * 'path', never both, and an inline one always carries a Content-ID.
+   */
+  protected static function extra_files( $email ) {
+    $out = [];
+    foreach ( (array) ( $email['extra_attachments'] ?? [] ) as $file ) {
+      if ( ! is_array( $file ) ) {
+        continue;
+      }
+      $content = isset( $file['content'] ) && $file['content'] !== null ? (string) $file['content'] : null;
+      $path    = $content === null ? (string) ( $file['path'] ?? '' ) : '';
+      if ( $content === null && ( $path === '' || ! file_exists( $path ) || ! is_readable( $path ) ) ) {
+        continue;
+      }
+      $name = (string) ( $file['name'] ?? '' );
+      if ( $name === '' ) {
+        $name = $path !== '' ? basename( $path ) : 'attachment';
+      }
+      $cid = (string) ( $file['cid'] ?? '' );
+      $out[] = [
+        'name'    => $name,
+        'content' => $content,
+        'path'    => $path,
+        'type'    => (string) ( $file['type'] ?? '' ) ?: self::guess_type( $name, $path ),
+        'inline'  => ! empty( $file['inline'] ) && $cid !== '',
+        'cid'     => $cid,
+      ];
+    }
+    return $out;
+  }
+
+  /**
+   * The MIME type of a file. Sniffed from the file when there is one on disk, and
+   * otherwise worked out from the name, which is all in-memory content has.
+   */
+  protected static function guess_type( $name, $path = '' ) {
+    if ( $path !== '' && file_exists( $path ) && function_exists( 'mime_content_type' ) ) {
+      $sniffed = @mime_content_type( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- unreadable files fall through to the name
+      if ( ! empty( $sniffed ) ) {
+        return $sniffed;
+      }
+    }
+    $type = wp_check_filetype( $name );
+    return ! empty( $type['type'] ) ? $type['type'] : 'application/octet-stream';
+  }
+
+  private static function add_address( $core, $mail, $type, $address ) {
+    list( $email, $name ) = self::split_address( $address );
     if ( ! $email ) {
       return;
     }
@@ -124,11 +209,11 @@ abstract class Meow_MWMAIL_Mailers_Base {
         default:         $mail->addAddress( $email, $name ); break;
       }
     } catch ( \PHPMailer\PHPMailer\Exception $e ) {
-      $this->core->log( 'Invalid address skipped: ' . $address );
+      $core->log( 'Invalid address skipped: ' . $address );
     }
   }
 
-  protected function split_address( $address ) {
+  protected static function split_address( $address ) {
     $name = '';
     if ( preg_match( '/(.*)<(.+)>/', $address, $m ) && count( $m ) === 3 ) {
       $name    = trim( $m[1], ' "' );
@@ -196,32 +281,44 @@ abstract class Meow_MWMAIL_Mailers_Base {
         $out[] = $file + [ 'inline' => true, 'cid' => (string) $cid ];
       }
     }
+    // Contributed through `phpmailer_init`: already in memory as often as not, and
+    // the bytes are encoded as they are rather than looked up on disk.
+    foreach ( self::extra_files( $email ) as $file ) {
+      $data = $file['content'] !== null ? $file['content'] : $this->read_file( $file['path'] );
+      if ( $data === null ) {
+        continue;
+      }
+      $out[] = [
+        'filename' => $file['name'],
+        'content'  => base64_encode( $data ),
+        'type'     => $file['type'],
+        'inline'   => $file['inline'],
+        'cid'      => $file['cid'],
+      ];
+    }
     return $out;
   }
 
   /** @return array|null  ['filename'=>, 'content'=>base64, 'type'=>mime] */
   private function read_base64( $path, $filename ) {
-    if ( ! file_exists( $path ) || ! is_readable( $path ) ) {
+    $data = $this->read_file( $path );
+    if ( $data === null ) {
       return null;
     }
-    $data = file_get_contents( $path );
-    if ( $data === false ) {
-      return null;
-    }
-    $type = function_exists( 'mime_content_type' ) ? mime_content_type( $path ) : 'application/octet-stream';
     return [
       'filename' => $filename,
       'content'  => base64_encode( $data ),
-      'type'     => $type ?: 'application/octet-stream',
+      'type'     => self::guess_type( $filename, $path ),
     ];
   }
 
   /**
    * Build a multipart/form-data body. $fields is a flat list of [name, value]
-   * pairs (repeated names allowed); $attachments and $embeds are normalized file
-   * maps. Returns [ 'body' => string, 'content_type' => string ].
+   * pairs (repeated names allowed), and the files come from the normalized email:
+   * its attachments, its inline images, and whatever `phpmailer_init` added.
+   * Returns [ 'body' => string, 'content_type' => string ].
    */
-  protected function build_multipart( $fields, $attachments = [], $embeds = [] ) {
+  protected function build_multipart( $fields, $email ) {
     $boundary = wp_generate_password( 24, false );
     $eol      = "\r\n";
     $body     = '';
@@ -232,33 +329,48 @@ abstract class Meow_MWMAIL_Mailers_Base {
       $body .= 'Content-Disposition: form-data; name="' . $name . '"' . $eol . $eol;
       $body .= $value . $eol;
     }
-    foreach ( (array) $attachments as $name => $path ) {
-      $body .= $this->multipart_file( 'attachment', $path, is_string( $name ) ? $name : basename( $path ), $boundary, $eol );
+    foreach ( (array) $email['attachments'] as $name => $path ) {
+      $data = $this->read_file( $path );
+      if ( $data !== null ) {
+        $filename = is_string( $name ) ? $name : basename( $path );
+        $body .= $this->multipart_file( 'attachment', $data, $filename, self::guess_type( $filename, $path ), $boundary, $eol );
+      }
     }
     // Inline files are matched by their name, so keeping the Content-ID as the
     // file name is what makes the cid: references in the HTML resolve.
-    foreach ( (array) $embeds as $cid => $path ) {
-      $body .= $this->multipart_file( 'inline', $path, (string) $cid, $boundary, $eol );
+    foreach ( ( $email['embeds'] ?? [] ) as $cid => $path ) {
+      $data = $this->read_file( $path );
+      if ( $data !== null ) {
+        $body .= $this->multipart_file( 'inline', $data, (string) $cid, self::guess_type( basename( $path ), $path ), $boundary, $eol );
+      }
+    }
+    foreach ( self::extra_files( $email ) as $file ) {
+      $data = $file['content'] !== null ? $file['content'] : $this->read_file( $file['path'] );
+      if ( $data !== null ) {
+        $body .= $this->multipart_file( $file['inline'] ? 'inline' : 'attachment', $data, $file['inline'] ? $file['cid'] : $file['name'], $file['type'], $boundary, $eol );
+      }
     }
     $body .= '--' . $boundary . '--' . $eol;
 
     return [ 'body' => $body, 'content_type' => 'multipart/form-data; boundary=' . $boundary ];
   }
 
-  private function multipart_file( $field, $path, $filename, $boundary, $eol ) {
-    if ( ! file_exists( $path ) || ! is_readable( $path ) ) {
-      return '';
-    }
-    $data = file_get_contents( $path );
-    if ( $data === false ) {
-      return '';
-    }
-    $type  = function_exists( 'mime_content_type' ) ? ( mime_content_type( $path ) ?: 'application/octet-stream' ) : 'application/octet-stream';
+  /** The part takes the bytes, never a path: what is attached is already decided. */
+  private function multipart_file( $field, $data, $filename, $type, $boundary, $eol ) {
     $part  = '--' . $boundary . $eol;
     $part .= 'Content-Disposition: form-data; name="' . $field . '"; filename="' . $filename . '"' . $eol;
-    $part .= 'Content-Type: ' . $type . $eol . $eol;
+    $part .= 'Content-Type: ' . ( $type ?: 'application/octet-stream' ) . $eol . $eol;
     $part .= $data . $eol;
     return $part;
+  }
+
+  /** @return string|null  null when the file is missing or unreadable. */
+  protected function read_file( $path ) {
+    if ( ! $path || ! file_exists( $path ) || ! is_readable( $path ) ) {
+      return null;
+    }
+    $data = file_get_contents( $path );
+    return $data === false ? null : $data;
   }
 
   protected function extract_error( $body ) {

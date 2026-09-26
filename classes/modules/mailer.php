@@ -96,6 +96,13 @@ class Meow_MWMAIL_Modules_Mailer {
     $email           = $this->normalize( $atts );
     $active_provider  = $email['provider'] ?? $this->core->get_option( 'provider', 'none' );
 
+    // Other plugins add part of the message on `phpmailer_init`, an invoice PDF built
+    // in memory being the usual one. Collect it here, before the provider is chosen
+    // and before anything is deferred: the hook needs the request that triggered the
+    // email to still be alive, and doing it once means the fallback sends exactly
+    // what the primary provider would have sent.
+    $email = $this->core->phpmailer->collect( $email );
+
     // Background sending: hand the page back to the visitor immediately and do
     // the actual network send on shutdown (after the response is flushed). Offline
     // just logs (no network), so there's nothing to defer. We never defer messages
@@ -103,7 +110,8 @@ class Meow_MWMAIL_Modules_Mailer {
     // and they'd be gone by shutdown.
     if ( $this->core->get_option( 'send_in_background', false )
       && $active_provider !== 'offline'
-      && empty( $email['attachments'] ) && empty( $email['embeds'] ) ) {
+      && empty( $email['attachments'] ) && empty( $email['embeds'] )
+      && ! $this->has_extra_paths( $email ) ) {
       $this->enqueue( $email );
       return true;
     }
@@ -188,6 +196,12 @@ class Meow_MWMAIL_Modules_Mailer {
     $logs_enabled  = ! empty( $options['logs_enabled'] );
     $store_body    = ! empty( $options['log_body'] );
     $provider_key  = $email['provider'] ?? ( $options['provider'] ?? 'none' );
+
+    // A resend or a test email comes straight in here, without passing through
+    // wp_mail(), so this is where those get their turn at `phpmailer_init`.
+    if ( empty( $email['phpmailer_init_done'] ) ) {
+      $email = $this->core->phpmailer->collect( $email );
+    }
 
     // Offline provider: never send, just keep a record.
     $this->last_error = '';
@@ -386,7 +400,7 @@ class Meow_MWMAIL_Modules_Mailer {
         'subject'     => (string) $email['subject'],
         'headers'     => wp_json_encode( $email['headers_raw'] ),
         'body'        => $store_body ? (string) $email['message'] : '',
-        'attachments' => implode( ', ', $this->file_names( $email['attachments'] ) ),
+        'attachments' => implode( ', ', array_merge( $this->file_names( $email['attachments'] ), $this->extra_names( $email ) ) ),
         'provider'    => $provider,
         'status'      => $status,
         'error'       => (string) $error,
@@ -395,6 +409,32 @@ class Meow_MWMAIL_Modules_Mailer {
       $this->core->log( 'Failed to log email: ' . $e->getMessage() );
       return null;
     }
+  }
+
+  /** The names of the files another plugin attached through `phpmailer_init`. */
+  private function extra_names( $email ) {
+    $names = [];
+    foreach ( (array) ( $email['extra_attachments'] ?? [] ) as $file ) {
+      if ( is_array( $file ) && empty( $file['inline'] ) && ! empty( $file['name'] ) ) {
+        $names[] = (string) $file['name'];
+      }
+    }
+    return $names;
+  }
+
+  /**
+   * Whether any file added through `phpmailer_init` is a path on disk. Those cannot
+   * be deferred to shutdown, for the same reason wp_mail() attachments cannot: the
+   * caller is free to delete its temp file as soon as wp_mail() returns. Content
+   * already in memory has no such problem.
+   */
+  private function has_extra_paths( $email ) {
+    foreach ( (array) ( $email['extra_attachments'] ?? [] ) as $file ) {
+      if ( is_array( $file ) && empty( $file['content'] ) && ! empty( $file['path'] ) ) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /** The names the recipient sees: the array key when there is one, the file name otherwise. */
@@ -520,6 +560,9 @@ class Meow_MWMAIL_Modules_Mailer {
       'message'      => $message,
       'attachments'  => $attachments,
       'embeds'       => $embeds,
+      // Filled in by the phpmailer_init compatibility layer: files other plugins
+      // attach, which unlike the two above can be content held in memory.
+      'extra_attachments' => [],
       'cc'           => array_values( array_filter( $cc ) ),
       'bcc'          => array_values( array_filter( $bcc ) ),
       'reply_to'     => array_values( array_filter( $reply_to ) ),
