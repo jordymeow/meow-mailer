@@ -401,6 +401,7 @@ class Meow_MWMAIL_Modules_Mailer {
         'headers'     => wp_json_encode( $email['headers_raw'] ),
         'body'        => $store_body ? (string) $email['message'] : '',
         'attachments' => implode( ', ', array_merge( $this->file_names( $email['attachments'] ), $this->extra_names( $email ) ) ),
+        'files'       => $this->stored_files( $email ),
         'provider'    => $provider,
         'status'      => $status,
         'error'       => (string) $error,
@@ -409,6 +410,75 @@ class Meow_MWMAIL_Modules_Mailer {
       $this->core->log( 'Failed to log email: ' . $e->getMessage() );
       return null;
     }
+  }
+
+  /**
+   * The attached files as JSON with base64 content, for the log, or null when the
+   * feature is off or the email carries nothing worth keeping.
+   *
+   * This is what makes a resend able to attach the invoice again. The bytes are the
+   * only part of an email we cannot rebuild later: a PDF generated in memory during
+   * a WooCommerce order is gone the moment that request ends, and the plugin that
+   * built it will not build it again outside its own context.
+   */
+  private function stored_files( $email ) {
+    if ( ! $this->core->get_option( 'store_attachments', false ) ) {
+      return null;
+    }
+
+    $files = [];
+    foreach ( (array) $email['attachments'] as $name => $path ) {
+      $files[] = [
+        'name'    => is_string( $name ) ? $name : basename( $path ),
+        'content' => Meow_MWMAIL_Mailers_Base::read_file( $path ),
+        'inline'  => false,
+        'cid'     => '',
+      ];
+    }
+    foreach ( ( $email['embeds'] ?? [] ) as $cid => $path ) {
+      $files[] = [
+        'name'    => basename( $path ),
+        'content' => Meow_MWMAIL_Mailers_Base::read_file( $path ),
+        'inline'  => true,
+        'cid'     => (string) $cid,
+      ];
+    }
+    foreach ( Meow_MWMAIL_Mailers_Base::extra_files( $email ) as $file ) {
+      $files[] = [
+        'name'    => $file['name'],
+        'content' => $file['content'] !== null ? $file['content'] : Meow_MWMAIL_Mailers_Base::read_file( $file['path'] ),
+        'type'    => $file['type'],
+        'inline'  => $file['inline'],
+        'cid'     => $file['cid'],
+      ];
+    }
+
+    $total   = 0;
+    $payload = [];
+    foreach ( $files as $file ) {
+      if ( $file['content'] === null || $file['content'] === '' ) {
+        continue;
+      }
+      $total += strlen( $file['content'] );
+      $payload[] = [
+        'name'    => $file['name'],
+        'type'    => $file['type'] ?? '',
+        'inline'  => $file['inline'],
+        'cid'     => $file['cid'],
+        'content' => base64_encode( $file['content'] ),
+      ];
+    }
+    if ( empty( $payload ) ) {
+      return null;
+    }
+    // All of it or none of it, so the log never promises a resend it can only
+    // half deliver.
+    if ( $total > Meow_MWMAIL_Modules_Logs::stored_limit() ) {
+      $this->core->log( sprintf( 'Attachments not stored for resend: %d bytes is over the limit.', $total ) );
+      return null;
+    }
+
+    return wp_json_encode( $payload );
   }
 
   /** The names of the files another plugin attached through `phpmailer_init`. */

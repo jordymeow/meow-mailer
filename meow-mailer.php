@@ -40,6 +40,10 @@ define( 'MWMAIL_LOG_COLUMNS', [
   'headers'     => 'LONGTEXT NOT NULL',
   'body'        => 'LONGTEXT NOT NULL',
   'attachments' => 'TEXT NOT NULL',
+  // The attached files themselves, as JSON with base64 content, so a resend can
+  // carry them. Only filled when "Keep Attachments" is on, and emptied again by
+  // the daily prune well before the log row itself expires.
+  'files'       => 'LONGBLOB NULL',
   'provider'    => "VARCHAR(50) NOT NULL DEFAULT ''",
   'status'      => "VARCHAR(20) NOT NULL DEFAULT ''",
   'error'       => 'TEXT NOT NULL',

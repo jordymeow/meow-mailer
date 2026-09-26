@@ -100,7 +100,7 @@ class Meow_MWMAIL_Core {
   const NETWORK_GROUPS = [
     'provider' => [ 'provider', 'fallback_provider', 'providers', 'encrypt_secrets' ],
     'sender'   => [ 'from_email', 'from_name', 'force_from', 'reply_to', 'return_path' ],
-    'delivery' => [ 'logs_enabled', 'log_body', 'log_retention_days', 'send_in_background' ],
+    'delivery' => [ 'logs_enabled', 'log_body', 'store_attachments', 'log_retention_days', 'send_in_background' ],
   ];
 
   /** The groups that are shareable on top of 'provider'. */
@@ -229,6 +229,10 @@ class Meow_MWMAIL_Core {
       'return_path'        => '',
       'logs_enabled'       => true,
       'log_body'           => true,
+      // Keep the attached files too, so a resend carries them. Off by default: it
+      // puts real documents (invoices and the like) in the database, which is a
+      // choice a site should make on purpose rather than discover.
+      'store_attachments'  => false,
       'log_retention_days' => 0, // 0 = keep forever
       'send_in_background' => false,
       'alerts_enabled'     => false,
@@ -749,10 +753,16 @@ class Meow_MWMAIL_Core {
   #endregion
 
   public function prune_logs() {
+    if ( ! $this->logs ) {
+      return;
+    }
     $days = intval( $this->get_option( 'log_retention_days', 0 ) );
-    if ( $days > 0 && $this->logs ) {
+    if ( $days > 0 ) {
       $this->logs->prune( $days );
     }
+    // Stored attachments go earlier than the rows that carry them, and keep going
+    // even when the logs are kept forever, which is the default.
+    $this->logs->prune_files( Meow_MWMAIL_Modules_Logs::stored_days() );
   }
 
   public function log( $message ) {

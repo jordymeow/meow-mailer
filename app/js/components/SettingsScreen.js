@@ -366,6 +366,11 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
             <SwitchSetting title={t('Store Body')} name="log_body" checked={options.log_body}
               onChange={(v) => updateOption(v, 'log_body')}
               description={t('Also keep the message itself, so you can read it back and resend it. Turn off if you would rather not keep email content in your database.')} />
+            {options.log_body && (
+              <SwitchSetting title={t('Keep Attachments')} name="store_attachments" checked={options.store_attachments}
+                onChange={(v) => updateOption(v, 'store_attachments')}
+                description={t('Also keep the attached files, so Resend sends the email complete. Useful when another plugin builds a document on the fly, like an invoice PDF, since that file cannot be rebuilt later. It does mean those documents sit in your database, so they are kept for 30 days only, and emails over 2 MB of attachments are skipped.')} />
+            )}
             <NekoSettings title={t('Keep Logs For')}>
               <NekoSelect scrolldown name="log_retention_days" value={String(options.log_retention_days)} onChange={(v) => updateOption(parseInt(v, 10), 'log_retention_days')}
                 description={t('Older entries are deleted automatically once a day.')}>

@@ -153,7 +153,7 @@ abstract class Meow_MWMAIL_Mailers_Base {
    * with the unusable ones dropped. Each entry has either 'content' (bytes) or
    * 'path', never both, and an inline one always carries a Content-ID.
    */
-  protected static function extra_files( $email ) {
+  public static function extra_files( $email ) {
     $out = [];
     foreach ( (array) ( $email['extra_attachments'] ?? [] ) as $file ) {
       if ( ! is_array( $file ) ) {
@@ -365,7 +365,7 @@ abstract class Meow_MWMAIL_Mailers_Base {
   }
 
   /** @return string|null  null when the file is missing or unreadable. */
-  protected function read_file( $path ) {
+  public static function read_file( $path ) {
     if ( ! $path || ! file_exists( $path ) || ! is_readable( $path ) ) {
       return null;
     }

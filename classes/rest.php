@@ -303,6 +303,15 @@ class Meow_MWMAIL_Rest {
       'attachments' => [],
     ] );
 
+    // Files kept with the log go straight back on, in memory, which is the same
+    // shape the providers already handle. They are also what `phpmailer_init`
+    // produced the first time, so the hook must not run again and add a second copy.
+    $files = $this->core->logs->files( $id );
+    if ( ! empty( $files ) ) {
+      $email['extra_attachments'] = $files;
+      $email['phpmailer_init_done'] = true;
+    }
+
     $result = $this->core->mailer->dispatch( $email );
 
     // The attempt is logged as its own entry; count it on the original too, so the

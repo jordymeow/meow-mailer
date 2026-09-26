@@ -46,7 +46,7 @@ const LogModal = ({ id, onClose, onResent }) => {
   // Delivered, but with an error recorded: only the fallback path writes that pair.
   const rescued = !!(log && log.status === 'sent' && log.error);
   const isHtml = log && /<[a-z][\s\S]*>/i.test(log.body || '');
-  // Only the message is stored, so a resend needs a body and never carries the files.
+  // A resend needs the body; the files come along only when they were kept.
   const canResend = !!(log && log.body);
 
   const content = busy || !log ? <div style={{ padding: 40, textAlign: 'center' }}><NekoSpinner /></div> : (
@@ -61,7 +61,9 @@ const LogModal = ({ id, onClose, onResent }) => {
       {log.reply_to ? <Row label={t('Reply-To')} value={log.reply_to} /> : null}
       <Row label={t('Subject')} value={log.subject} />
       {log.attachments ? <Row label={t('Attachments')} value={<>{log.attachments}
-        <em style={{ color: 'var(--neko-gray-50)' }}> ({t('not included in a resend')})</em></>} /> : null}
+        <em style={{ color: 'var(--neko-gray-50)' }}> ({log.has_files
+          ? t('kept, so a resend includes them')
+          : t('not included in a resend')})</em></>} /> : null}
       {/* An error on a delivered email is not a failure: it is what the main provider
           said before the fallback stepped in. Shown as such, or it reads as a bug. */}
       {log.error ? (rescued

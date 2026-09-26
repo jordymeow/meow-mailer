@@ -18,7 +18,7 @@ class Meow_MWMAIL_Modules_Logs {
   private $db_check = false;
   private $create_attempted = false;
 
-  const MWMAIL_DB_LOGS_VERSION = '1.0';
+  const MWMAIL_DB_LOGS_VERSION = '1.1';
 
   public function __construct( $core = null ) {
     global $wpdb;
@@ -126,12 +126,78 @@ class Meow_MWMAIL_Modules_Logs {
     return $row;
   }
 
+  /**
+   * One row, without the stored files: those can be megabytes and nothing on screen
+   * needs the bytes, only whether they are still there. Column names come from our
+   * own schema constant, never from input.
+   */
   public function select_one( $id ) {
     if ( ! $this->check_db() ) {
       throw new Exception( esc_html__( 'Could not access the database.', 'meow-mailer' ) );
     }
+    $columns = implode( ', ', array_diff( array_keys( MWMAIL_LOG_COLUMNS ), [ 'files' ] ) );
     // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-    return $this->wpdb->get_row( $this->wpdb->prepare( "SELECT * FROM {$this->table_name} WHERE id = %d", intval( $id ) ), ARRAY_A );
+    $row = $this->wpdb->get_row( $this->wpdb->prepare(
+      "SELECT {$columns}, ( files IS NOT NULL AND LENGTH( files ) > 0 ) AS has_files FROM {$this->table_name} WHERE id = %d",
+      intval( $id )
+    ), ARRAY_A );
+    if ( $row ) {
+      $row['has_files'] = ! empty( $row['has_files'] );
+    }
+    return $row;
+  }
+
+  /**
+   * The stored files of a row, shaped the way the mailers read attachments, so a
+   * resend hands them to the provider exactly like the first send did.
+   *
+   * @return array  [ [ 'name'=>, 'content'=>bytes, 'path'=>null, 'type'=>, 'inline'=>, 'cid'=> ], ... ]
+   */
+  public function files( $id ) {
+    if ( ! $this->check_db() ) {
+      return [];
+    }
+    // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+    $json = $this->wpdb->get_var( $this->wpdb->prepare( "SELECT files FROM {$this->table_name} WHERE id = %d", intval( $id ) ) );
+    $stored = json_decode( (string) $json, true );
+    if ( ! is_array( $stored ) ) {
+      return [];
+    }
+
+    $files = [];
+    foreach ( $stored as $file ) {
+      $content = base64_decode( (string) ( $file['content'] ?? '' ), true );
+      if ( $content === false || $content === '' ) {
+        continue;
+      }
+      $files[] = [
+        'name'    => (string) ( $file['name'] ?? 'attachment' ),
+        'content' => $content,
+        'path'    => null,
+        'type'    => (string) ( $file['type'] ?? '' ),
+        'inline'  => ! empty( $file['inline'] ),
+        'cid'     => (string) ( $file['cid'] ?? '' ),
+      ];
+    }
+    return $files;
+  }
+
+  /**
+   * How long stored attachments live. Shorter than the log on purpose: a row of text
+   * is cheap to keep for years, a pile of invoice PDFs is not, and the reason to
+   * resend an email is nearly always the same day it failed.
+   */
+  public static function stored_days() {
+    return max( 1, (int) apply_filters( 'mwmail_stored_attachment_days', 30 ) );
+  }
+
+  /**
+   * The most one email may add to the database. Over this, nothing is stored for
+   * that email rather than part of it: a resend that quietly drops two files out of
+   * three is worse than one that says it carries none.
+   */
+  public static function stored_limit() {
+    return max( 0, (int) apply_filters( 'mwmail_stored_attachment_limit', 2 * MB_IN_BYTES ) );
   }
 
   /**
@@ -323,6 +389,23 @@ class Meow_MWMAIL_Modules_Logs {
     }
     // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
     return $this->wpdb->query( "TRUNCATE TABLE {$this->table_name}" );
+  }
+
+  /** Drop the stored files of older rows, leaving the rows themselves alone. */
+  public function prune_files( $days ) {
+    if ( ! $this->check_db() ) {
+      return false;
+    }
+    $days = intval( $days );
+    if ( $days <= 0 ) {
+      return 0;
+    }
+    $cutoff = gmdate( 'Y-m-d H:i:s', current_time( 'timestamp' ) - ( $days * DAY_IN_SECONDS ) );
+    // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+    return $this->wpdb->query( $this->wpdb->prepare(
+      "UPDATE {$this->table_name} SET files = NULL WHERE files IS NOT NULL AND created < %s",
+      $cutoff
+    ) );
   }
 
   public function prune( $days ) {
