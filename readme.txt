@@ -43,7 +43,7 @@ That is Meow Mailer, and all of this is free:
 
 = Supported providers =
 
-Generic SMTP, Mailgun, Brevo, SendGrid, Amazon SES, Postmark, SMTP2GO, Mailjet, Resend, MailerSend, Maileroo, Gmail / Google Workspace (OAuth 2.0), Microsoft 365 / Outlook (OAuth 2.0), and Zoho Mail (OAuth 2.0).
+Generic SMTP, Mailgun, Brevo, SendGrid, Amazon SES, Postmark, SMTP2GO, Mailjet, Resend, MailerSend, Maileroo, Gmail / Google Workspace (OAuth 2.0), Microsoft 365 / Outlook (OAuth 2.0), Microsoft 365 App-only (Entra app registration, certificate or client secret), and Zoho Mail (OAuth 2.0).
 
 = About Meow Apps =
 
@@ -86,7 +86,7 @@ This is the SMTP envelope sender, so it applies to Generic SMTP. The API provide
 
 = Does it store my email password? =
 
-For SMTP and API providers, credentials are stored in the WordPress database. You can instead define them as PHP constants in `wp-config.php` (e.g. `MWMAIL_SMTP_PASSWORD`) to keep them out of the database. Gmail, Microsoft 365 and Zoho Mail use OAuth 2.0, so no password is ever stored.
+For SMTP and API providers, credentials are stored in the WordPress database. You can instead define them as PHP constants in `wp-config.php` (e.g. `MWMAIL_SMTP_PASSWORD`) to keep them out of the database. Gmail, Microsoft 365 and Zoho Mail use OAuth 2.0, so no password is ever stored. Microsoft 365 App-only stores its certificate or client secret like any other credential, and `MWMAIL_MICROSOFT_CERTIFICATE` can also be the path to a PEM file outside your web root.
 
 = Can the stored credentials be encrypted? =
 
@@ -119,6 +119,8 @@ When enabled, the page is returned to your visitor immediately and the email is 
 = How do I connect Gmail or Microsoft 365? =
 
 Both use OAuth 2.0, so no password is stored. Create an OAuth app (Google Cloud Console for Gmail, Azure Portal for Microsoft 365), paste the Client ID and Secret into the provider settings, add the shown redirect URI to your OAuth app, then click Connect.
+
+If you would rather nobody signs in, for example when you build a site for a client, pick **Microsoft 365 (App-only)** instead. In Entra ID, give your app registration the Microsoft Graph Mail.Send application permission with admin consent, and upload a certificate or create a client secret. Then enter the tenant, client ID, credential and the mailbox to send from. A shared mailbox works and needs no license.
 
 == Screenshots ==
 

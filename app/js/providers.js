@@ -136,6 +136,27 @@ export const PROVIDERS = [
     ],
   },
   {
+    // The same Graph API as above, but the app authenticates as itself (client
+    // credentials), so agencies can set it up without the client ever signing in.
+    key: 'microsoft',
+    label: 'Microsoft 365 (App-only)',
+    description: 'Send through Microsoft 365 with an Entra app registration and application permissions. Nobody signs in: the app authenticates with a certificate or a client secret.',
+    help: 'In Entra ID → App registrations, add the Microsoft Graph "Mail.Send" application permission and grant admin consent, then upload a certificate or create a client secret. The mailbox can be a shared mailbox, which needs no license. Mail.Send lets the app send as any mailbox in your tenant, so limit it to this one with an Application Access Policy.',
+    fields: [
+      { name: 'tenant', label: 'Tenant ID', type: 'text', placeholder: 'Directory ID or contoso.onmicrosoft.com' },
+      { name: 'client_id', label: 'Client ID', type: 'text' },
+      { name: 'auth', label: 'Authentication', type: 'select', options: [
+        { value: 'certificate', label: 'Certificate' },
+        { value: 'secret', label: 'Client Secret' },
+      ] },
+      { name: 'certificate', label: 'Certificate', type: 'pem', placeholder: '-----BEGIN CERTIFICATE-----',
+        description: 'The certificate and its private key, both in PEM format, pasted together. From a .pfx file: openssl pkcs12 -in cert.pfx -out cert.pem -nodes',
+        showIf: (creds) => creds.auth !== 'secret' },
+      { name: 'client_secret', label: 'Client Secret', type: 'password', showIf: (creds) => creds.auth === 'secret' },
+      { name: 'mailbox', label: 'Send From', type: 'text', placeholder: 'website@example.com' },
+    ],
+  },
+  {
     key: 'zoho',
     label: 'Zoho Mail',
     description: 'Send via your Zoho Mail account using OAuth 2.0 (no password stored). Emails are sent from the connected mailbox.',
@@ -199,6 +220,9 @@ export const isProviderConfigured = (key, creds = {}) => {
     case 'gmail':
     case 'outlook':
     case 'zoho':     return !!creds.refresh_token;
+    case 'microsoft':
+      return !!creds.tenant && !!creds.client_id && !!creds.mailbox
+        && !!(creds.auth === 'secret' ? creds.client_secret : creds.certificate);
     case 'mailgun':  return !!creds.api_key && !!creds.domain;
     case 'ses':      return !!creds.access_key && !!creds.secret_key;
     case 'postmark': return !!creds.server_token;

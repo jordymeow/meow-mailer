@@ -459,9 +459,10 @@ class Meow_MWMAIL_Rest {
     $field    = (string) ( $params['field'] ?? '' );
 
     // Whitelisted, or the route would read back any option the plugin stores rather
-    // than the one credential behind the eye. OAuth tokens are excluded on top: the
-    // UI never offers to reveal them, so nothing should be able to ask.
-    $allowed = array_diff( $this->core->secret_fields(), [ 'access_token', 'refresh_token' ] );
+    // than the one credential behind the eye. OAuth tokens and certificates (which hold
+    // a private key) are excluded on top: the UI never offers to reveal them, so
+    // nothing should be able to ask.
+    $allowed = array_diff( $this->core->secret_fields(), [ 'access_token', 'refresh_token', 'certificate' ] );
     if ( ! in_array( $field, $allowed, true ) ) {
       return new WP_REST_Response( [ 'success' => false, 'message' => __( 'That field cannot be revealed.', 'meow-mailer' ) ], 200 );
     }

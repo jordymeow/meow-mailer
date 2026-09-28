@@ -1,6 +1,6 @@
 const { useState } = wp.element;
 
-import { NekoSettings, NekoInput, NekoSelect, NekoOption, NekoSwitch, NekoButton, NekoStatus, NekoMessage, NekoSpacer } from '@neko-ui';
+import { NekoSettings, NekoInput, NekoTextArea, NekoSelect, NekoOption, NekoSwitch, NekoButton, NekoStatus, NekoMessage, NekoSpacer } from '@neko-ui';
 
 import { useCoreContext } from '@app/contexts/core';
 import { getProvider } from '@app/providers';
@@ -15,6 +15,7 @@ const Field = ({ field, value, providerKey, onChange }) => {
   // in the settings payload, so revealing it means asking the server for that one
   // field rather than toggling an input that only holds a row of bullets.
   const [revealed, setRevealed] = useState(null);
+  const [replacing, setReplacing] = useState(false);
 
   const reveal = async () => {
     try {
@@ -58,6 +59,22 @@ const Field = ({ field, value, providerKey, onChange }) => {
         // because whatever is in it is what the user just typed.
         return <NekoInput type="password" name={field.name} value={value ?? ''} placeholder={field.placeholder}
           onBlur={onChange} onEnter={onChange} />;
+      }
+      case 'pem': {
+        // A saved certificate comes back as the mask. The private key inside it is never
+        // shown again, so there is no eye: replacing it means pasting a new one.
+        if (value === SECRET_MASK && !replacing) {
+          return (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <NekoStatus status="ok">{t('Saved')}</NekoStatus>
+              <NekoButton className="secondary" onClick={() => setReplacing(true)}>{t('Replace')}</NekoButton>
+            </div>
+          );
+        }
+        // Leaving the box empty must not wipe the certificate that is already saved.
+        return <NekoTextArea name={field.name} rows={6} value={value === SECRET_MASK ? '' : (value ?? '')}
+          placeholder={field.placeholder} description={field.description && t(field.description)}
+          onBlur={(v) => { if (v.trim()) { setReplacing(false); onChange(v.trim()); } }} />;
       }
       default:
         return <NekoInput name={field.name} value={value ?? ''} placeholder={field.placeholder} onBlur={onChange} onEnter={onChange} />;
@@ -137,7 +154,7 @@ const ProviderFields = ({ providerKey }) => {
 
   return (
     <>
-      {provider.fields.map((field) => (
+      {provider.fields.filter((field) => !field.showIf || field.showIf(creds)).map((field) => (
         <Field
           key={`${providerKey}-${field.name}`}
           field={field}
@@ -146,6 +163,7 @@ const ProviderFields = ({ providerKey }) => {
           onChange={(value) => actions.updateProviderOption(value, field.name, providerKey)}
         />
       ))}
+      {provider.help && <><NekoSpacer /><NekoMessage variant="info">{t(provider.help)}</NekoMessage></>}
       {provider.oauth && <OAuthConnect provider={provider} />}
     </>
   );

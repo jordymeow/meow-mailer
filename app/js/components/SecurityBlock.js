@@ -27,7 +27,7 @@ const constantsFor = (providerKey) => {
   if (!provider || !provider.fields) {
     return [];
   }
-  return provider.fields.filter((f) => f.type === 'password')
+  return provider.fields.filter((f) => f.type === 'password' || f.type === 'pem')
     .map((f) => `MWMAIL_${providerKey}_${f.name}`.toUpperCase());
 };
 

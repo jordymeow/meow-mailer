@@ -16,7 +16,16 @@ class Meow_MWMAIL_Mailers_Outlook extends Meow_MWMAIL_Mailers_Base {
     if ( is_wp_error( $token ) ) {
       return $token;
     }
+    return $this->graph_send( self::SEND_URL, $token, $email );
+  }
 
+  /**
+   * Post a normalized email to a Graph sendMail endpoint. Shared with the app-only
+   * mailer, which only differs in how it gets its token and which mailbox it names.
+   *
+   * @return true|WP_Error
+   */
+  protected function graph_send( $url, $token, $email ) {
     $message = [
       'subject'      => $email['subject'],
       'body'         => [
@@ -51,7 +60,7 @@ class Meow_MWMAIL_Mailers_Outlook extends Meow_MWMAIL_Mailers_Base {
       }, $files );
     }
 
-    $result = $this->http_post( self::SEND_URL, [
+    $result = $this->http_post( $url, [
       'timeout' => 30,
       'headers' => [
         'Authorization' => 'Bearer ' . $token,
@@ -67,6 +76,22 @@ class Meow_MWMAIL_Mailers_Outlook extends Meow_MWMAIL_Mailers_Base {
     return array_map( function ( $r ) {
       return [ 'emailAddress' => array_filter( [ 'address' => $r['email'], 'name' => $r['name'] ?? '' ] ) ];
     }, $this->recipients( $list ) );
+  }
+
+  /**
+   * Entra answers { error, error_description } and Graph { error: { code, message } }.
+   * The generic reader would return the bare code ("invalid_client") or a JSON blob.
+   */
+  protected function extract_error( $body ) {
+    $json = json_decode( $body, true );
+    if ( ! empty( $json['error_description'] ) && is_string( $json['error_description'] ) ) {
+      // The description ends with Trace ID, Correlation ID and Timestamp nobody needs here.
+      return trim( preg_replace( '/\s*Trace ID:.*$/s', '', $json['error_description'] ) );
+    }
+    if ( ! empty( $json['error']['message'] ) && is_string( $json['error']['message'] ) ) {
+      return empty( $json['error']['code'] ) ? $json['error']['message'] : $json['error']['code'] . ': ' . $json['error']['message'];
+    }
+    return parent::extract_error( $body );
   }
 
   /**

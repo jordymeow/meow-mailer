@@ -264,7 +264,9 @@ class Meow_MWMAIL_Core {
       'maileroo'   => [ 'api_key' => '' ],
       'gmail'      => [ 'client_id' => '', 'client_secret' => '', 'access_token' => '', 'refresh_token' => '', 'expires' => 0 ],
       'outlook'    => [ 'client_id' => '', 'client_secret' => '', 'tenant' => 'common', 'access_token' => '', 'refresh_token' => '', 'expires' => 0 ],
-      'zoho'       => [ 'client_id' => '', 'client_secret' => '', 'datacenter' => 'zoho.com', 'access_token' => '', 'refresh_token' => '', 'expires' => 0, 'account_id' => '', 'addresses' => [], 'primary_address' => '' ],
+      // App-only: token_for ties the cached token to the credentials that fetched it.
+      'microsoft'  => [ 'tenant' => '', 'client_id' => '', 'auth' => 'certificate', 'certificate' => '', 'client_secret' => '', 'mailbox' => '', 'access_token' => '', 'expires' => 0, 'token_for' => '' ],
+      'zoho'     => [ 'client_id' => '', 'client_secret' => '', 'datacenter' => 'zoho.com', 'access_token' => '', 'refresh_token' => '', 'expires' => 0, 'account_id' => '', 'addresses' => [], 'primary_address' => '' ],
     ];
   }
 
@@ -288,6 +290,7 @@ class Meow_MWMAIL_Core {
       'maileroo'   => 'Maileroo',
       'gmail'      => 'Gmail / Google Workspace',
       'outlook'    => 'Microsoft 365 / Outlook',
+      'microsoft'  => 'Microsoft 365 (App-only)',
       'zoho'       => 'Zoho Mail',
     ];
     return $labels[ $key ] ?? (string) $key;
@@ -388,7 +391,7 @@ class Meow_MWMAIL_Core {
 
   /** Credential fields that must never be exposed to the browser. */
   public function secret_fields() {
-    return [ 'password', 'api_key', 'secret_key', 'server_token', 'client_secret', 'access_token', 'refresh_token' ];
+    return [ 'password', 'api_key', 'secret_key', 'server_token', 'client_secret', 'certificate', 'access_token', 'refresh_token' ];
   }
 
   /** Options safe to send to the client: stored secrets replaced by a mask. */
