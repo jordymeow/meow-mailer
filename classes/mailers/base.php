@@ -376,12 +376,56 @@ abstract class Meow_MWMAIL_Mailers_Base {
   protected function extract_error( $body ) {
     $json = json_decode( $body, true );
     if ( is_array( $json ) ) {
-      foreach ( [ 'message', 'Message', 'error', 'detail', 'errors' ] as $key ) {
-        if ( ! empty( $json[ $key ] ) ) {
-          return is_string( $json[ $key ] ) ? $json[ $key ] : wp_json_encode( $json[ $key ] );
-        }
+      $messages = self::error_messages( $json );
+      if ( ! empty( $messages ) ) {
+        return substr( implode( ' ', $messages ), 0, 500 );
       }
     }
     return is_string( $body ) ? substr( $body, 0, 500 ) : '';
+  }
+
+  /**
+   * The readable sentences out of a provider's error response, wherever it put them.
+   * They all disagree on the shape: a flat "message", a list of "errors" each with
+   * one of its own (SendGrid), a message nested under "data" (SMTP2GO) or two levels
+   * down inside "Messages" (Mailjet).
+   *
+   * Worth the recursion: the log used to show those shapes as raw JSON, which turned
+   * the one sentence that says what to fix ("The from address does not match a
+   * verified Sender Identity") into the hardest part of the line to read.
+   *
+   * @return string[]
+   */
+  /** Trimmed, and ending like a sentence so several of them read as one paragraph. */
+  private static function as_sentence( $text ) {
+    $text = trim( $text );
+    return preg_match( '/[.!?]$/', $text ) ? $text : $text . '.';
+  }
+
+  private static function error_messages( $node, $depth = 0 ) {
+    // Deep enough for every shape above, and it stops a hostile or broken response
+    // from walking us into a stack overflow.
+    if ( $depth > 4 || ! is_array( $node ) ) {
+      return [];
+    }
+    $carries = [ 'message', 'Message', 'ErrorMessage', 'error', 'Error', 'detail', 'description' ];
+    $found   = [];
+    foreach ( $node as $key => $value ) {
+      $key = (string) $key;
+      if ( is_string( $value ) && trim( $value ) !== '' ) {
+        // A named key we know carries a sentence, or a bare list item inside an
+        // "errors" block, which is where field validation details live (MailerSend
+        // puts "The from.email must be a verified domain" there, under the field
+        // name). Other named keys are skipped: they hold codes and field names.
+        if ( in_array( $key, $carries, true ) || ( $depth > 0 && is_numeric( $key ) ) ) {
+          $found[] = self::as_sentence( $value );
+        }
+        continue;
+      }
+      if ( is_array( $value ) ) {
+        $found = array_merge( $found, self::error_messages( $value, $depth + 1 ) );
+      }
+    }
+    return array_values( array_unique( $found ) );
   }
 }
