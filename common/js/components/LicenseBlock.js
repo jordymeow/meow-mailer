@@ -17,6 +17,86 @@ import { NekoNoticeModal, useNekoNotice } from './NoticeModal';
 
 const CommonApiUrl = `${restUrl}/meow-licenser/${prefix}/v1`;
 
+const AccountLink = () => <a target='_blank' rel="noreferrer" href='https://meowapps.com'>Meow Apps</a>;
+const ContactLink = () => <a target='_blank' rel="noreferrer" href='https://meowapps.com/contact/'>contact us</a>;
+
+// The licenser already knows why a validation failed and stores it in license.issue
+// (premium/licenser.php). Everything outside a short list used to land in a generic
+// "unknown error" that blamed the serial key and the user's security plugins, so a
+// server that simply cannot reach check.meowapps.com read as a broken licence and
+// became a support ticket. These are the codes the store actually sends, kept in
+// sync with the badge in admin.php: an invented one would silently never match.
+const getIssueMessage = (issue) => {
+  switch (issue) {
+  case 'no_activations_left':
+    return <span>There are no activations left for this license. You can visit your account at <AccountLink />, unregister a site, and click on <i>Retry to validate</i>.</span>;
+  case 'expired':
+    return <span>Your license has expired. You can get another license or renew the current one by visiting your account at <AccountLink />.</span>;
+  case 'missing':
+  case 'key_mismatch':
+    return <span>This license key was not recognized. Please check it in your account at <AccountLink />, then enter it again.</span>;
+  case 'disabled':
+    return 'This license has been disabled.';
+  case 'item_name_mismatch':
+  case 'invalid_item_id':
+  case 'missing_item_id':
+    return 'This license seems to be for a different plugin... isn\'t it? :)';
+  case 'bundle_activation_not_allowed':
+    return <span>This license belongs to a bundle and cannot be activated directly. Use the key listed for this plugin in your account at <AccountLink />.</span>;
+  case 'site_inactive':
+  case 'inactive':
+    return <span>This license is fine, but it is not activated for this site yet. Click on <i>Retry to validate</i> to activate it here. If the site was renamed or moved, unregister the old address in your account at <AccountLink /> first.</span>;
+  case 'no_response':
+    return <span>Your server could not reach our license server (check.meowapps.com). This is usually a firewall or a security plugin on your side. Ask your host to allow outgoing HTTPS to check.meowapps.com and meowapps.com, then click on <i>Retry to validate</i>.</span>;
+  case 'invalid_response':
+    return <span>Our license server answered, but the answer could not be read. A security plugin or a proxy on your side is probably altering it. Try again in a few minutes, and if it keeps happening, please <ContactLink /> with the details below.</span>;
+  default:
+    return null;
+  }
+};
+
+// wp_remote_retrieve_response_code() can come back as a string, and as a print_r()
+// dump when the request was a WP_Error, so never compare it to 200 directly.
+const isHttpOk = (code) => parseInt(code, 10) === 200;
+
+// licenser.php probes google.com and meowapps.com next to the licence call and runs
+// detect_block() on the bodies. That tells apart "blocked on the way" from "nothing
+// goes out at all", which are two different fixes for the user.
+const getDebugHint = (debug) => {
+  if (!debug) {
+    return null;
+  }
+  const reasons = [ debug.license_reason, debug.meowapps_reason, debug.google_reason ].filter(Boolean);
+  const cfRay = [ debug.license_cf_ray, debug.meowapps_cf_ray, debug.google_cf_ray ].filter(Boolean)[0];
+  if (reasons.includes('CLOUDFLARE_SECURITY_TRIGGER')) {
+    return <>A Cloudflare security check stopped the request coming from your server{cfRay ? <> (Ray ID {cfRay})</> : null}. Copy the details below and send them to us, we can see what triggered it.</>;
+  }
+  if (reasons.includes('GOOGLE_SECURITY_TRIGGER')) {
+    return 'Your server was blocked when reaching google.com too, so the filtering is on your side and not specific to us.';
+  }
+  if (!isHttpOk(debug.google_response_code) && !isHttpOk(debug.meowapps_response_code)) {
+    return 'Your server could not reach google.com or meowapps.com either, so its outgoing connections are blocked in general. Your host can confirm that in a minute.';
+  }
+  if (isHttpOk(debug.google_response_code) && !isHttpOk(debug.meowapps_response_code)) {
+    return 'Your server reaches google.com but not meowapps.com, so something on your side is filtering our domains in particular.';
+  }
+  return null;
+};
+
+// An allowlist and not a blacklist, on purpose: tickets travel by plain email, and
+// key, check_url and logs each carry the license key or the admin email address. A
+// new field added to the option later must be opted in here, never leak by default.
+const buildSupportDetails = (license) => {
+  const lic = license || {};
+  return JSON.stringify({
+    plugin: domain,
+    issue: lic.issue || null,
+    license: lic.license || null,
+    expires: lic.expires || null,
+    debug: lic.debug || null
+  }, null, 2);
+};
+
 const LicenseBlock = () => {
   const [ busy, setBusy ] = useState(false);
   const [ meowMode, setMeowMode ] = useState(false);
@@ -25,11 +105,46 @@ const LicenseBlock = () => {
   const [ serialKey, setSerialKey ] = useState('');
   const [ editMode, setEditMode ] = useState(false);
   const [ integrityFailed, setIntegrityFailed ] = useState(false);
+  const [ copied, setCopied ] = useState(false);
   const { notice, showNotice, closeNotice } = useNekoNotice();
-  const isOverridenLicense = isRegistered && (!license || license.license !== 'valid');
+  // isRegistered is localised by PHP when the page is built, so it is frozen: after a
+  // failed re-validation it still claims the site is registered. That made a failure
+  // render as "Forced License / force-enabled" and hid the real error until a reload,
+  // and a recovery keep saying "Disabled" after it had worked. Trust the licence we
+  // just fetched, and fall back to the page-load value only until it arrives.
+  const liveRegistered = license ? !license.issue : isRegistered;
+  const isOverridenLicense = liveRegistered && (!license || license.license !== 'valid');
 
   const showLicenseError = (message) => {
     showNotice(message, { title: __( 'License Error', domain ) });
+  };
+
+  const copySupportDetails = async () => {
+    const details = buildSupportDetails(license);
+    try {
+      // The admin is not always served over HTTPS, and navigator.clipboard does not
+      // exist outside a secure context, which is exactly the kind of install that
+      // ends up here. Keep the old execCommand path as a fallback.
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(details);
+      }
+      else {
+        const el = document.createElement('textarea');
+        el.value = details;
+        el.style.position = 'fixed';
+        el.style.opacity = '0';
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+    catch (err) {
+      showLicenseError(__( 'The details could not be copied. They are in your browser console, you can copy them from there.', domain ));
+      console.error(err, details);
+    }
   };
 
   const checkLicense = async () => {
@@ -174,7 +289,7 @@ const LicenseBlock = () => {
 
   useEffect(() => { checkLicense(); }, []);
 
-  const licenseTextStatus = isOverridenLicense ? 'Forced License' : isRegistered ? 'Enabled' : 'Disabled';
+  const licenseTextStatus = isOverridenLicense ? 'Forced License' : liveRegistered ? 'Enabled' : 'Disabled';
 
   const success = !integrityFailed && (isOverridenLicense || (license && license.license === 'valid'));
   let message = 'Your license is active. Thanks a lot for your support :)';
@@ -198,27 +313,16 @@ const LicenseBlock = () => {
     else if (!license || !license.key) {
       message = 'Please enter your license key below to activate Pro features.';
     }
-    else if (license.issue === 'no_activations_left') {
-      message = <span>There are no activations left for this license. You can visit your account at <a target='_blank' rel="noreferrer" href='https://meowapps.com'>Meow Apps</a>, unregister a site, and click on <i>Retry to validate</i>.</span>;
-    }
-    else if (license.issue === 'expired') {
-      message = <span>Your license has expired. You can get another license or renew the current one by visiting your account at <a target='_blank' rel="noreferrer" href='https://meowapps.com'>Meow Apps</a>.</span>;
-    }
-    else if (license.issue === 'missing') {
-      message = 'This license does not exist.';
-    }
-    else if (license.issue === 'disabled') {
-      message = 'This license has been disabled.';
-    }
-    else if (license.issue === 'item_name_mismatch') {
-      message = 'This license seems to be for a different plugin... isn\'t it? :)';
-    }
-    else if (license.issue === 'forced') {
-      message = 'ABC';
-    }
     else {
-      message = <span>There is an unknown error related to the system or this serial key. Really sorry about this! Make sure your security plugins and systems are off temporarily. If you are still experiencing an issue, please <a target='_blank' rel="noreferrer" href='https://meowapps.com/contact/'>contact us</a>.</span>;
-      console.error({ license });
+      const issueMessage = getIssueMessage(license.issue);
+      if (!issueMessage) {
+        console.error({ license });
+      }
+      const hint = getDebugHint(license.debug);
+      message = <>
+        {issueMessage || <span>This license could not be validated, and the status we got back ({license.issue || 'none'}) is one we do not know. Sorry about that! Please <ContactLink /> with the details below and we will sort it out.</span>}
+        {hint && <><br /><br /><small>{hint}</small></>}
+      </>;
     }
   }
 
@@ -261,6 +365,9 @@ const LicenseBlock = () => {
             onClick={validateLicense}>Validate License</NekoButton>
         </>}
         {!success && <>
+          {license && license.issue && <NekoButton className="secondary" disabled={busy}
+            onClick={copySupportDetails}>{copied ? 'Copied' : 'Copy details for support'}
+          </NekoButton>}
           {license && <NekoButton className="secondary" disabled={busy || !serialKey}
             onClick={validateLicense}>Retry to validate
           </NekoButton>}

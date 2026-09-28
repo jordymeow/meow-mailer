@@ -5,7 +5,7 @@ Donate link: https://www.patreon.com/meowapps
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.2.6
+Stable tag: 0.2.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,6 +134,14 @@ If you would rather nobody signs in, for example when you build a site for a cli
 Meow Mailer is open source. The full source, including the React code used to build the admin interface, lives [on GitHub](https://github.com/jordymeow/meow-mailer).
 
 == Changelog ==
+
+= 0.2.7 (2026/09/28) =
+* Add: Microsoft 365 App-only sending through an Entra app registration, using a certificate or a client secret, with no sign-in required.
+* Add: Option to store attachments with the log, so resending an email carries the files it was sent with.
+* Update: The test email now names the provider that delivered it, and Send Test waits for a credential that is still being saved.
+* Fix: Emails built by other plugins through phpmailer_init, such as generated invoices, now keep their attachments whichever provider sends them.
+* Fix: Provider errors are written to the log as plain sentences instead of raw JSON.
+* Fix: The log keeps recording entries on databases where the attachments column cannot be added.
 
 = 0.2.6 (2026/09/11) =
 * Fix: The Send Test button now reports the provider's error when the fallback handles the test, instead of showing success.
