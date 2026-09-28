@@ -17,6 +17,7 @@ class Meow_MWMAIL_Modules_Logs {
   private $table_name = null;
   private $db_check = false;
   private $create_attempted = false;
+  private $files_column = null; // null = not looked at yet
 
   const MWMAIL_DB_LOGS_VERSION = '1.1';
 
@@ -127,6 +128,28 @@ class Meow_MWMAIL_Modules_Logs {
   }
 
   /**
+   * Whether the table actually has the files column. Adding it needs ALTER, and a
+   * database user without that right is a real setup: the migration then quietly
+   * does nothing. Everything about stored attachments has to degrade to "off" in
+   * that case rather than take the log down with it, since reading and resending
+   * email matters far more than carrying the files.
+   */
+  private function has_files_column() {
+    if ( $this->files_column !== null ) {
+      return $this->files_column;
+    }
+    // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+    $found = $this->wpdb->get_var( "SHOW COLUMNS FROM {$this->table_name} LIKE 'files'" );
+    $this->files_column = ! empty( $found );
+    return $this->files_column;
+  }
+
+  /** Public so the mailer can skip building a payload nothing can store. */
+  public function can_store_files() {
+    return $this->check_db() && $this->has_files_column();
+  }
+
+  /**
    * One row, without the stored files: those can be megabytes and nothing on screen
    * needs the bytes, only whether they are still there. Column names come from our
    * own schema constant, never from input.
@@ -135,10 +158,11 @@ class Meow_MWMAIL_Modules_Logs {
     if ( ! $this->check_db() ) {
       throw new Exception( esc_html__( 'Could not access the database.', 'meow-mailer' ) );
     }
-    $columns = implode( ', ', array_diff( array_keys( MWMAIL_LOG_COLUMNS ), [ 'files' ] ) );
+    $columns  = implode( ', ', array_diff( array_keys( MWMAIL_LOG_COLUMNS ), [ 'files' ] ) );
+    $has_expr = $this->has_files_column() ? '( files IS NOT NULL AND LENGTH( files ) > 0 )' : '0';
     // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
     $row = $this->wpdb->get_row( $this->wpdb->prepare(
-      "SELECT {$columns}, ( files IS NOT NULL AND LENGTH( files ) > 0 ) AS has_files FROM {$this->table_name} WHERE id = %d",
+      "SELECT {$columns}, {$has_expr} AS has_files FROM {$this->table_name} WHERE id = %d",
       intval( $id )
     ), ARRAY_A );
     if ( $row ) {
@@ -154,7 +178,7 @@ class Meow_MWMAIL_Modules_Logs {
    * @return array  [ [ 'name'=>, 'content'=>bytes, 'path'=>null, 'type'=>, 'inline'=>, 'cid'=> ], ... ]
    */
   public function files( $id ) {
-    if ( ! $this->check_db() ) {
+    if ( ! $this->can_store_files() ) {
       return [];
     }
     // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -393,7 +417,7 @@ class Meow_MWMAIL_Modules_Logs {
 
   /** Drop the stored files of older rows, leaving the rows themselves alone. */
   public function prune_files( $days ) {
-    if ( ! $this->check_db() ) {
+    if ( ! $this->can_store_files() ) {
       return false;
     }
     $days = intval( $days );

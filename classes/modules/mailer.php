@@ -425,6 +425,12 @@ class Meow_MWMAIL_Modules_Mailer {
     if ( ! $this->core->get_option( 'store_attachments', false ) ) {
       return null;
     }
+    // No column to put them in (the migration could not add it), so there is
+    // nothing to build. Writing the key anyway would fail the whole insert and cost
+    // the site its log entry, which is a much worse trade than losing the files.
+    if ( ! $this->core->logs->can_store_files() ) {
+      return null;
+    }
 
     $files = [];
     foreach ( (array) $email['attachments'] as $name => $path ) {
