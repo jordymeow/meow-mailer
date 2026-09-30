@@ -5,7 +5,7 @@ Donate link: https://www.patreon.com/meowapps
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.2.7
+Stable tag: 0.2.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,6 +134,9 @@ If you would rather nobody signs in, for example when you build a site for a cli
 Meow Mailer is open source. The full source, including the React code used to build the admin interface, lives [on GitHub](https://github.com/jordymeow/meow-mailer).
 
 == Changelog ==
+
+= 0.2.8 (2026/09/30) =
+* Fix: Cc, Bcc and Reply-To addresses are no longer dropped on emails sent by Gravity Forms.
 
 = 0.2.7 (2026/09/28) =
 * Add: Microsoft 365 App-only sending through an Entra app registration, using a certificate or a client secret, with no sign-in required.
