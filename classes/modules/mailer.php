@@ -672,7 +672,16 @@ class Meow_MWMAIL_Modules_Mailer {
     $pairs = [];
     foreach ( (array) $header_lines as $key => $line ) {
       if ( is_string( $key ) ) {
-        $pairs[] = [ trim( $key ), trim( (string) $line ) ];
+        $name    = trim( $key );
+        $content = trim( (string) $line );
+        // Gravity Forms (and a few others) pass an associative array whose values
+        // repeat the header name: [ 'Bcc' => 'Bcc: admin@site.com' ]. Core ignores the
+        // keys and always parses the value, so the prefix has to be dropped here too,
+        // otherwise it stays glued to the address and the recipient is silently lost.
+        if ( $name !== '' && stripos( $content, $name . ':' ) === 0 ) {
+          $content = trim( substr( $content, strlen( $name ) + 1 ) );
+        }
+        $pairs[] = [ $name, $content ];
       } elseif ( is_string( $line ) && strpos( $line, ':' ) !== false ) {
         list( $name, $content ) = explode( ':', trim( $line ), 2 );
         $pairs[] = [ trim( $name ), trim( $content ) ];
