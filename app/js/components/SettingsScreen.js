@@ -6,7 +6,7 @@ import {
 } from '@neko-ui';
 
 import { useCoreContext } from '@app/contexts/core';
-import { PROVIDERS, fallbackChoices, isProviderConfigured } from '@app/providers';
+import { MAIN_PROVIDERS, fallbackChoices, getProvider, isProviderConfigured } from '@app/providers';
 import ProviderFields from './ProviderFields';
 import ProviderPicker from './ProviderPicker';
 import SwitchSetting from './SwitchSetting';
@@ -184,6 +184,7 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
 
   // A fallback pointing at a provider whose credentials were never filled in is worse
   // than none: it reads as covered, and it is not. 'wordpress' needs no credentials.
+  const fallbackInline = hasFallback && !!(getProvider(fallback) || {}).fallbackOnly;
   const fallbackUnconfigured = hasFallback && fallback !== 'wordpress'
     && !isProviderConfigured(fallback, (options.providers || {})[fallback]);
 
@@ -244,7 +245,7 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
               <NekoSettings title={t('Provider')}>
                 <NekoSelect scrolldown name="provider" value={provider} onChange={(v) => updateOption(v, 'provider')}
                   description={t('Pick one provider. Set it up once and Meow Mailer routes all WordPress email through it.')}>
-                  {PROVIDERS.map((p) => <NekoOption key={p.key} value={p.key} label={t(p.label)} />)}
+                  {MAIN_PROVIDERS.map((p) => <NekoOption key={p.key} value={p.key} label={t(p.label)} />)}
                 </NekoSelect>
               </NekoSettings>
               <ProviderFields providerKey={provider} />
@@ -252,15 +253,22 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
               <NekoSpacer />
               <NekoSettings title={t('Fallback')}>
                 <NekoSelect scrolldown name="fallback_provider" value={fallback} onChange={(v) => updateOption(v, 'fallback_provider')}
-                  description={t('Used only when the provider above refuses an email, so nothing is lost to a bad moment. Set it up like any other provider by selecting it above first. WordPress needs no setup at all: it hands the email to your server, which is imperfect but always there.')}>
+                  description={fallbackInline
+                    ? t('Used only when the provider above refuses an email, so nothing is lost to a bad moment.')
+                    : t('Used only when the provider above refuses an email, so nothing is lost to a bad moment. Set it up like any other provider by selecting it above first. WordPress needs no setup at all: it hands the email to your server, which is imperfect but always there.')}>
                   {fallbackChoices(provider).map((f) => <NekoOption key={f.key} value={f.key} label={t(f.label)} />)}
                 </NekoSelect>
               </NekoSettings>
+              {/* Not in the Provider list above, so it cannot be set up the usual way:
+                  its fields live right here instead. */}
+              {fallbackInline && <ProviderFields providerKey={fallback} />}
 
               {fallbackUnconfigured && (
                 <>
                   <NekoMessage variant="danger">
-                    {t('This fallback has no credentials yet, so it cannot rescue anything. Select it in Provider above, fill it in, then switch back.')}
+                    {fallbackInline
+                      ? t('This fallback has no server yet, so it cannot rescue anything. Fill it in just above.')
+                      : t('This fallback has no credentials yet, so it cannot rescue anything. Select it in Provider above, fill it in, then switch back.')}
                   </NekoMessage>
                   <NekoSpacer />
                 </>

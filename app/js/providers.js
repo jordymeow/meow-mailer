@@ -1,6 +1,19 @@
 // Declarative description of every supported provider and its credential fields.
 // `one active at a time`: the user picks one in Settings.
 
+const SMTP_FIELDS = [
+  { name: 'host', label: 'Host', type: 'text', placeholder: 'smtp.example.com' },
+  { name: 'port', label: 'Port', type: 'number', placeholder: '587' },
+  { name: 'encryption', label: 'Encryption', type: 'select', options: [
+    { value: 'tls', label: 'TLS (STARTTLS)' },
+    { value: 'ssl', label: 'SSL' },
+    { value: 'none', label: 'None' },
+  ] },
+  { name: 'auth', label: 'Authentication', type: 'switch' },
+  { name: 'username', label: 'Username', type: 'text' },
+  { name: 'password', label: 'Password', type: 'password' },
+];
+
 export const PROVIDERS = [
   {
     key: 'none',
@@ -20,18 +33,16 @@ export const PROVIDERS = [
     // Named on purpose: people look for their own mail host in this list, and read
     // its absence as "not supported" even though Generic SMTP covers all of them.
     description: 'Any SMTP server: Zoho Mail, Fastmail, Infomaniak, OVH, or the one your host gave you. Works everywhere.',
-    fields: [
-      { name: 'host', label: 'Host', type: 'text', placeholder: 'smtp.example.com' },
-      { name: 'port', label: 'Port', type: 'number', placeholder: '587' },
-      { name: 'encryption', label: 'Encryption', type: 'select', options: [
-        { value: 'tls', label: 'TLS (STARTTLS)' },
-        { value: 'ssl', label: 'SSL' },
-        { value: 'none', label: 'None' },
-      ] },
-      { name: 'auth', label: 'Authentication', type: 'switch' },
-      { name: 'username', label: 'Username', type: 'text' },
-      { name: 'password', label: 'Password', type: 'password' },
-    ],
+    fields: SMTP_FIELDS,
+  },
+  {
+    key: 'smtp_secondary',
+    label: 'Generic SMTP (Second Server)',
+    // Only ever a fallback: it is never offered as the main provider, so the picker
+    // stays as it was for everyone who has one SMTP server.
+    fallbackOnly: true,
+    description: 'A second SMTP server, used only as the fallback.',
+    fields: SMTP_FIELDS,
   },
   {
     key: 'mailgun',
@@ -195,6 +206,9 @@ export const PROVIDER_LABELS = PROVIDERS.reduce((acc, p) => {
 
 export const getProvider = (key) => PROVIDERS.find((p) => p.key === key);
 
+// What can be picked as the main provider.
+export const MAIN_PROVIDERS = PROVIDERS.filter((p) => !p.fallbackOnly);
+
 // What can stand in when the main provider fails. 'offline' is excluded (it does not
 // send), and so is whichever provider is already active: retrying the one that just
 // refused only costs another round trip. 'wordpress' is the zero-setup choice.
@@ -214,7 +228,8 @@ export const isProviderConfigured = (key, creds = {}) => {
     return false;
   }
   switch (key) {
-    case 'smtp':     return !!creds.host;
+    case 'smtp':
+    case 'smtp_secondary': return !!creds.host;
     // The OAuth providers hold no api_key, so they need to be named here or they
     // read as unconfigured however well they are connected.
     case 'gmail':

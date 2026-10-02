@@ -1,11 +1,11 @@
 import { NekoButton, NekoSpacer } from '@neko-ui';
 
-import { PROVIDERS } from '@app/providers';
+import { MAIN_PROVIDERS } from '@app/providers';
 import { t } from '@app/i18n';
 
 // 'none' is the state we're leaving, and 'offline' is a mode rather than a
 // provider, so it gets its own line below the grid.
-const CHOICES = PROVIDERS.filter((p) => p.key !== 'none' && p.key !== 'offline');
+const CHOICES = MAIN_PROVIDERS.filter((p) => p.key !== 'none' && p.key !== 'offline');
 
 const hintStyle = { margin: 0, color: 'var(--neko-gray-50)', fontSize: 13 };
 

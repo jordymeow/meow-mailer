@@ -252,6 +252,7 @@ class Meow_MWMAIL_Core {
   public function default_providers() {
     return [
       'smtp'       => [ 'host' => '', 'port' => 587, 'encryption' => 'tls', 'autotls' => true, 'auth' => true, 'username' => '', 'password' => '' ],
+      'smtp_secondary' => [ 'host' => '', 'port' => 587, 'encryption' => 'tls', 'autotls' => true, 'auth' => true, 'username' => '', 'password' => '' ],
       'mailgun'    => [ 'api_key' => '', 'domain' => '', 'region' => 'us' ],
       'brevo'      => [ 'api_key' => '' ],
       'sendgrid'   => [ 'api_key' => '' ],
@@ -278,6 +279,7 @@ class Meow_MWMAIL_Core {
     $labels = [
       'wordpress'  => 'WordPress',
       'smtp'       => 'Generic SMTP',
+      'smtp_secondary' => 'Generic SMTP (Second Server)',
       'mailgun'    => 'Mailgun',
       'brevo'      => 'Brevo',
       'sendgrid'   => 'SendGrid',
