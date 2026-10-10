@@ -5,7 +5,7 @@ Donate link: https://www.patreon.com/meowapps
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.2.9
+Stable tag: 0.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,6 +134,9 @@ If you would rather nobody signs in, for example when you build a site for a cli
 Meow Mailer is open source. The full source, including the React code used to build the admin interface, lives [on GitHub](https://github.com/jordymeow/meow-mailer).
 
 == Changelog ==
+
+= 0.3.0 (2026/10/10) =
+* Add: ZeptoMail (Zoho CPaaS) as a new mailer, connected through its API.
 
 = 0.2.9 (2026/10/02) =
 * Add: A second Generic SMTP server you can set up and use as the fallback mailer.
