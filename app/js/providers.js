@@ -193,6 +193,25 @@ export const PROVIDERS = [
       ] },
     ],
   },
+  {
+    key: 'zeptomail',
+    label: 'ZeptoMail (Zoho CPaaS)',
+    // Not Zoho Mail: people with a Zoho account look for "Zoho" and pick the mailbox
+    // one, then hit its Reply-To limits. Saying which is which saves that detour.
+    description: 'Zoho\'s transactional email service, now part of Zoho CPaaS. Connects with a Send Mail token, no OAuth. For a regular Zoho mailbox, pick Zoho Mail instead.',
+    fields: [
+      { name: 'api_key', label: 'Send Mail Token', type: 'password' },
+      { name: 'region', label: 'Data Center', type: 'select', options: [
+        { value: 'com', label: 'zeptomail.com (US)' },
+        { value: 'eu', label: 'zeptomail.eu (Europe)' },
+        { value: 'in', label: 'zeptomail.in (India)' },
+        { value: 'com.au', label: 'zeptomail.com.au (Australia)' },
+        { value: 'jp', label: 'zeptomail.jp (Japan)' },
+        { value: 'com.cn', label: 'zeptomail.com.cn (China)' },
+        { value: 'ca', label: 'zeptomail.ca (Canada)' },
+      ] },
+    ],
+  },
 ];
 
 export const PROVIDER_LABELS = PROVIDERS.reduce((acc, p) => {

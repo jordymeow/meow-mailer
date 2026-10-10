@@ -268,6 +268,7 @@ class Meow_MWMAIL_Core {
       // App-only: token_for ties the cached token to the credentials that fetched it.
       'microsoft'  => [ 'tenant' => '', 'client_id' => '', 'auth' => 'certificate', 'certificate' => '', 'client_secret' => '', 'mailbox' => '', 'access_token' => '', 'expires' => 0, 'token_for' => '' ],
       'zoho'     => [ 'client_id' => '', 'client_secret' => '', 'datacenter' => 'zoho.com', 'access_token' => '', 'refresh_token' => '', 'expires' => 0, 'account_id' => '', 'addresses' => [], 'primary_address' => '' ],
+      'zeptomail' => [ 'api_key' => '', 'region' => 'com' ],
     ];
   }
 
@@ -294,6 +295,7 @@ class Meow_MWMAIL_Core {
       'outlook'    => 'Microsoft 365 / Outlook',
       'microsoft'  => 'Microsoft 365 (App-only)',
       'zoho'       => 'Zoho Mail',
+      'zeptomail'  => 'ZeptoMail (Zoho CPaaS)',
     ];
     return $labels[ $key ] ?? (string) $key;
   }
