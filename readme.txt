@@ -5,7 +5,7 @@ Donate link: https://www.patreon.com/meowapps
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.3.0
+Stable tag: 0.3.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,6 +134,10 @@ If you would rather nobody signs in, for example when you build a site for a cli
 Meow Mailer is open source. The full source, including the React code used to build the admin interface, lives [on GitHub](https://github.com/jordymeow/meow-mailer).
 
 == Changelog ==
+
+= 0.3.1 (2026/10/11) =
+* Add: {site_name} and {admin_email} placeholders for the From Name, Reply-To and Return Path settings.
+* Update: Provider fields defined in wp-config.php now show as set instead of appearing empty with the provider listed as not configured.
 
 = 0.3.0 (2026/10/10) =
 * Add: ZeptoMail (Zoho CPaaS) as a new mailer, connected through its API.
