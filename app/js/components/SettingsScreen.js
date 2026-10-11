@@ -303,7 +303,7 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
             </NekoSettings>
             <NekoSettings title={t('From Name')}>
               <NekoInput name="from_name" value={options.from_name} placeholder="My Website" onBlur={updateOption} onEnter={updateOption}
-                description={t('The sender name recipients see in their inbox (usually your site name).')} />
+                description={t('The sender name recipients see in their inbox (usually your site name). {site_name} is replaced by the name of this site.')} />
             </NekoSettings>
             <SwitchSetting title={t('Force From')} name="force_from" checked={options.force_from}
               onChange={(v) => updateOption(v, 'force_from')}
@@ -334,11 +334,11 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
             ) : null}
             <NekoSettings title={t('Reply-To')}>
               <NekoInput name="reply_to" value={options.reply_to} placeholder={t('(optional)')} onBlur={updateOption} onEnter={updateOption}
-                description={t('Where replies should go, if different from the From address.')} />
+                description={t('Where replies should go, if different from the From address. {admin_email} is replaced by the admin email of this site.')} />
             </NekoSettings>
             <NekoSettings title={t('Return Path')}>
               <NekoInput name="return_path" value={options.return_path} placeholder={t('(same as From)')} onBlur={updateOption} onEnter={updateOption}
-                description={t('Where bounces and non-delivery reports go, if you keep a mailbox for them. Left empty they follow the From address, which is what happens today. Generic SMTP only: the API providers handle bounces on their own side.')} />
+                description={t('Where bounces and non-delivery reports go, if you keep a mailbox for them. Left empty they follow the From address, which is what happens today. Generic SMTP only: the API providers handle bounces on their own side. {admin_email} works here too.')} />
             </NekoSettings>
           </NekoBlock>
         )}

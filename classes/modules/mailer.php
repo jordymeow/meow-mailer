@@ -610,7 +610,7 @@ class Meow_MWMAIL_Modules_Mailer {
     }
     if ( $force || $from_name === '' ) {
       if ( ! empty( $options['from_name'] ) ) {
-        $from_name = $options['from_name'];
+        $from_name = self::fill_placeholders( $options['from_name'] );
       }
     }
     // Fall back to WordPress defaults if still empty.
@@ -618,12 +618,12 @@ class Meow_MWMAIL_Modules_Mailer {
       $from_email = $this->default_from_email();
     }
     if ( empty( $reply_to ) && ! empty( $options['reply_to'] ) ) {
-      $reply_to[] = $options['reply_to'];
+      $reply_to[] = self::fill_placeholders( $options['reply_to'] );
     }
     // A header on the message wins over the setting: it is per-email and deliberate,
     // where the setting is the site-wide default.
     if ( $return_path === '' && ! empty( $options['return_path'] ) ) {
-      $return_path = $options['return_path'];
+      $return_path = self::fill_placeholders( $options['return_path'] );
     }
 
     // Allow core's wp_mail_from / wp_mail_from_name filters to keep working.
@@ -654,6 +654,18 @@ class Meow_MWMAIL_Modules_Mailer {
       // fallback has or has not stepped in, so the mailer fills it in at send time.
       'test'         => ! empty( $atts['test'] ),
     ];
+  }
+
+  /**
+   * The placeholders the sender settings accept, filled in for this site. Only our own
+   * settings go through this, never a header another plugin set, and it is what lets
+   * one configuration be reused across many sites (each gets its own name and admin).
+   */
+  public static function fill_placeholders( $value ) {
+    return strtr( (string) $value, [
+      '{site_name}'   => wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES ),
+      '{admin_email}' => (string) get_option( 'admin_email' ),
+    ] );
   }
 
   /** Headers as an array of lines, either shape wp_mail() accepts. */
