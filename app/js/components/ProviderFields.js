@@ -3,7 +3,7 @@ const { useState } = wp.element;
 import { NekoSettings, NekoInput, NekoTextArea, NekoSelect, NekoOption, NekoSwitch, NekoButton, NekoStatus, NekoMessage, NekoSpacer } from '@neko-ui';
 
 import { useCoreContext } from '@app/contexts/core';
-import { getProvider } from '@app/providers';
+import { getProvider, constantFields, constantName } from '@app/providers';
 import { getOAuthUrl, disconnectOAuth, revealSecret } from '@app/requests';
 import { secretMask as SECRET_MASK } from '@app/settings';
 import { t } from '@app/i18n';
@@ -26,6 +26,12 @@ const Field = ({ field, value, providerKey, onChange }) => {
   };
 
   const control = () => {
+    // Set in wp-config.php, which wins over anything typed here, so the field only
+    // says where its value comes from.
+    if (constantFields(providerKey).includes(field.name)) {
+      return <NekoInput name={field.name} value="" readOnly placeholder={t('Set in wp-config.php')}
+        description={t('Set by %s in wp-config.php, which takes priority over this field.').replace('%s', constantName(providerKey, field.name))} />;
+    }
     switch (field.type) {
       case 'select':
         return (

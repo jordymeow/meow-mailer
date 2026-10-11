@@ -238,14 +238,24 @@ export const fallbackChoices = (activeKey) => [
     .map((p) => ({ key: p.key, label: p.label })),
 ];
 
+// The fields of a provider that a wp-config.php constant is in charge of. Only their
+// names reach the browser, so they read as empty here while they are in fact set.
+export const constantFields = (key) => ((window.mwmail || {}).constants || {})[key] || [];
+
+// The name of the constant that sets a field, as the user would write it in wp-config.php.
+export const constantName = (key, field) => `MWMAIL_${key.toUpperCase()}_${field.toUpperCase()}`;
+
 // Whether the active provider has the credentials it needs to send.
 export const isProviderConfigured = (key, creds = {}) => {
   if (key === 'none' || key === 'offline') {
     return true; // no credentials needed
   }
-  if (!creds) {
+  const fromConfig = constantFields(key);
+  if (!creds && fromConfig.length === 0) {
     return false;
   }
+  creds = { ...(creds || {}) };
+  fromConfig.forEach((field) => { creds[field] = creds[field] || true; });
   switch (key) {
     case 'smtp':
     case 'smtp_secondary': return !!creds.host;

@@ -398,6 +398,24 @@ class Meow_MWMAIL_Core {
     return [ 'password', 'api_key', 'secret_key', 'server_token', 'client_secret', 'certificate', 'access_token', 'refresh_token' ];
   }
 
+  /**
+   * The provider fields a wp-config.php constant is in charge of, as provider => [ field, ... ].
+   * Names only: the values stay in wp-config.php and never reach the browser. Without
+   * this the settings screen sees an empty field, and reads a provider that sends
+   * perfectly well as one that was never set up.
+   */
+  public function constant_fields() {
+    $out = [];
+    foreach ( $this->get_all_options()['providers'] as $provider => $fields ) {
+      foreach ( array_keys( (array) $fields ) as $field ) {
+        if ( defined( 'MWMAIL_' . strtoupper( $provider ) . '_' . strtoupper( $field ) ) ) {
+          $out[ $provider ][] = $field;
+        }
+      }
+    }
+    return $out;
+  }
+
   /** Options safe to send to the client: stored secrets replaced by a mask. */
   public function get_masked_options() {
     $options = $this->get_all_options();

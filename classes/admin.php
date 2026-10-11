@@ -132,6 +132,7 @@ class Meow_MWMAIL_Admin extends MeowKit_MWMAIL_Admin {
       'network'    => $this->core->network_state(),
       'security'   => $this->core->security_state(),
       'options'    => $this->core->get_masked_options(),
+      'constants'  => $this->core->constant_fields(),
       // Other mail plugins whose settings we can take over. Names and provider
       // keys only: their credentials stay server-side until an import is asked for.
       'importer'   => ( new Meow_MWMAIL_Modules_Importer( $this->core ) )->detect(),
