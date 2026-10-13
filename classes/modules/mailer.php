@@ -26,7 +26,7 @@ class Meow_MWMAIL_Modules_Mailer {
 
   public function __construct( $core ) {
     $this->core = $core;
-    add_filter( 'pre_wp_mail', [ $this, 'pre_wp_mail' ], 10, 2 );
+    add_filter( 'pre_wp_mail', [ $this, 'pre_wp_mail' ], self::send_priority(), 2 );
 
     // With no provider chosen we stay out of the delivery path, but the log is
     // still worth keeping: watching what WordPress sends changes nothing about how
@@ -65,6 +65,18 @@ class Meow_MWMAIL_Modules_Mailer {
   }
 
   #endregion
+
+  /**
+   * Where we sit on `pre_wp_mail`. Early by default, but after Mail Queue (WDM) when it
+   * is active: it holds emails back to pace them, and steps aside for any filter that
+   * already sent the email. Running first would send everything at once and silently
+   * defeat the pacing. Running after it, it queues, then releases each email later
+   * through wp_mail(), which brings it back to us.
+   */
+  private static function send_priority() {
+    $queue = function_exists( 'wdm_wpma_prewpmail' ) ? has_filter( 'pre_wp_mail', 'wdm_wpma_prewpmail' ) : false;
+    return $queue === false ? 10 : (int) $queue + 1;
+  }
 
   /**
    * @param null|bool $short_circuit
