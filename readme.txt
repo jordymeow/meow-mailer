@@ -5,7 +5,7 @@ Donate link: https://www.patreon.com/meowapps
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.3.1
+Stable tag: 0.3.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,6 +134,9 @@ If you would rather nobody signs in, for example when you build a site for a cli
 Meow Mailer is open source. The full source, including the React code used to build the admin interface, lives [on GitHub](https://github.com/jordymeow/meow-mailer).
 
 == Changelog ==
+
+= 0.3.2 (2026/10/13) =
+* Update: Meow Mailer now works alongside WordPress Mail Queue, keeping its sending pace while each email still goes out through your provider.
 
 = 0.3.1 (2026/10/11) =
 * Add: {site_name} and {admin_email} placeholders for the From Name, Reply-To and Return Path settings.
