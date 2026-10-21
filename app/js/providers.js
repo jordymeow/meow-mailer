@@ -18,7 +18,7 @@ export const PROVIDERS = [
   {
     key: 'none',
     label: 'None',
-    description: 'Meow Mailer stays out of the way. WordPress sends email as usual and nothing is logged. Pick a provider below to take over.',
+    description: 'Meow Mailer stays out of the way. WordPress sends email as usual, and each email is still logged. Pick a provider below to take over.',
     fields: [],
   },
   {
