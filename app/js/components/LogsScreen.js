@@ -214,7 +214,9 @@ const LogsScreen = ({ filters, onView, onExplainError, reloadSignal,
             filters it was one slip from the button that only changes the view. */}
         <NekoButton className="secondary" icon="download" disabled={!total} onClick={exportCsv}>{t('Export CSV')}</NekoButton>
         <div style={{ flex: 1 }} />
-        <NekoPaging currentPage={page} limit={LIMIT} total={total} onClick={setPage} />
+        {/* Nothing to page through: a "1/1" with four arrows only adds noise under an
+            empty table. */}
+        {total > 0 && <NekoPaging currentPage={page} limit={LIMIT} total={total} onClick={setPage} />}
       </div>
     </NekoBlock>
   );
