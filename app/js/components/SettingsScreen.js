@@ -240,7 +240,8 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
         )}
 
         {lockedProvider ? <LockedBlock title={t('Email Provider')} /> : (
-          <NekoBlock title={t('Email Provider')} busy={busy}>
+          <NekoBlock title={t('Email Provider')} busy={busy}
+            subtitle={t('The service that sends your emails, and the one that takes over if it refuses one.')}>
             {firstRun ? <ProviderPicker onPick={(v) => updateOption(v, 'provider')} /> : <>
               <NekoSettings title={t('Provider')}>
                 <NekoSelect scrolldown name="provider" value={provider} onChange={(v) => updateOption(v, 'provider')}
@@ -294,7 +295,8 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
         )}
 
         {lockedSender ? <LockedBlock title={t('Sender')} /> : (
-          <NekoBlock title={t('Sender')} busy={busy}>
+          <NekoBlock title={t('Sender')} busy={busy}
+            subtitle={t('Who your emails come from, and where replies and bounces go.')}>
             <NekoSettings title={t('From Email')}>
               <NekoInput name="from_email" value={options.from_email} placeholder="you@example.com" onBlur={updateOption} onEnter={updateOption}
                 description={senderAddresses.length
