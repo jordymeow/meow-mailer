@@ -6,6 +6,7 @@ import { useCoreContext } from '@app/contexts/core';
 import { fetchStats } from '@app/requests';
 import { PROVIDER_LABELS } from '@app/providers';
 import VolumeChart from './VolumeChart';
+import { hasActiveFilters } from './FilterBar';
 import { num } from '@app/format';
 import { t } from '@app/i18n';
 
@@ -106,6 +107,9 @@ const DashboardScreen = ({ filters, reloadSignal, onBusy = () => {} }) => {
   // out as 100% or 0%, and 0% in red would read as an outage when all it means is
   // that you asked to see failures. So the tile steps aside and says why.
   const statusFiltered = !!filters.status;
+  // With a search, status or provider narrowing things down, an empty result says
+  // nothing about what was sent, so the empty states must not read as "never sent".
+  const narrowed = hasActiveFilters(filters);
 
   // A rate needs something to divide. Until an email has actually been attempted,
   // a big "0%" would read as a problem rather than as an empty log.
@@ -122,7 +126,7 @@ const DashboardScreen = ({ filters, reloadSignal, onBusy = () => {} }) => {
   } else if (attempted > 0) {
     rateHint = `${num(totals.sent)} ${t('of')} ${num(attempted)} ${t('attempted')}`;
   } else {
-    rateHint = t('nothing sent yet');
+    rateHint = narrowed ? t('nothing matches') : t('nothing sent yet');
   }
 
   if (!state.options.logs_enabled) {
@@ -158,7 +162,8 @@ const DashboardScreen = ({ filters, reloadSignal, onBusy = () => {} }) => {
           </div>
 
           <VolumeChart series={stats ? stats.series : []}
-            emptyMessage={t('Once WordPress sends something, it will show up here.')} />
+            emptyTitle={narrowed ? t('Nothing matches these filters') : t('No emails in this period')}
+            emptyMessage={narrowed ? t('Try another status, provider, period or search term.') : t('Once WordPress sends something, it will show up here.')} />
         </NekoBlock>
 
         {errors.length > 0 && (
