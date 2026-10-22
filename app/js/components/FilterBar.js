@@ -3,7 +3,7 @@ const { useState, useEffect } = wp.element;
 import { NekoToolbar, NekoInput, NekoSelect, NekoOption, NekoButton } from '@neko-ui';
 
 import { PROVIDERS } from '@app/providers';
-import { t } from '@app/i18n';
+import { __ } from '@app/i18n';
 
 export const DEFAULT_FILTERS = { search: '', status: '', provider: '', days: 30 };
 
@@ -43,24 +43,24 @@ const FilterBar = ({ filters, onChange, onRefresh, busy }) => {
 
   return (
     <NekoToolbar style={{ flexWrap: 'wrap' }}>
-      <NekoInput name="search" value={searchInput} placeholder={t('Search subject or recipient…')}
+      <NekoInput name="search" value={searchInput} placeholder={__('Search subject or recipient…', 'meow-mailer')}
         onChange={setSearchInput} onEnter={() => onChange({ ...filters, search: searchInput })}
         style={{ flex: 1, minWidth: 200 }} />
       <NekoSelect scrolldown name="status" value={filters.status} onChange={(v) => set('status', v)} style={{ width: 130 }}>
-        <NekoOption value="" label={t('All statuses')} />
-        <NekoOption value="sent" label={t('Sent')} />
-        <NekoOption value="failed" label={t('Failed')} />
-        <NekoOption value="offline" label={t('Offline')} />
-        <NekoOption value="pending" label={t('Pending')} />
+        <NekoOption value="" label={__('All statuses', 'meow-mailer')} />
+        <NekoOption value="sent" label={__('Sent', 'meow-mailer')} />
+        <NekoOption value="failed" label={__('Failed', 'meow-mailer')} />
+        <NekoOption value="offline" label={__('Offline', 'meow-mailer')} />
+        <NekoOption value="pending" label={__('Pending', 'meow-mailer')} />
       </NekoSelect>
       <NekoSelect scrolldown name="provider" value={filters.provider} onChange={(v) => set('provider', v)} style={{ width: 160 }}>
-        <NekoOption value="" label={t('All providers')} />
-        {PROVIDERS.map((p) => <NekoOption key={p.key} value={p.key} label={t(p.label)} />)}
+        <NekoOption value="" label={__('All providers', 'meow-mailer')} />
+        {PROVIDERS.map((p) => <NekoOption key={p.key} value={p.key} label={p.label} />)}
       </NekoSelect>
       <NekoSelect scrolldown name="days" value={String(filters.days)} onChange={(v) => set('days', parseInt(v, 10))} style={{ width: 150 }}>
-        <NekoOption value="7" label={t('Last 7 days')} />
-        <NekoOption value="30" label={t('Last 30 days')} />
-        <NekoOption value="90" label={t('Last 90 days')} />
+        <NekoOption value="7" label={__('Last 7 days', 'meow-mailer')} />
+        <NekoOption value="30" label={__('Last 30 days', 'meow-mailer')} />
+        <NekoOption value="90" label={__('Last 90 days', 'meow-mailer')} />
       </NekoSelect>
       {/* Before Refresh, not after it. The search field is the one that flexes, so
           whatever appears here is paid for out of its width and Refresh stays pinned
@@ -68,13 +68,13 @@ const FilterBar = ({ filters, onChange, onRefresh, busy }) => {
       {hasActiveFilters(filters) && (
         <NekoButton className="secondary" icon="close" disabled={busy}
           onClick={() => onChange({ ...DEFAULT_FILTERS, days: filters.days })}>
-          {t('Clear')}
+          {__('Clear', 'meow-mailer')}
         </NekoButton>
       )}
       {/* Refreshes the whole screen, which is why it sits here rather than on one of
           the panels: they all read the same rows. Last, so it ends at the right edge. */}
       <NekoButton className="primary" icon="refresh" busy={busy} onClick={onRefresh}>
-        {t('Refresh')}
+        {__('Refresh', 'meow-mailer')}
       </NekoButton>
     </NekoToolbar>
   );

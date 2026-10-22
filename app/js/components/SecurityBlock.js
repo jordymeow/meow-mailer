@@ -6,7 +6,7 @@ import { useCoreContext } from '@app/contexts/core';
 import { fetchSecurity, setEncryption } from '@app/requests';
 import { security as initialSecurity } from '@app/settings';
 import { getProvider } from '@app/providers';
-import { t } from '@app/i18n';
+import { __ } from '@app/i18n';
 import Row from './SettingRow';
 
 // "Generic SMTP: Password, Mailgun: API Key", from the provider => fields map the
@@ -15,9 +15,9 @@ const describeFields = (byProvider) => Object.entries(byProvider || {}).map(([ke
   const provider = getProvider(key) || { label: key, fields: [] };
   const names = Object.keys(fields).map((f) => {
     const field = (provider.fields || []).find((x) => x.name === f);
-    return field ? t(field.label) : f;
+    return field ? field.label : f;
   });
-  return `${t(provider.label)}: ${names.join(', ')}`;
+  return `${provider.label}: ${names.join(', ')}`;
 }).join('. ');
 
 // The wp-config constants that would keep the current provider's secrets out of the
@@ -64,7 +64,7 @@ const SecurityBlock = () => {
 
   const toggle = async (enabled) => {
     if (!enabled && hasUnreadable
-      && !window.confirm(t('Some stored credentials cannot be read anymore, so there is no plain text to put back. They will be cleared and you will need to enter them again. Continue?'))) {
+      && !window.confirm(__('Some stored credentials cannot be read anymore, so there is no plain text to put back. They will be cleared and you will need to enter them again. Continue?', 'meow-mailer'))) {
       return;
     }
     setBusy(true);
@@ -75,11 +75,11 @@ const SecurityBlock = () => {
       setOptions(res.options);
       const cleared = describeFields(res.cleared);
       if (enabled) {
-        setNotice({ variant: 'success', text: t('Your credentials are now stored encrypted.') });
+        setNotice({ variant: 'success', text: __('Your credentials are now stored encrypted.', 'meow-mailer') });
       } else if (cleared) {
-        setNotice({ variant: 'warning', text: `${t('Encryption is off. These credentials could not be read and were cleared, so enter them again:')} ${cleared}.` });
+        setNotice({ variant: 'warning', text: `${__('Encryption is off. These credentials could not be read and were cleared, so enter them again:', 'meow-mailer')} ${cleared}.` });
       } else {
-        setNotice({ variant: 'success', text: t('Encryption is off. Your credentials are stored in plain text again.') });
+        setNotice({ variant: 'success', text: __('Encryption is off. Your credentials are stored in plain text again.', 'meow-mailer') });
       }
     } catch (err) {
       setError(err.message);
@@ -91,56 +91,56 @@ const SecurityBlock = () => {
   const constants = constantsFor(options.provider);
 
   return (
-    <NekoBlock title={t('Security')}
-      subtitle={t('How the passwords and API keys you enter above are kept.')}>
+    <NekoBlock title={__('Security', 'meow-mailer')}
+      subtitle={__('How the passwords and API keys you enter above are kept.', 'meow-mailer')}>
 
       {notice && <><NekoMessage variant={notice.variant}>{notice.text}</NekoMessage><NekoSpacer /></>}
 
       {hasUnreadable && (
         <>
           <NekoMessage variant="danger">
-            <b>{t('These credentials cannot be read anymore:')}</b> {describeFields(unreadable)}.{' '}
+            <b>{__('These credentials cannot be read anymore:', 'meow-mailer')}</b> {describeFields(unreadable)}.{' '}
             {keyChanged
-              ? t('They were encrypted with security keys this site no longer has, which happens after a migration, a restore onto another site, or a security plugin rotating the keys. Email through these providers fails until you enter them again in Email Provider above.')
-              : t('The stored values are damaged and cannot be decrypted. Email through these providers fails until you enter them again in Email Provider above.')}
+              ? __('They were encrypted with security keys this site no longer has, which happens after a migration, a restore onto another site, or a security plugin rotating the keys. Email through these providers fails until you enter them again in Email Provider above.', 'meow-mailer')
+              : __('The stored values are damaged and cannot be decrypted. Email through these providers fails until you enter them again in Email Provider above.', 'meow-mailer')}
           </NekoMessage>
           <NekoSpacer />
         </>
       )}
 
-      <Row title={t('Encrypt Credentials')}
+      <Row title={__('Encrypt Credentials', 'meow-mailer')}
         description={security.enabled
-          ? t('On. Passwords and API keys are stored encrypted in the database.')
-          : t('Off. Passwords and API keys are stored as plain text in the database, the way WordPress stores its own settings.')}>
+          ? __('On. Passwords and API keys are stored encrypted in the database.', 'meow-mailer')
+          : __('Off. Passwords and API keys are stored as plain text in the database, the way WordPress stores its own settings.', 'meow-mailer')}>
         <NekoButton className={security.enabled ? 'secondary' : 'primary'} busy={busy}
           disabled={!security.enabled && !!security.blocker}
           onClick={() => toggle(!security.enabled)}>
-          {security.enabled ? t('Disable Encryption') : t('Enable Encryption')}
+          {security.enabled ? __('Disable Encryption', 'meow-mailer') : __('Enable Encryption', 'meow-mailer')}
         </NekoButton>
       </Row>
 
       {!security.enabled && !!security.blocker && (
         <>
           <NekoSpacer />
-          <NekoMessage variant="warning">{t('Encryption cannot be enabled on this site.')} {security.blocker}</NekoMessage>
+          <NekoMessage variant="warning">{__('Encryption cannot be enabled on this site.', 'meow-mailer')} {security.blocker}</NekoMessage>
         </>
       )}
 
       <NekoSpacer />
       <NekoTypo p style={small}>
         {security.custom_key
-          ? t('The key comes from MWMAIL_ENCRYPTION_KEY in your wp-config.php.')
-          : t('The key comes from the security keys in your wp-config.php.')}{' '}
-        {t('This protects against a copy of the database being read: a backup, a dump, a staging clone, a support export. It does not protect against someone who can read your files, since the keys are there too.')}{' '}
-        <b>{t('If those keys change, after a migration, a restore onto another site, or a security plugin rotating them, the stored credentials cannot be read anymore and email stops until you enter them again.')}</b>{' '}
-        {t('Export your settings before moving a site, or define MWMAIL_ENCRYPTION_KEY in wp-config.php to pin a key that survives rotation.')}
+          ? __('The key comes from MWMAIL_ENCRYPTION_KEY in your wp-config.php.', 'meow-mailer')
+          : __('The key comes from the security keys in your wp-config.php.', 'meow-mailer')}{' '}
+        {__('This protects against a copy of the database being read: a backup, a dump, a staging clone, a support export. It does not protect against someone who can read your files, since the keys are there too.', 'meow-mailer')}{' '}
+        <b>{__('If those keys change, after a migration, a restore onto another site, or a security plugin rotating them, the stored credentials cannot be read anymore and email stops until you enter them again.', 'meow-mailer')}</b>{' '}
+        {__('Export your settings before moving a site, or define MWMAIL_ENCRYPTION_KEY in wp-config.php to pin a key that survives rotation.', 'meow-mailer')}
       </NekoTypo>
 
       <NekoSpacer />
-      <Row title={t('Keep Them Out of the Database')}
+      <Row title={__('Keep Them Out of the Database', 'meow-mailer')}
         description={constants.length
-          ? <>{t('Define them as constants in wp-config.php and they are never stored at all. For your current provider:')} <code>{constants.join(', ')}</code></>
-          : t('Define them as constants in wp-config.php and they are never stored at all. Pick a provider above to see the names to use.')} />
+          ? <>{__('Define them as constants in wp-config.php and they are never stored at all. For your current provider:', 'meow-mailer')} <code>{constants.join(', ')}</code></>
+          : __('Define them as constants in wp-config.php and they are never stored at all. Pick a provider above to see the names to use.', 'meow-mailer')} />
     </NekoBlock>
   );
 };

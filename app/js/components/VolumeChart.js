@@ -1,6 +1,6 @@
 const { useState } = wp.element;
 
-import { t } from '@app/i18n';
+import { __ } from '@app/i18n';
 
 /**
  * Daily email volume as stacked bars.
@@ -22,9 +22,9 @@ import { t } from '@app/i18n';
 // Order is bottom-to-top. Failures sit against the baseline, where they are
 // easiest to compare between days.
 export const SERIES = [
-  { key: 'failed', label: 'Failed', color: 'var(--neko-red)' },
-  { key: 'sent', label: 'Sent', color: 'var(--neko-green)' },
-  { key: 'offline', label: 'Offline', color: 'var(--neko-gray-60)' },
+  { key: 'failed', label: __('Failed', 'meow-mailer'), color: 'var(--neko-red)' },
+  { key: 'sent', label: __('Sent', 'meow-mailer'), color: 'var(--neko-green)' },
+  { key: 'offline', label: __('Offline', 'meow-mailer'), color: 'var(--neko-gray-60)' },
 ];
 
 const HEIGHT = 180;
@@ -48,7 +48,7 @@ const Legend = () => (
     {SERIES.map((s) => (
       <span key={s.key} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--neko-gray-50)' }}>
         <span style={{ width: 10, height: 10, borderRadius: 3, background: s.color, flex: '0 0 auto' }} />
-        {t(s.label)}
+        {s.label}
       </span>
     ))}
   </div>
@@ -93,7 +93,7 @@ const EmptyChart = ({ days, title, message }) => (
           textAlign: 'center', padding: '10px 18px', borderRadius: 8,
           background: 'var(--neko-white)', boxShadow: '0 1px 10px rgba(0, 0, 0, 0.06)',
         }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--neko-gray-40)' }}>{title || t('No emails in this period')}</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--neko-gray-40)' }}>{title || __('No emails in this period', 'meow-mailer')}</div>
           <div style={{ fontSize: 12, color: 'var(--neko-gray-50)', marginTop: 2 }}>{message}</div>
         </div>
       </div>
@@ -128,7 +128,7 @@ const VolumeChart = ({ series, emptyTitle, emptyMessage }) => {
   // would be unreadable, and dated ticks would collide long before they helped.
   const readout = active
     ? `${dayLabel(active.day)} · ${SERIES.filter((s) => active[s.key] > 0)
-        .map((s) => `${active[s.key]} ${t(s.label).toLowerCase()}`).join(', ') || t('nothing')}`
+        .map((s) => `${active[s.key]} ${s.label.toLowerCase()}`).join(', ') || __('nothing', 'meow-mailer')}`
     : '';
 
   return (
@@ -188,7 +188,7 @@ const VolumeChart = ({ series, emptyTitle, emptyMessage }) => {
         <span>{dayLabel(days[0].day)}</span>
         {/* The real busiest day, not the rounded top of the scale: that one made a
             month of single emails read as "peak 5". */}
-        <span>{t('busiest day')}: {peak}</span>
+        <span>{__('busiest day', 'meow-mailer')}: {peak}</span>
         <span>{dayLabel(days[days.length - 1].day)}</span>
       </div>
     </div>

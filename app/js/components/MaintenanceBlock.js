@@ -5,7 +5,7 @@ import { NekoBlock, NekoButton, NekoMessage, NekoSpacer, NekoTypo } from '@neko-
 import { useCoreContext } from '@app/contexts/core';
 import { exportSettings, importSettings, clearLogs } from '@app/requests';
 import { download } from '@app/download';
-import { t } from '@app/i18n';
+import { __ } from '@app/i18n';
 import Row from './SettingRow';
 
 /**
@@ -50,51 +50,51 @@ const MaintenanceBlock = ({ onLogsCleared = () => {} }) => {
     try {
       parsed = JSON.parse(text);
     } catch (e) {
-      throw new Error(t('That file is not valid JSON.'));
+      throw new Error(__('That file is not valid JSON.', 'meow-mailer'));
     }
     setOptions(await importSettings(parsed));
-    setNotice({ variant: 'success', text: t('Settings imported.') });
+    setNotice({ variant: 'success', text: __('Settings imported.', 'meow-mailer') });
   });
 
   const doReset = () => {
-    if (!window.confirm(t('Put every setting back to its default? Your provider and its credentials are included. This cannot be undone.'))) {
+    if (!window.confirm(__('Put every setting back to its default? Your provider and its credentials are included. This cannot be undone.', 'meow-mailer'))) {
       return;
     }
     run('reset', async () => {
       await resetOptions();
-      setNotice({ variant: 'success', text: t('Settings reset to their defaults.') });
+      setNotice({ variant: 'success', text: __('Settings reset to their defaults.', 'meow-mailer') });
     });
   };
 
   const doClearLogs = () => {
-    if (!window.confirm(t('Delete every entry in the email log? This cannot be undone.'))) {
+    if (!window.confirm(__('Delete every entry in the email log? This cannot be undone.', 'meow-mailer'))) {
       return;
     }
     run('logs', async () => {
       await clearLogs();
       onLogsCleared();
-      setNotice({ variant: 'success', text: t('The email log is empty.') });
+      setNotice({ variant: 'success', text: __('The email log is empty.', 'meow-mailer') });
     });
   };
 
   return (
-    <NekoBlock title={t('Maintenance')}
-      subtitle={t('Move this configuration to another site, put it back the way it was, or clear out the log.')}>
+    <NekoBlock title={__('Maintenance', 'meow-mailer')}
+      subtitle={__('Move this configuration to another site, put it back the way it was, or clear out the log.', 'meow-mailer')}>
 
       {notice && <><NekoMessage variant={notice.variant}>{notice.text}</NekoMessage><NekoSpacer /></>}
 
-      <Row title={t('Export Settings')}
-        description={t('Download everything as a JSON file, ready to import on another site.')}>
+      <Row title={__('Export Settings', 'meow-mailer')}
+        description={__('Download everything as a JSON file, ready to import on another site.', 'meow-mailer')}>
         <NekoButton className="secondary" icon="download" busy={busy === 'export'} onClick={doExport}>
-          {t('Export')}
+          {__('Export', 'meow-mailer')}
         </NekoButton>
       </Row>
 
-      <Row title={t('Import Settings')}
-        description={t('Read a file exported from Meow Mailer. Whatever it contains replaces what is set here.')}>
+      <Row title={__('Import Settings', 'meow-mailer')}
+        description={__('Read a file exported from Meow Mailer. Whatever it contains replaces what is set here.', 'meow-mailer')}>
         <NekoButton className="secondary" icon="upload" busy={busy === 'import'}
           onClick={() => fileInput.current && fileInput.current.click()}>
-          {t('Import')}
+          {__('Import', 'meow-mailer')}
         </NekoButton>
         {/* The browser's own file button cannot be styled to match, so it stays out of
             sight and the NekoButton above stands in for it. */}
@@ -109,19 +109,19 @@ const MaintenanceBlock = ({ onLogsCleared = () => {} }) => {
           }} />
       </Row>
 
-      <Row title={t('Reset Settings')}
-        description={t('Back to a fresh install: no provider, no credentials, every option at its default. The log is left alone.')}>
-        <NekoButton className="danger" busy={busy === 'reset'} onClick={doReset}>{t('Reset')}</NekoButton>
+      <Row title={__('Reset Settings', 'meow-mailer')}
+        description={__('Back to a fresh install: no provider, no credentials, every option at its default. The log is left alone.', 'meow-mailer')}>
+        <NekoButton className="danger" busy={busy === 'reset'} onClick={doReset}>{__('Reset', 'meow-mailer')}</NekoButton>
       </Row>
 
-      <Row title={t('Delete All Logs')}
-        description={t('Empty the email log completely. Your settings are left alone.')}>
-        <NekoButton className="danger" busy={busy === 'logs'} onClick={doClearLogs}>{t('Delete All')}</NekoButton>
+      <Row title={__('Delete All Logs', 'meow-mailer')}
+        description={__('Empty the email log completely. Your settings are left alone.', 'meow-mailer')}>
+        <NekoButton className="danger" busy={busy === 'logs'} onClick={doClearLogs}>{__('Delete All', 'meow-mailer')}</NekoButton>
       </Row>
 
       <NekoSpacer />
       <NekoTypo p style={{ fontSize: 12, color: 'var(--neko-gray-50)', margin: 0 }}>
-        {t('An export holds your provider credentials in plain text, so keep the file somewhere you would keep a password.')}
+        {__('An export holds your provider credentials in plain text, so keep the file somewhere you would keep a password.', 'meow-mailer')}
       </NekoTypo>
     </NekoBlock>
   );

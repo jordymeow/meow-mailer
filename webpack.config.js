@@ -37,6 +37,7 @@ module.exports = function(env, options) {
     externals: {
       react: "React",
       "react-dom": "ReactDOM",
+      "@wordpress/i18n": ["wp", "i18n"],
     },
     output: {
       filename: "[name].js",

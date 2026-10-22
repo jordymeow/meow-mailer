@@ -9,7 +9,7 @@ import { fetchLogs, deleteLogs, exportLogs } from '@app/requests';
 import { PROVIDER_LABELS } from '@app/providers';
 import { download } from '@app/download';
 import { hasActiveFilters } from './FilterBar';
-import { t } from '@app/i18n';
+import { __ } from '@app/i18n';
 
 const LIMIT = 20;
 
@@ -20,10 +20,10 @@ let viewState = { page: 1, sort: { accessor: 'created', by: 'desc' } };
 
 export const statusOf = (status) => {
   switch (status) {
-    case 'sent':    return { type: 'ok', label: t('Sent') };
-    case 'failed':  return { type: 'error', label: t('Failed') };
-    case 'offline': return { type: 'paused', label: t('Offline') };
-    case 'pending': return { type: 'pending', label: t('Pending') };
+    case 'sent':    return { type: 'ok', label: __('Sent', 'meow-mailer') };
+    case 'failed':  return { type: 'error', label: __('Failed', 'meow-mailer') };
+    case 'offline': return { type: 'paused', label: __('Offline', 'meow-mailer') };
+    case 'pending': return { type: 'pending', label: __('Pending', 'meow-mailer') };
     default:        return { type: 'info', label: status || '-' };
   }
 };
@@ -41,7 +41,7 @@ const StatusCell = ({ status, label, onExplain }) => {
   const { icon, color } = STATUS_ICONS[status] || { icon: 'info-outline', color: 'var(--neko-gray-60)' };
   const clickable = !!onExplain;
   return (
-    <span title={clickable ? `${label}. ${t('Click to find out why.')}` : label}
+    <span title={clickable ? `${label}. ${__('Click to find out why.', 'meow-mailer')}` : label}
       aria-label={label}
       role={clickable ? 'button' : undefined}
       tabIndex={clickable ? 0 : undefined}
@@ -74,10 +74,10 @@ const DateCell = ({ value }) => {
 // column of icons down the left edge answers that faster than reading any row.
 const COLUMNS = [
   { accessor: 'status', title: '', width: '38px' },
-  { accessor: 'created', title: t('Date'), width: '105px', sortable: true },
-  { accessor: 'to', title: t('To') },
-  { accessor: 'subject', title: t('Subject') },
-  { accessor: 'provider', title: t('Provider'), width: '130px' },
+  { accessor: 'created', title: __('Date', 'meow-mailer'), width: '105px', sortable: true },
+  { accessor: 'to', title: __('To', 'meow-mailer') },
+  { accessor: 'subject', title: __('Subject', 'meow-mailer') },
+  { accessor: 'provider', title: __('Provider', 'meow-mailer'), width: '130px' },
   { accessor: 'actions', title: '', width: '46px' },
 ];
 
@@ -149,16 +149,16 @@ const LogsScreen = ({ filters, onView, onExplainError, reloadSignal,
   if (hasFilters) {
     // No button to clear them: the filter bar sits a few centimetres above with its
     // own Clear, and a second one here would be the same action twice on one screen.
-    empty = <NekoEmpty inline icon="filter" title={t('Nothing matches these filters')}
-      subtitle={t('Try another status, provider, period or search term.')} />;
+    empty = <NekoEmpty inline icon="filter" title={__('Nothing matches these filters', 'meow-mailer')}
+      subtitle={__('Try another status, provider, period or search term.', 'meow-mailer')} />;
   }
   else if (loggingOff) {
-    empty = <NekoEmpty inline icon="eye-off" title={t('Logging is turned off')}
-      subtitle={t('Emails are still sent, they are just not recorded. Turn Enable Logging back on in the Settings.')} />;
+    empty = <NekoEmpty inline icon="eye-off" title={__('Logging is turned off', 'meow-mailer')}
+      subtitle={__('Emails are still sent, they are just not recorded. Turn Enable Logging back on in the Settings.', 'meow-mailer')} />;
   }
   else {
-    empty = <NekoEmpty inline icon="mail" title={t('No emails yet')}
-      subtitle={t('Once WordPress sends an email, it will show up here.')} />;
+    empty = <NekoEmpty inline icon="mail" title={__('No emails yet', 'meow-mailer')}
+      subtitle={__('Once WordPress sends an email, it will show up here.', 'meow-mailer')} />;
   }
 
   const data = rows.map((row) => {
@@ -170,9 +170,9 @@ const LogsScreen = ({ filters, onView, onExplainError, reloadSignal,
       id: row.id,
       created: <DateCell value={row.created} />,
       to: extra
-        ? <>{row.email_to} <span style={{ opacity: 0.5 }} title={t('Cc / Bcc recipients')}>+{extra}</span></>
+        ? <>{row.email_to} <span style={{ opacity: 0.5 }} title={__('Cc / Bcc recipients', 'meow-mailer')}>+{extra}</span></>
         : row.email_to,
-      subject: row.subject || <em style={{ opacity: 0.5 }}>{t('(no subject)')}</em>,
+      subject: row.subject || <em style={{ opacity: 0.5 }}>{__('(no subject)', 'meow-mailer')}</em>,
       provider: PROVIDER_LABELS[row.provider] || row.provider || '-',
       // Only a failure has something to explain, so only that icon invites a click.
       // The modal itself is owned by MainScreen, alongside the email one, so both
@@ -180,7 +180,7 @@ const LogsScreen = ({ filters, onView, onExplainError, reloadSignal,
       status: <StatusCell status={row.status} label={st.label}
         onExplain={row.status === 'failed' ? () => onExplainError(row) : null} />,
       actions: (
-        <NekoButton rounded icon="search" className="primary" title={t('View')} aria-label={t('View email')}
+        <NekoButton rounded icon="search" className="primary" title={__('View', 'meow-mailer')} aria-label={__('View email', 'meow-mailer')}
           onClick={() => onView(row.id)} />
       ),
     };
@@ -208,11 +208,11 @@ const LogsScreen = ({ filters, onView, onExplainError, reloadSignal,
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <NekoButton className="danger" disabled={!selected.length} onClick={removeSelected}>
-          {selected.length ? `${t('Delete')} (${selected.length})` : t('Delete')}
+          {selected.length ? `${__('Delete', 'meow-mailer')} (${selected.length})` : __('Delete', 'meow-mailer')}
         </NekoButton>
         {/* Emptying the whole log lives in Settings › Maintenance now. Beside the
             filters it was one slip from the button that only changes the view. */}
-        <NekoButton className="secondary" icon="download" disabled={!total} onClick={exportCsv}>{t('Export CSV')}</NekoButton>
+        <NekoButton className="secondary" icon="download" disabled={!total} onClick={exportCsv}>{__('Export CSV', 'meow-mailer')}</NekoButton>
         <div style={{ flex: 1 }} />
         {/* Nothing to page through: a "1/1" with four arrows only adds noise under an
             empty table. */}

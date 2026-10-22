@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Meow Mailer 0.1.0\n"
+"Project-Id-Version: Meow Mailer 0.3.2\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/meow-mailer\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-06-27T10:28:38+00:00\n"
+"POT-Creation-Date: 2026-10-22T01:11:21+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: meow-mailer\n"
@@ -17,11 +17,6 @@ msgstr ""
 #. Plugin Name of the plugin
 #: meow-mailer.php
 msgid "Meow Mailer"
-msgstr ""
-
-#. Plugin URI of the plugin
-#: meow-mailer.php
-msgid "https://meowapps.com/meow-mailer"
 msgstr ""
 
 #. Description of the plugin
@@ -40,15 +35,35 @@ msgid "https://meowapps.com"
 msgstr ""
 
 #. translators: %d: number of emails that failed to send in the last 24 hours.
-#: classes/admin.php:47
+#: classes/admin.php:50
 #, php-format
 msgid "%d email failed to send in the last 24 hours."
 msgid_plural "%d emails failed to send in the last 24 hours."
 msgstr[0] ""
 msgstr[1] ""
 
-#: classes/admin.php:49
+#: classes/admin.php:52
 msgid "View logs"
+msgstr ""
+
+#: classes/admin.php:95
+msgid "Your stored email credentials cannot be read anymore. They were encrypted with security keys this site no longer has, which happens after a migration, a restore, or a security plugin rotating them. Email fails until you enter them again."
+msgstr ""
+
+#: classes/admin.php:97
+msgid "Open the settings"
+msgstr ""
+
+#: classes/core.php:613
+msgid "PHP on this server was built without the Sodium extension, which does the encrypting."
+msgstr ""
+
+#: classes/core.php:616
+msgid "AUTH_KEY and SECURE_AUTH_KEY in wp-config.php are missing or still set to their placeholder, so there is nothing safe to derive an encryption key from."
+msgstr ""
+
+#: classes/core.php:759
+msgid "Encryption did not pass its self-test on this server, so nothing was changed."
 msgstr ""
 
 #: classes/mailers/brevo.php:10
@@ -63,6 +78,14 @@ msgstr ""
 msgid "Could not refresh the Gmail access token."
 msgstr ""
 
+#: classes/mailers/maileroo.php:12
+msgid "Maileroo sending key is required."
+msgstr ""
+
+#: classes/mailers/maileroo.php:71
+msgid "Maileroo rejected the email."
+msgstr ""
+
 #: classes/mailers/mailersend.php:10
 msgid "MailerSend API key is required."
 msgstr ""
@@ -75,11 +98,71 @@ msgstr ""
 msgid "Mailjet API key and secret key are required."
 msgstr ""
 
-#: classes/mailers/outlook.php:73
+#: classes/mailers/microsoft.php:21
+msgid "Enter the mailbox Microsoft 365 should send from."
+msgstr ""
+
+#: classes/mailers/microsoft.php:40
+msgid "Check that the app has the Mail.Send application permission (not delegated), that admin consent was granted, and that no Application Access Policy excludes this mailbox."
+msgstr ""
+
+#: classes/mailers/microsoft.php:43
+msgid "Check that this mailbox exists in the tenant. A shared mailbox works too."
+msgstr ""
+
+#: classes/mailers/microsoft.php:55
+msgid "Enter the Tenant ID and Client ID of your app registration."
+msgstr ""
+
+#: classes/mailers/microsoft.php:60
+msgid "The Tenant ID has to be your own tenant (its Directory ID or domain), not \"common\"."
+msgstr ""
+
+#: classes/mailers/microsoft.php:67
+msgid "Paste the certificate and its private key."
+msgstr ""
+
+#: classes/mailers/microsoft.php:68
+msgid "Enter the client secret."
+msgstr ""
+
+#: classes/mailers/microsoft.php:103
+msgid "Microsoft did not return an access token."
+msgstr ""
+
+#: classes/mailers/microsoft.php:123
+msgid "Signing in with a certificate needs the OpenSSL PHP extension. Use a client secret instead, or ask your host to enable it."
+msgstr ""
+
+#: classes/mailers/microsoft.php:131
+msgid "The certificate is missing. Paste the certificate and its private key together, both in PEM format."
+msgstr ""
+
+#: classes/mailers/microsoft.php:134
+msgid "The private key is protected by a password. Export it without one (for example with the -nodes option of openssl)."
+msgstr ""
+
+#: classes/mailers/microsoft.php:137
+msgid "The private key is missing. Paste the certificate and its private key together, both in PEM format."
+msgstr ""
+
+#: classes/mailers/microsoft.php:143
+msgid "The certificate or its private key could not be read."
+msgstr ""
+
+#: classes/mailers/microsoft.php:146
+msgid "The private key does not belong to this certificate."
+msgstr ""
+
+#: classes/mailers/microsoft.php:166
+msgid "Signing with the private key failed."
+msgstr ""
+
+#: classes/mailers/outlook.php:103
 msgid "Outlook is not connected. Please authorize it in the settings."
 msgstr ""
 
-#: classes/mailers/outlook.php:97
+#: classes/mailers/outlook.php:127
 msgid "Could not refresh the Outlook access token."
 msgstr ""
 
@@ -107,66 +190,1823 @@ msgstr ""
 msgid "SMTP2GO API key is required."
 msgstr ""
 
-#: classes/modules/logs.php:36
-#: classes/modules/logs.php:83
+#: classes/mailers/zeptomail.php:28
+msgid "ZeptoMail Send Mail token is required."
+msgstr ""
+
+#. translators: %s: the file name that could not be uploaded.
+#: classes/mailers/zoho.php:146
+#, php-format
+msgid "Zoho did not accept the attachment \"%s\"."
+msgstr ""
+
+#: classes/mailers/zoho.php:163
+msgid "Zoho Mail is not connected. Please authorize it in the settings."
+msgstr ""
+
+#: classes/mailers/zoho.php:190
+msgid "no access token returned"
+msgstr ""
+
+#. translators: %s: the reason reported by Zoho.
+#: classes/mailers/zoho.php:192
+#, php-format
+msgid "Could not refresh the Zoho Mail access token (%s). Try disconnecting and connecting again."
+msgstr ""
+
+#: classes/mailers/zoho.php:244
+msgid "Could not read the Zoho Mail account. Make sure the connected account has a mailbox."
+msgstr ""
+
+#. translators: %s: the site name.
+#: classes/modules/alerts.php:95
+#, php-format
+msgid "[%s] Your email provider is failing"
+msgstr ""
+
+#. translators: %s: the site name.
+#: classes/modules/alerts.php:99
+#, php-format
+msgid "The email provider configured on %s is refusing to send, and the fallback is delivering in its place."
+msgstr ""
+
+#: classes/modules/alerts.php:101
+msgid "Your email is still going out, so there is nothing urgent to do. It is worth a look all the same, because the fallback is only meant to cover a bad moment, not to carry the site."
+msgstr ""
+
+#. translators: %s: the error reported by the main email provider.
+#: classes/modules/alerts.php:105
+#, php-format
+msgid "What the provider said: %s"
+msgstr ""
+
+#: classes/modules/alerts.php:108
+#: classes/modules/alerts.php:143
+#: classes/modules/alerts.php:315
+msgid "The full log is here:"
+msgstr ""
+
+#: classes/modules/alerts.php:111
+#: classes/modules/alerts.php:146
+msgid "You are getting this because failure alerts are on in Meow Mailer. You can turn them off in its settings."
+msgstr ""
+
+#. translators: %s: the site name.
+#: classes/modules/alerts.php:118
+#, php-format
+msgid "[%s] Your email provider is failing, and the fallback is delivering in its place."
+msgstr ""
+
+#. translators: %s: the site name.
+#: classes/modules/alerts.php:129
+#, php-format
+msgid "[%s] Email is failing to send"
+msgstr ""
+
+#. translators: %s: the site name.
+#: classes/modules/alerts.php:133
+#, php-format
+msgid "Emails from %s are not being delivered."
+msgstr ""
+
+#. translators: %d: number of emails that failed in the last hour.
+#: classes/modules/alerts.php:136
+#, php-format
+msgid "%d email failed in the last hour."
+msgid_plural "%d emails failed in the last hour."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %s: the error reported by the email provider.
+#: classes/modules/alerts.php:140
+#, php-format
+msgid "Last error: %s"
+msgstr ""
+
+#. translators: 1: the site name, 2: number of emails that failed in the last hour.
+#: classes/modules/alerts.php:151
+#, php-format
+msgid "[%1$s] Email is failing: %2$d email failed in the last hour."
+msgid_plural "[%1$s] Email is failing: %2$d emails failed in the last hour."
+msgstr[0] ""
+msgstr[1] ""
+
+#: classes/modules/alerts.php:233
+msgid "The webhook URL must start with http:// or https://."
+msgstr ""
+
+#. translators: %s: the site name.
+#: classes/modules/alerts.php:237
+#, php-format
+msgid "[%s] Meow Mailer test. This is what a failure alert will look like. 🐱"
+msgstr ""
+
+#. translators: 1: HTTP status code, 2: what the server replied, often empty.
+#: classes/modules/alerts.php:260
+#, php-format
+msgid "The webhook answered with HTTP %1$d. %2$s"
+msgstr ""
+
+#. translators: %s: the site name.
+#: classes/modules/alerts.php:287
+#, php-format
+msgid "[%s] Email summary for the past week"
+msgstr ""
+
+#. translators: %s: the site name.
+#: classes/modules/alerts.php:291
+#, php-format
+msgid "Here is what %s sent over the past seven days."
+msgstr ""
+
+#. translators: %d: number of emails delivered.
+#: classes/modules/alerts.php:294
+#, php-format
+msgid "%d email sent"
+msgid_plural "%d emails sent"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of emails that failed.
+#: classes/modules/alerts.php:296
+#, php-format
+msgid "%d failed"
+msgid_plural "%d failed"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of emails captured in offline mode.
+#: classes/modules/alerts.php:302
+#, php-format
+msgid "%d captured in offline mode, not delivered"
+msgid_plural "%d captured in offline mode, not delivered"
+msgstr[0] ""
+msgstr[1] ""
+
+#: classes/modules/alerts.php:308
+msgid "Most common errors:"
+msgstr ""
+
+#: classes/modules/alerts.php:318
+msgid "You are getting this because the weekly summary is on in Meow Mailer. You can turn it off in its settings."
+msgstr ""
+
+#. translators: 1: the site name, 2: number of emails sent, 3: number that failed.
+#: classes/modules/alerts.php:325
+#, php-format
+msgid "[%1$s] Email summary for the past week: %2$d sent, %3$d failed."
+msgstr ""
+
+#: classes/modules/importer.php:57
+msgid "Nothing importable was found for this plugin."
+msgstr ""
+
+#: classes/modules/importer.php:259
+msgid "The account connection itself cannot be copied. Add the Meow Mailer redirect URI to your OAuth app, then connect your account again."
+msgstr ""
+
+#: classes/modules/logs.php:84
+#: classes/modules/logs.php:159
 msgid "Could not access the database."
 msgstr ""
 
+#. translators: 1: error from the main provider, 2: error from the fallback provider.
+#: classes/modules/mailer.php:308
+#, php-format
+msgid "%1$s (the fallback failed too: %2$s)"
+msgstr ""
+
 #. translators: %s: the provider key/slug that was not recognised.
-#: classes/modules/mailer.php:158
+#: classes/modules/mailer.php:383
 #, php-format
 msgid "Unknown email provider: %s"
 msgstr ""
 
-#: classes/rest.php:81
-#: classes/rest.php:127
+#. translators: %s: the provider key/slug.
+#: classes/modules/mailer.php:390
+#, php-format
+msgid "The stored credentials for %s cannot be read: they were encrypted with security keys this site no longer has. Enter them again in the settings, or turn credential encryption off."
+msgstr ""
+
+#: classes/rest.php:97
+msgid "That file does not look like a Meow Mailer export."
+msgstr ""
+
+#: classes/rest.php:102
+msgid "That file has no Meow Mailer settings in it."
+msgstr ""
+
+#: classes/rest.php:145
+msgid "The shared configuration is managed from the main site of the network."
+msgstr ""
+
+#: classes/rest.php:186
+#: classes/rest.php:283
 msgid "Log entry not found."
 msgstr ""
 
-#: classes/rest.php:131
+#: classes/rest.php:287
 msgid "Provider is set to None. Choose a provider before resending."
 msgstr ""
 
-#: classes/rest.php:160
+#: classes/rest.php:294
+msgid "The content of this email was not stored, so it cannot be resent. Turn on \"Store Body\" in the settings to keep future emails resendable."
+msgstr ""
+
+#: classes/rest.php:347
 msgid "Please provide a valid email address."
 msgstr ""
 
-#: classes/rest.php:164
+#: classes/rest.php:351
 msgid "Provider is set to None. Choose a provider (or Offline) to send a test."
 msgstr ""
 
-#: classes/rest.php:168
-msgid "Meow Mailer — Plain Text Test"
+#: classes/rest.php:361
+msgid "No fallback provider is configured."
 msgstr ""
 
-#: classes/rest.php:169
+#. translators: {route} is replaced by the name of the provider that sent the email.
+#: classes/rest.php:369
+msgid "Delivered through: {route}"
+msgstr ""
+
+#: classes/rest.php:371
+msgid "Meow Mailer: Plain Text Test"
+msgstr ""
+
+#: classes/rest.php:372
 msgid ""
 "This is a plain-text test email from Meow Mailer.\n"
 "\n"
 "If you received it, your provider is configured correctly. 🐱"
 msgstr ""
 
-#: classes/rest.php:172
-msgid "Meow Mailer — HTML Test"
+#: classes/rest.php:376
+msgid "Meow Mailer: HTML Test"
 msgstr ""
 
-#: classes/rest.php:173
+#: classes/rest.php:377
 msgid "It works! 🐱"
 msgstr ""
 
-#: classes/rest.php:174
+#: classes/rest.php:378
 msgid "This is an HTML test email from Meow Mailer. If you can read this with formatting, your provider is configured correctly."
 msgstr ""
 
-#: classes/rest.php:189
+#. translators: %s: the error returned by the main email provider.
+#: classes/rest.php:403
+#, php-format
+msgid "Your provider refused it: %s. The fallback delivered this test in its place, so it may still arrive, but the provider itself is not working."
+msgstr ""
+
+#: classes/rest.php:414
+msgid "Handed to your server. That means it was accepted for sending, not that it was delivered, so check that it actually arrives."
+msgstr ""
+
+#: classes/rest.php:421
+msgid "Test email sent through the fallback."
+msgstr ""
+
+#: classes/rest.php:422
 msgid "Test email sent."
 msgstr ""
 
-#: classes/rest.php:196
-#: classes/rest.php:220
+#: classes/rest.php:438
+msgid "Please provide a webhook URL."
+msgstr ""
+
+#: classes/rest.php:445
+msgid "Test sent. Check that it arrived."
+msgstr ""
+
+#: classes/rest.php:467
+msgid "That field cannot be revealed."
+msgstr ""
+
+#: classes/rest.php:473
+msgid "Nothing is saved in that field."
+msgstr ""
+
+#: classes/rest.php:478
+msgid "This value was encrypted with security keys this site no longer has, so it cannot be shown. Type a new one to replace it."
+msgstr ""
+
+#: classes/rest.php:506
+#: classes/rest.php:530
 msgid "Unknown OAuth provider."
 msgstr ""
 
-#: classes/rest.php:201
+#: classes/rest.php:511
 msgid "Enter your Client ID and Secret first, and Save."
+msgstr ""
+
+#: app/index.js:2
+msgid "Request failed."
+msgstr ""
+
+#: app/index.js:2
+msgid "Reset all Meow Mailer settings to defaults?"
+msgstr ""
+
+#: app/index.js:2
+msgid "Error"
+msgstr ""
+
+#: app/index.js:2
+msgid "Close"
+msgstr ""
+
+#: app/index.js:2
+msgid "Host"
+msgstr ""
+
+#: app/index.js:2
+msgid "Port"
+msgstr ""
+
+#: app/index.js:2
+msgid "Encryption"
+msgstr ""
+
+#: app/index.js:2
+msgid "TLS (STARTTLS)"
+msgstr ""
+
+#: app/index.js:2
+msgid "SSL"
+msgstr ""
+
+#: app/index.js:2
+msgid "None"
+msgstr ""
+
+#: app/index.js:2
+msgid "Authentication"
+msgstr ""
+
+#: app/index.js:2
+msgid "Username"
+msgstr ""
+
+#: app/index.js:2
+msgid "Password"
+msgstr ""
+
+#: app/index.js:2
+msgid "Meow Mailer stays out of the way. WordPress sends email as usual, and each email is still logged. Pick a provider below to take over."
+msgstr ""
+
+#: app/index.js:2
+msgid "Offline"
+msgstr ""
+
+#: app/index.js:2
+msgid "Every email is captured in the log but never actually sent. Ideal for staging and development sites."
+msgstr ""
+
+#: app/index.js:2
+msgid "Generic SMTP"
+msgstr ""
+
+#: app/index.js:2
+msgid "Any SMTP server: Zoho Mail, Fastmail, Infomaniak, OVH, or the one your host gave you. Works everywhere."
+msgstr ""
+
+#: app/index.js:2
+msgid "Generic SMTP (Second Server)"
+msgstr ""
+
+#: app/index.js:2
+msgid "A second SMTP server, used only as the fallback."
+msgstr ""
+
+#: app/index.js:2
+msgid "Mailgun"
+msgstr ""
+
+#: app/index.js:2
+msgid "High-volume API mailer. Needs an API key and a sending domain."
+msgstr ""
+
+#: app/index.js:2
+msgid "API Key"
+msgstr ""
+
+#: app/index.js:2
+msgid "Domain"
+msgstr ""
+
+#: app/index.js:2
+msgid "Region"
+msgstr ""
+
+#: app/index.js:2
+msgid "US"
+msgstr ""
+
+#: app/index.js:2
+msgid "EU"
+msgstr ""
+
+#: app/index.js:2
+msgid "Brevo"
+msgstr ""
+
+#: app/index.js:2
+msgid "Generous free tier (300 emails/day). Just an API key."
+msgstr ""
+
+#: app/index.js:2
+msgid "SendGrid"
+msgstr ""
+
+#: app/index.js:2
+msgid "Popular API mailer by Twilio."
+msgstr ""
+
+#: app/index.js:2
+msgid "Amazon SES"
+msgstr ""
+
+#: app/index.js:2
+msgid "Cheapest at scale. Needs IAM access key, secret and region."
+msgstr ""
+
+#: app/index.js:2
+msgid "Access Key ID"
+msgstr ""
+
+#: app/index.js:2
+msgid "Secret Access Key"
+msgstr ""
+
+#: app/index.js:2
+msgid "Postmark"
+msgstr ""
+
+#: app/index.js:2
+msgid "Excellent deliverability for transactional email."
+msgstr ""
+
+#: app/index.js:2
+msgid "Server Token"
+msgstr ""
+
+#: app/index.js:2
+msgid "Message Stream"
+msgstr ""
+
+#: app/index.js:2
+msgid "SMTP2GO"
+msgstr ""
+
+#: app/index.js:2
+msgid "Reliable API mailer with a free tier."
+msgstr ""
+
+#: app/index.js:2
+msgid "Mailjet"
+msgstr ""
+
+#: app/index.js:2
+msgid "API key and secret key from your Mailjet account."
+msgstr ""
+
+#: app/index.js:2
+msgid "Secret Key"
+msgstr ""
+
+#: app/index.js:2
+msgid "Resend"
+msgstr ""
+
+#: app/index.js:2
+msgid "Developer-friendly modern API mailer."
+msgstr ""
+
+#: app/index.js:2
+msgid "MailerSend"
+msgstr ""
+
+#: app/index.js:2
+msgid "Modern API mailer with a free tier."
+msgstr ""
+
+#: app/index.js:2
+msgid "Maileroo"
+msgstr ""
+
+#: app/index.js:2
+msgid "European (GDPR) API mailer with a free tier. Create a Sending Key for your domain in the Maileroo dashboard."
+msgstr ""
+
+#: app/index.js:2
+msgid "Sending Key"
+msgstr ""
+
+#: app/index.js:2
+msgid "Gmail / Google Workspace"
+msgstr ""
+
+#: app/index.js:2
+msgid "Send via your Google account using OAuth 2.0 (no password stored)."
+msgstr ""
+
+#: app/index.js:2
+msgid "Connect with Google"
+msgstr ""
+
+#: app/index.js:2
+msgid "Create an OAuth Client (Web application) in Google Cloud Console, add the redirect URI below, then paste the Client ID and Secret above and Save before connecting:"
+msgstr ""
+
+#: app/index.js:2
+msgid "Client ID"
+msgstr ""
+
+#: app/index.js:2
+msgid "Client Secret"
+msgstr ""
+
+#: app/index.js:2
+msgid "Microsoft 365 / Outlook"
+msgstr ""
+
+#: app/index.js:2
+msgid "Send via your Microsoft 365 or Outlook account using OAuth 2.0 (no password stored). Emails are sent from the connected mailbox."
+msgstr ""
+
+#: app/index.js:2
+msgid "Connect with Microsoft"
+msgstr ""
+
+#: app/index.js:2
+msgid "Register an app in Azure Portal → App registrations, add the redirect URI below, grant the Microsoft Graph \"Mail.Send\" delegated permission, create a client secret, then paste the Client ID and Secret above and Save before connecting:"
+msgstr ""
+
+#: app/index.js:2
+msgid "Tenant"
+msgstr ""
+
+#: app/index.js:2
+msgid "Microsoft 365 (App-only)"
+msgstr ""
+
+#: app/index.js:2
+msgid "Send through Microsoft 365 with an Entra app registration and application permissions. Nobody signs in: the app authenticates with a certificate or a client secret."
+msgstr ""
+
+#: app/index.js:2
+msgid "In Entra ID → App registrations, add the Microsoft Graph \"Mail.Send\" application permission and grant admin consent, then upload a certificate or create a client secret. The mailbox can be a shared mailbox, which needs no license. Mail.Send lets the app send as any mailbox in your tenant, so limit it to this one with an Application Access Policy."
+msgstr ""
+
+#: app/index.js:2
+msgid "Tenant ID"
+msgstr ""
+
+#: app/index.js:2
+msgid "Certificate"
+msgstr ""
+
+#: app/index.js:2
+msgid "The certificate and its private key, both in PEM format, pasted together. From a .pfx file: openssl pkcs12 -in cert.pfx -out cert.pem -nodes"
+msgstr ""
+
+#: app/index.js:2
+msgid "Send From"
+msgstr ""
+
+#: app/index.js:2
+msgid "Zoho Mail"
+msgstr ""
+
+#: app/index.js:2
+msgid "Send via your Zoho Mail account using OAuth 2.0 (no password stored). Emails are sent from the connected mailbox."
+msgstr ""
+
+#: app/index.js:2
+msgid "Connect with Zoho"
+msgstr ""
+
+#: app/index.js:2
+msgid "Create a Server-based Application in the Zoho API Console, add the redirect URI below, then paste the Client ID and Secret above, pick your data center and Save before connecting:"
+msgstr ""
+
+#: app/index.js:2
+msgid "Data Center"
+msgstr ""
+
+#: app/index.js:2
+msgid "zoho.com (US)"
+msgstr ""
+
+#: app/index.js:2
+msgid "zoho.eu (Europe)"
+msgstr ""
+
+#: app/index.js:2
+msgid "zoho.in (India)"
+msgstr ""
+
+#: app/index.js:2
+msgid "zoho.com.au (Australia)"
+msgstr ""
+
+#: app/index.js:2
+msgid "zoho.jp (Japan)"
+msgstr ""
+
+#: app/index.js:2
+msgid "zoho.com.cn (China)"
+msgstr ""
+
+#: app/index.js:2
+msgid "zohocloud.ca (Canada)"
+msgstr ""
+
+#: app/index.js:2
+msgid "ZeptoMail (Zoho CPaaS)"
+msgstr ""
+
+#: app/index.js:2
+msgid "Zoho's transactional email service, now part of Zoho CPaaS. Connects with a Send Mail token, no OAuth. For a regular Zoho mailbox, pick Zoho Mail instead."
+msgstr ""
+
+#: app/index.js:2
+msgid "Send Mail Token"
+msgstr ""
+
+#: app/index.js:2
+msgid "zeptomail.com (US)"
+msgstr ""
+
+#: app/index.js:2
+msgid "zeptomail.eu (Europe)"
+msgstr ""
+
+#: app/index.js:2
+msgid "zeptomail.in (India)"
+msgstr ""
+
+#: app/index.js:2
+msgid "zeptomail.com.au (Australia)"
+msgstr ""
+
+#: app/index.js:2
+msgid "zeptomail.jp (Japan)"
+msgstr ""
+
+#: app/index.js:2
+msgid "zeptomail.com.cn (China)"
+msgstr ""
+
+#: app/index.js:2
+msgid "zeptomail.ca (Canada)"
+msgstr ""
+
+#: app/index.js:2
+msgid "Failed"
+msgstr ""
+
+#: app/index.js:2
+msgid "Sent"
+msgstr ""
+
+#: app/index.js:2
+msgid "No emails in this period"
+msgstr ""
+
+#: app/index.js:2
+msgid "nothing"
+msgstr ""
+
+#: app/index.js:2
+msgid "busiest day"
+msgstr ""
+
+#: app/index.js:2
+msgid "Search subject or recipient…"
+msgstr ""
+
+#: app/index.js:2
+msgid "All statuses"
+msgstr ""
+
+#: app/index.js:2
+msgid "Pending"
+msgstr ""
+
+#: app/index.js:2
+msgid "All providers"
+msgstr ""
+
+#: app/index.js:2
+msgid "Last 7 days"
+msgstr ""
+
+#: app/index.js:2
+msgid "Last 30 days"
+msgstr ""
+
+#: app/index.js:2
+msgid "Last 90 days"
+msgstr ""
+
+#: app/index.js:2
+msgid "Clear"
+msgstr ""
+
+#: app/index.js:2
+msgid "Refresh"
+msgstr ""
+
+#: app/index.js:2
+msgid "not meaningful for one status"
+msgstr ""
+
+#: app/index.js:2
+msgid "of"
+msgstr ""
+
+#: app/index.js:2
+msgid "attempted"
+msgstr ""
+
+#: app/index.js:2
+msgid "nothing matches"
+msgstr ""
+
+#: app/index.js:2
+msgid "nothing sent yet"
+msgstr ""
+
+#: app/index.js:2
+msgid "Success Rate"
+msgstr ""
+
+#: app/index.js:2
+msgid "Per Day"
+msgstr ""
+
+#: app/index.js:2
+msgid "on average"
+msgstr ""
+
+#: app/index.js:2
+msgid "left without error"
+msgstr ""
+
+#: app/index.js:2
+msgid "Nothing matches these filters"
+msgstr ""
+
+#: app/index.js:2
+msgid "Try another status, provider, period or search term."
+msgstr ""
+
+#: app/index.js:2
+msgid "Once WordPress sends something, it will show up here."
+msgstr ""
+
+#: app/index.js:2
+msgid "Why emails failed"
+msgstr ""
+
+#: app/index.js:2
+msgid "The most common errors among the emails shown. Fixing the top one usually fixes most of them."
+msgstr ""
+
+#: app/index.js:2
+msgid "Providers"
+msgstr ""
+
+#: app/index.js:2
+msgid "Which services carried the emails shown."
+msgstr ""
+
+#: app/index.js:2
+msgid "Logging is turned off"
+msgstr ""
+
+#: app/index.js:2
+msgid "Statistics are built from the log, so there is nothing to show until logging is back on."
+msgstr ""
+
+#: app/index.js:2
+msgid "Click to find out why."
+msgstr ""
+
+#: app/index.js:2
+msgid "Date"
+msgstr ""
+
+#: app/index.js:2
+msgid "To"
+msgstr ""
+
+#: app/index.js:2
+msgid "Subject"
+msgstr ""
+
+#: app/index.js:2
+msgid "Provider"
+msgstr ""
+
+#: app/index.js:2
+msgid "Emails are still sent, they are just not recorded. Turn Enable Logging back on in the Settings."
+msgstr ""
+
+#: app/index.js:2
+msgid "No emails yet"
+msgstr ""
+
+#: app/index.js:2
+msgid "Once WordPress sends an email, it will show up here."
+msgstr ""
+
+#: app/index.js:2
+msgid "Cc / Bcc recipients"
+msgstr ""
+
+#: app/index.js:2
+msgid "(no subject)"
+msgstr ""
+
+#: app/index.js:2
+msgid "View"
+msgstr ""
+
+#: app/index.js:2
+msgid "View email"
+msgstr ""
+
+#: app/index.js:2
+msgid "Delete"
+msgstr ""
+
+#: app/index.js:2
+msgid "Export CSV"
+msgstr ""
+
+#: app/index.js:2
+msgid "Set in wp-config.php"
+msgstr ""
+
+#: app/index.js:2
+#, js-format
+msgid "Set by %s in wp-config.php, which takes priority over this field."
+msgstr ""
+
+#: app/index.js:2
+msgid "Saved and hidden. Click the eye to see it, or type a new one to replace it."
+msgstr ""
+
+#: app/index.js:2
+msgid "Showing the saved value. Click the eye to hide it again."
+msgstr ""
+
+#: app/index.js:2
+msgid "Saved"
+msgstr ""
+
+#: app/index.js:2
+msgid "Replace"
+msgstr ""
+
+#: app/index.js:2
+msgid "Could not start authorization."
+msgstr ""
+
+#: app/index.js:2
+msgid "Open the console"
+msgstr ""
+
+#: app/index.js:2
+msgid "Connected"
+msgstr ""
+
+#: app/index.js:2
+msgid "Disconnect"
+msgstr ""
+
+#: app/index.js:2
+msgid "Which service sends your email?"
+msgstr ""
+
+#: app/index.js:2
+msgid "Pick one to get started. You can change it at any time, and nothing is sent until you do."
+msgstr ""
+
+#: app/index.js:2
+msgid "Using Zoho, Fastmail, or the mail server your host gave you?"
+msgstr ""
+
+#: app/index.js:2
+msgid "Pick Generic SMTP"
+msgstr ""
+
+#: app/index.js:2
+msgid "It works with all of them."
+msgstr ""
+
+#: app/index.js:2
+msgid "Just testing, or on a staging site?"
+msgstr ""
+
+#: app/index.js:2
+msgid "Use Offline mode"
+msgstr ""
+
+#: app/index.js:2
+msgid "Every email is logged, none are delivered."
+msgstr ""
+
+#: app/index.js:2
+msgid "Maintenance"
+msgstr ""
+
+#: app/index.js:2
+msgid "Move this configuration to another site, put it back the way it was, or clear out the log."
+msgstr ""
+
+#: app/index.js:2
+msgid "Export Settings"
+msgstr ""
+
+#: app/index.js:2
+msgid "Download everything as a JSON file, ready to import on another site."
+msgstr ""
+
+#: app/index.js:2
+msgid "Export"
+msgstr ""
+
+#: app/index.js:2
+msgid "Import Settings"
+msgstr ""
+
+#: app/index.js:2
+msgid "Read a file exported from Meow Mailer. Whatever it contains replaces what is set here."
+msgstr ""
+
+#: app/index.js:2
+msgid "Import"
+msgstr ""
+
+#: app/index.js:2
+msgid "That file is not valid JSON."
+msgstr ""
+
+#: app/index.js:2
+msgid "Settings imported."
+msgstr ""
+
+#: app/index.js:2
+msgid "Reset Settings"
+msgstr ""
+
+#: app/index.js:2
+msgid "Back to a fresh install: no provider, no credentials, every option at its default. The log is left alone."
+msgstr ""
+
+#: app/index.js:2
+msgid "Put every setting back to its default? Your provider and its credentials are included. This cannot be undone."
+msgstr ""
+
+#: app/index.js:2
+msgid "Settings reset to their defaults."
+msgstr ""
+
+#: app/index.js:2
+msgid "Reset"
+msgstr ""
+
+#: app/index.js:2
+msgid "Delete All Logs"
+msgstr ""
+
+#: app/index.js:2
+msgid "Empty the email log completely. Your settings are left alone."
+msgstr ""
+
+#: app/index.js:2
+msgid "Delete every entry in the email log? This cannot be undone."
+msgstr ""
+
+#: app/index.js:2
+msgid "The email log is empty."
+msgstr ""
+
+#: app/index.js:2
+msgid "Delete All"
+msgstr ""
+
+#: app/index.js:2
+msgid "An export holds your provider credentials in plain text, so keep the file somewhere you would keep a password."
+msgstr ""
+
+#: app/index.js:2
+msgid "Some stored credentials cannot be read anymore, so there is no plain text to put back. They will be cleared and you will need to enter them again. Continue?"
+msgstr ""
+
+#: app/index.js:2
+msgid "Your credentials are now stored encrypted."
+msgstr ""
+
+#: app/index.js:2
+msgid "Encryption is off. These credentials could not be read and were cleared, so enter them again:"
+msgstr ""
+
+#: app/index.js:2
+msgid "Encryption is off. Your credentials are stored in plain text again."
+msgstr ""
+
+#: app/index.js:2
+msgid "Security"
+msgstr ""
+
+#: app/index.js:2
+msgid "How the passwords and API keys you enter above are kept."
+msgstr ""
+
+#: app/index.js:2
+msgid "These credentials cannot be read anymore:"
+msgstr ""
+
+#: app/index.js:2
+msgid "They were encrypted with security keys this site no longer has, which happens after a migration, a restore onto another site, or a security plugin rotating the keys. Email through these providers fails until you enter them again in Email Provider above."
+msgstr ""
+
+#: app/index.js:2
+msgid "The stored values are damaged and cannot be decrypted. Email through these providers fails until you enter them again in Email Provider above."
+msgstr ""
+
+#: app/index.js:2
+msgid "Encrypt Credentials"
+msgstr ""
+
+#: app/index.js:2
+msgid "On. Passwords and API keys are stored encrypted in the database."
+msgstr ""
+
+#: app/index.js:2
+msgid "Off. Passwords and API keys are stored as plain text in the database, the way WordPress stores its own settings."
+msgstr ""
+
+#: app/index.js:2
+msgid "Disable Encryption"
+msgstr ""
+
+#: app/index.js:2
+msgid "Enable Encryption"
+msgstr ""
+
+#: app/index.js:2
+msgid "Encryption cannot be enabled on this site."
+msgstr ""
+
+#: app/index.js:2
+msgid "The key comes from MWMAIL_ENCRYPTION_KEY in your wp-config.php."
+msgstr ""
+
+#: app/index.js:2
+msgid "The key comes from the security keys in your wp-config.php."
+msgstr ""
+
+#: app/index.js:2
+msgid "This protects against a copy of the database being read: a backup, a dump, a staging clone, a support export. It does not protect against someone who can read your files, since the keys are there too."
+msgstr ""
+
+#: app/index.js:2
+msgid "If those keys change, after a migration, a restore onto another site, or a security plugin rotating them, the stored credentials cannot be read anymore and email stops until you enter them again."
+msgstr ""
+
+#: app/index.js:2
+msgid "Export your settings before moving a site, or define MWMAIL_ENCRYPTION_KEY in wp-config.php to pin a key that survives rotation."
+msgstr ""
+
+#: app/index.js:2
+msgid "Keep Them Out of the Database"
+msgstr ""
+
+#: app/index.js:2
+msgid "Define them as constants in wp-config.php and they are never stored at all. For your current provider:"
+msgstr ""
+
+#: app/index.js:2
+msgid "Define them as constants in wp-config.php and they are never stored at all. Pick a provider above to see the names to use."
+msgstr ""
+
+#: app/index.js:2
+msgid "Network setting"
+msgstr ""
+
+#: app/index.js:2
+msgid "This is managed by the network administrator."
+msgstr ""
+
+#: app/index.js:2
+msgid "This is managed on the main site of the network."
+msgstr ""
+
+#: app/index.js:2
+msgid "Open the main site"
+msgstr ""
+
+#: app/index.js:2
+msgid "New User (to you)"
+msgstr ""
+
+#: app/index.js:2
+msgid "WordPress tells the site admin whenever someone registers."
+msgstr ""
+
+#: app/index.js:2
+msgid "New User (to them)"
+msgstr ""
+
+#: app/index.js:2
+msgid "The welcome email a new user receives, with the link to set their password."
+msgstr ""
+
+#: app/index.js:2
+msgid "Password Changed"
+msgstr ""
+
+#: app/index.js:2
+msgid "Confirmation sent to a user after they change their password. This is not the password reset email, which is never affected."
+msgstr ""
+
+#: app/index.js:2
+msgid "Email Changed"
+msgstr ""
+
+#: app/index.js:2
+msgid "Confirmation sent to a user after they change their email address."
+msgstr ""
+
+#: app/index.js:2
+msgid "Admin Email Changed"
+msgstr ""
+
+#: app/index.js:2
+msgid "Notice sent when the site administration email address is changed."
+msgstr ""
+
+#: app/index.js:2
+msgid "Comment Awaiting Moderation"
+msgstr ""
+
+#: app/index.js:2
+msgid "WordPress emails the moderator each time a comment needs approval."
+msgstr ""
+
+#: app/index.js:2
+msgid "New Comment"
+msgstr ""
+
+#: app/index.js:2
+msgid "WordPress emails the post author each time a comment is published."
+msgstr ""
+
+#: app/index.js:2
+msgid "Automatic Updates"
+msgstr ""
+
+#: app/index.js:2
+msgid "The report WordPress sends after it updates itself in the background."
+msgstr ""
+
+#: app/index.js:2
+msgid "Account connected successfully."
+msgstr ""
+
+#: app/index.js:2
+msgid "Connection failed. Check your Client ID, Secret and redirect URI."
+msgstr ""
+
+#: app/index.js:2
+msgid "Open the Logs to see the result."
+msgstr ""
+
+#: app/index.js:2
+msgid "Send a test email to…"
+msgstr ""
+
+#: app/index.js:2
+msgid "HTML"
+msgstr ""
+
+#: app/index.js:2
+msgid "Plain"
+msgstr ""
+
+#: app/index.js:2
+msgid "Send Test"
+msgstr ""
+
+#: app/index.js:2
+msgid "Test Fallback"
+msgstr ""
+
+#: app/index.js:2
+msgid "Another plugin is sending your email."
+msgstr ""
+
+#: app/index.js:2
+#, js-format
+msgid "%s has replaced WordPress's own wp_mail function, so Meow Mailer is never called: neither the provider below nor the fallback is used, and the Logs tab stays empty. Deactivate that plugin (or turn off its email feature) for these settings to take effect."
+msgstr ""
+
+#: app/index.js:2
+msgid "Email Provider"
+msgstr ""
+
+#: app/index.js:2
+msgid "The service that sends your emails, and the one that takes over if it refuses one."
+msgstr ""
+
+#: app/index.js:2
+msgid "Pick one provider. Set it up once and Meow Mailer routes all WordPress email through it."
+msgstr ""
+
+#: app/index.js:2
+msgid "Fallback"
+msgstr ""
+
+#: app/index.js:2
+msgid "Used only when the provider above refuses an email, so nothing is lost to a bad moment."
+msgstr ""
+
+#: app/index.js:2
+msgid "Used only when the provider above refuses an email, so nothing is lost to a bad moment. Set it up like any other provider by selecting it above first. WordPress needs no setup at all: it hands the email to your server, which is imperfect but always there."
+msgstr ""
+
+#: app/index.js:2
+msgid "No fallback"
+msgstr ""
+
+#: app/index.js:2
+msgid "WordPress (server mail)"
+msgstr ""
+
+#: app/index.js:2
+msgid "This fallback has no server yet, so it cannot rescue anything. Fill it in just above."
+msgstr ""
+
+#: app/index.js:2
+msgid "This fallback has no credentials yet, so it cannot rescue anything. Select it in Provider above, fill it in, then switch back."
+msgstr ""
+
+#: app/index.js:2
+msgid "Your fallback needs its own SPF and DKIM records for your domain, exactly like your main provider. Without them, rescued email is delivered but usually lands in spam."
+msgstr ""
+
+#: app/index.js:2
+msgid "Sender"
+msgstr ""
+
+#: app/index.js:2
+msgid "Who your emails come from, and where replies and bounces go."
+msgstr ""
+
+#: app/index.js:2
+msgid "From Email"
+msgstr ""
+
+#: app/index.js:2
+msgid "Your provider will only send from one of its own addresses:"
+msgstr ""
+
+#: app/index.js:2
+msgid "The address your emails are sent from. Use one at your own domain for the best deliverability. Leave empty to keep what WordPress uses."
+msgstr ""
+
+#: app/index.js:2
+msgid "From Name"
+msgstr ""
+
+#: app/index.js:2
+msgid "The sender name recipients see in their inbox (usually your site name). {site_name} is replaced by the name of this site."
+msgstr ""
+
+#: app/index.js:2
+msgid "Force From"
+msgstr ""
+
+#: app/index.js:2
+msgid "Use the address above for every email, even when another plugin sets its own. Recommended, because providers reject mail sent from addresses you do not own."
+msgstr ""
+
+#: app/index.js:2
+msgid "Contact form plugins usually set their own sender, which overrides the address above. If your forms are not delivered, or land in spam, turn Force From on."
+msgstr ""
+
+#: app/index.js:2
+#, js-format
+msgid "This address is not on %s. Providers often refuse to send from a domain you do not own, and mail that does get through usually lands in spam because it matches no SPF or DKIM record. Use an address at your own domain unless you manage that one too."
+msgstr ""
+
+#: app/index.js:2
+msgid "Reply-To"
+msgstr ""
+
+#: app/index.js:2
+msgid "(optional)"
+msgstr ""
+
+#: app/index.js:2
+msgid "Where replies should go, if different from the From address. {admin_email} is replaced by the admin email of this site."
+msgstr ""
+
+#: app/index.js:2
+msgid "Return Path"
+msgstr ""
+
+#: app/index.js:2
+msgid "(same as From)"
+msgstr ""
+
+#: app/index.js:2
+msgid "Where bounces and non-delivery reports go, if you keep a mailbox for them. Left empty they follow the From address, which is what happens today. Generic SMTP only: the API providers handle bounces on their own side. {admin_email} works here too."
+msgstr ""
+
+#: app/index.js:2
+msgid "Test Email"
+msgstr ""
+
+#: app/index.js:2
+msgid "Delivery & Logs"
+msgstr ""
+
+#: app/index.js:2
+msgid "What happens once WordPress hands an email over to Meow Mailer."
+msgstr ""
+
+#: app/index.js:2
+msgid "Background Send"
+msgstr ""
+
+#: app/index.js:2
+msgid "Deliver the email after the page has finished loading instead of during it. Whoever triggered it, such as a customer checking out or a user resetting a password, no longer waits for the mail server to answer. Recommended."
+msgstr ""
+
+#: app/index.js:2
+msgid "Enable Logging"
+msgstr ""
+
+#: app/index.js:2
+msgid "Keep a record of every email in the Logs, with whether it was delivered or failed. This is how you find out an email never arrived."
+msgstr ""
+
+#: app/index.js:2
+msgid "Store Body"
+msgstr ""
+
+#: app/index.js:2
+msgid "Also keep the message itself, so you can read it back and resend it. Turn off if you would rather not keep email content in your database."
+msgstr ""
+
+#: app/index.js:2
+msgid "Keep Attachments"
+msgstr ""
+
+#: app/index.js:2
+msgid "Also keep the attached files, so Resend sends the email complete. Useful when another plugin builds a document on the fly, like an invoice PDF, since that file cannot be rebuilt later. It does mean those documents sit in your database, so they are kept for 30 days only, and emails over 2 MB of attachments are skipped."
+msgstr ""
+
+#: app/index.js:2
+msgid "Keep Logs For"
+msgstr ""
+
+#: app/index.js:2
+msgid "Older entries are deleted automatically once a day."
+msgstr ""
+
+#: app/index.js:2
+msgid "Forever"
+msgstr ""
+
+#: app/index.js:2
+msgid "7 days"
+msgstr ""
+
+#: app/index.js:2
+msgid "30 days"
+msgstr ""
+
+#: app/index.js:2
+msgid "90 days"
+msgstr ""
+
+#: app/index.js:2
+msgid "Alerts"
+msgstr ""
+
+#: app/index.js:2
+msgid "How you find out something went wrong, without having to log in and look."
+msgstr ""
+
+#: app/index.js:2
+msgid "Failure Alerts"
+msgstr ""
+
+#: app/index.js:2
+msgid "Email you when your site stops being able to send. At most one alert per hour, however many emails fail. It is sent by WordPress itself rather than your provider, so it still reaches you when the provider is the problem."
+msgstr ""
+
+#: app/index.js:2
+msgid "Alert To"
+msgstr ""
+
+#: app/index.js:2
+msgid "(site admin address)"
+msgstr ""
+
+#: app/index.js:2
+msgid "Where alerts go. Leave empty to use the site admin address. An address at another provider is safer, since it is reachable when yours is down."
+msgstr ""
+
+#: app/index.js:2
+msgid "Weekly Summary"
+msgstr ""
+
+#: app/index.js:2
+msgid "A short weekly email with how much was sent, how much failed, and the most common errors. Skipped entirely on weeks where nothing was sent."
+msgstr ""
+
+#: app/index.js:2
+msgid "Summary To"
+msgstr ""
+
+#: app/index.js:2
+msgid "Where the summary goes. Leave empty to use the site admin address."
+msgstr ""
+
+#: app/index.js:2
+msgid "Also Post To"
+msgstr ""
+
+#: app/index.js:2
+msgid "https://hooks.slack.com/services/…"
+msgstr ""
+
+#: app/index.js:2
+msgid "Optional. Send the same alerts and summary to a chat service as well, so the news does not travel by email at all. Paste the webhook URL your service gives you: Slack and Discord are recognised from the URL and get the message they expect, everything else receives plain JSON. Microsoft Teams retired its old incoming webhooks, so there it means a Power Automate workflow with the \"When a Teams webhook request is received\" trigger."
+msgstr ""
+
+#: app/index.js:2
+msgid "Test Webhook"
+msgstr ""
+
+#: app/index.js:2
+msgid "WordPress Notifications"
+msgstr ""
+
+#: app/index.js:2
+msgid "Emails WordPress sends by itself. Turn off the ones you do not want anyone to receive."
+msgstr ""
+
+#: app/index.js:2
+msgid "Password reset emails are never affected. Turning those off would lock people out of the site."
+msgstr ""
+
+#: app/index.js:2
+msgid "Multisite"
+msgstr ""
+
+#: app/index.js:2
+#, js-format
+msgid "This network has %d sites. Choose what they configure themselves, and what they inherit from here."
+msgstr ""
+
+#: app/index.js:2
+msgid "Shared Settings"
+msgstr ""
+
+#: app/index.js:2
+msgid "Set the email provider up once, here on the main site, and every site of the network sends through it. Their own Email Provider section becomes read-only. Email logs are never shared, so each site only ever sees its own."
+msgstr ""
+
+#: app/index.js:2
+msgid "Also Share Sender"
+msgstr ""
+
+#: app/index.js:2
+msgid "Share the From address, name and Reply-To as well. Usually best left off: each site has its own domain, and mail is more trusted when it comes from that domain."
+msgstr ""
+
+#: app/index.js:2
+msgid "Also Share Delivery"
+msgstr ""
+
+#: app/index.js:2
+msgid "Share the logging, body-storage and retention options as well, so every site keeps records the same way."
+msgstr ""
+
+#: app/index.js:2
+msgid "Status"
+msgstr ""
+
+#: app/index.js:2
+msgid "From"
+msgstr ""
+
+#: app/index.js:2
+msgid "Cc"
+msgstr ""
+
+#: app/index.js:2
+msgid "Bcc"
+msgstr ""
+
+#: app/index.js:2
+msgid "Attachments"
+msgstr ""
+
+#: app/index.js:2
+msgid "kept, so a resend includes them"
+msgstr ""
+
+#: app/index.js:2
+msgid "not included in a resend"
+msgstr ""
+
+#: app/index.js:2
+msgid "Sent by the fallback because the main provider failed:"
+msgstr ""
+
+#: app/index.js:2
+msgid "Content"
+msgstr ""
+
+#: app/index.js:2
+msgid "Body was not stored for this email."
+msgstr ""
+
+#: app/index.js:2
+msgid "Email Details"
+msgstr ""
+
+#: app/index.js:2
+msgid "The Reply-To address was refused"
+msgstr ""
+
+#: app/index.js:2
+msgid "Zoho Mail only accepts a Reply-To that belongs to your own account. Contact forms normally put the visitor address there, which Zoho rejects, and it refuses the whole email rather than ignoring the header."
+msgstr ""
+
+#: app/index.js:2
+msgid "Recent versions leave that header out automatically when the address is not yours, so the email is delivered. If this is an old entry, no action is needed."
+msgstr ""
+
+#: app/index.js:2
+msgid "The server refused your sender address"
+msgstr ""
+
+#: app/index.js:2
+msgid "The mail server will not send from the From address configured here, usually because the address or its domain does not belong to the account you authenticated with."
+msgstr ""
+
+#: app/index.js:2
+msgid "Set From Email to an address on the account you are sending through, and turn on Force From so another plugin cannot replace it."
+msgstr ""
+
+#: app/index.js:2
+msgid "The recipient address does not exist"
+msgstr ""
+
+#: app/index.js:2
+msgid "The receiving server says there is no such mailbox. This is about the destination address, not your configuration."
+msgstr ""
+
+#: app/index.js:2
+msgid "Check the address for a typo. If it came from a form, the person who filled it in probably mistyped their own address."
+msgstr ""
+
+#: app/index.js:2
+msgid "The mail server rejected your credentials"
+msgstr ""
+
+#: app/index.js:2
+msgid "The username or password was not accepted. With Gmail and Outlook this usually means a normal account password was used where an app password or OAuth is required."
+msgstr ""
+
+#: app/index.js:2
+msgid "Re-enter the password in the Settings. If your host requires an app-specific password, generate one and use it here."
+msgstr ""
+
+#: app/index.js:2
+msgid "The provider rejected your API key"
+msgstr ""
+
+#: app/index.js:2
+msgid "The key was refused. Keys are commonly revoked, restricted to certain domains, or copied with a missing character at the end."
+msgstr ""
+
+#: app/index.js:2
+msgid "Generate a fresh key in the provider dashboard and paste it again, making sure nothing is cut off."
+msgstr ""
+
+#: app/index.js:2
+msgid "You have hit the provider limit"
+msgstr ""
+
+#: app/index.js:2
+msgid "The provider is refusing further email for now, either because a sending quota is exhausted or because too many were sent too quickly."
+msgstr ""
+
+#: app/index.js:2
+msgid "Wait for the limit to reset, then resend from the log. If it keeps happening, your plan may be too small for the volume this site sends."
+msgstr ""
+
+#: app/index.js:2
+msgid "The sending domain is not verified"
+msgstr ""
+
+#: app/index.js:2
+msgid "The provider will not send from this domain until you have proved you own it, which is done by adding DNS records."
+msgstr ""
+
+#: app/index.js:2
+msgid "Complete the domain verification in the provider dashboard, then send a test email from the Settings."
+msgstr ""
+
+#: app/index.js:2
+msgid "Your site could not reach the mail server"
+msgstr ""
+
+#: app/index.js:2
+msgid "The connection never completed. Either the host or port is wrong, or your web host blocks outgoing connections on that port, which many shared hosts do."
+msgstr ""
+
+#: app/index.js:2
+msgid "Check the host and port, and try port 465 with SSL instead of 587 with TLS. If nothing connects, ask your host whether outgoing SMTP is blocked. A provider that sends over its API instead of SMTP avoids the problem entirely."
+msgstr ""
+
+#: app/index.js:2
+msgid "The secure connection failed"
+msgstr ""
+
+#: app/index.js:2
+msgid "The encrypted connection to the mail server could not be established, often a certificate mismatch or a server that expects a different encryption mode."
+msgstr ""
+
+#: app/index.js:2
+msgid "Try the other encryption setting: SSL on port 465, or TLS on port 587."
+msgstr ""
+
+#: app/index.js:2
+msgid "The provider wanted a name with the address"
+msgstr ""
+
+#: app/index.js:2
+msgid "Brevo rejects recipients sent without a display name."
+msgstr ""
+
+#: app/index.js:2
+msgid "This was fixed in a recent version. Updating is enough."
+msgstr ""
+
+#: app/index.js:2
+msgid "What to do:"
+msgstr ""
+
+#: app/index.js:2
+msgid "This one is not a failure Meow Mailer recognises, so here it is exactly as the provider reported it. Searching for this text usually finds the answer."
+msgstr ""
+
+#: app/index.js:2
+msgid "Reported by the provider"
+msgstr ""
+
+#: app/index.js:2
+msgid "No message was recorded."
+msgstr ""
+
+#: app/index.js:2
+msgid "Why this email failed"
+msgstr ""
+
+#: app/index.js:2
+msgid "Inactive"
+msgstr ""
+
+#: app/index.js:2
+msgid "WordPress is sending email on its own. Pick a provider to route and log it."
+msgstr ""
+
+#: app/index.js:2
+msgid "Offline mode"
+msgstr ""
+
+#: app/index.js:2
+msgid "Every email is written to the log and none of them are delivered."
+msgstr ""
+
+#: app/index.js:2
+msgid "Not configured"
+msgstr ""
+
+#: app/index.js:2
+#, js-format
+msgid "Finish setting %s up before sending."
+msgstr ""
+
+#: app/index.js:2
+#, js-format
+msgid "All WordPress email goes through %s."
+msgstr ""
+
+#: app/index.js:2
+#, js-format
+msgid "If it refuses one, %s takes over."
+msgstr ""
+
+#: app/index.js:2
+msgid "There is no fallback if it fails."
+msgstr ""
+
+#: app/index.js:2
+msgid "Everything is logged."
+msgstr ""
+
+#: app/index.js:2
+msgid "Nothing is being logged."
+msgstr ""
+
+#: app/index.js:2
+msgid "Active"
+msgstr ""
+
+#: app/index.js:2
+msgid "All time"
+msgstr ""
+
+#: app/index.js:2
+msgid "Counted over the whole log, whatever the dashboard is filtered to."
+msgstr ""
+
+#: app/index.js:2
+msgid "Handed to the provider without an error."
+msgstr ""
+
+#: app/index.js:2
+msgid "The provider refused them, or could not be reached."
+msgstr ""
+
+#: app/index.js:2
+msgid "Captured by Offline mode and deliberately never delivered."
+msgstr ""
+
+#: app/index.js:2
+#, js-format
+msgid "The settings of %s were imported. Review them below, then send yourself a test email to confirm everything works."
+msgstr ""
+
+#: app/index.js:2
+#, js-format
+msgid "Once the test arrives, you can deactivate %s: Meow Mailer is handling your email now."
+msgstr ""
+
+#: app/index.js:2
+msgid "Dismiss"
+msgstr ""
+
+#: app/index.js:2
+#, js-format
+msgid "%1$s is already set up on this site, using %2$s. Meow Mailer can copy its settings so you do not have to enter them again."
+msgstr ""
+
+#: app/index.js:2
+msgid "Another mail plugin is already set up on this site. Meow Mailer can copy its settings so you do not have to enter them again."
+msgstr ""
+
+#: app/index.js:2
+#, js-format
+msgid "Import from %s"
+msgstr ""
+
+#: app/index.js:2
+msgid "Dashboard"
+msgstr ""
+
+#: app/index.js:2
+msgid "Settings"
+msgstr ""
+
+#: app/index.js:2
+msgid "By Meow Apps"
+msgstr ""
+
+#: app/index.js:2
+msgid "Meow Mailer is brand new, and your feedback shapes it. Tell us what is missing and what you wish it did on the"
+msgstr ""
+
+#: app/index.js:2
+msgid "WordPress support forum"
+msgstr ""
+
+#: app/index.js:2
+msgid ". We will make it perfect for you. 💕"
 msgstr ""

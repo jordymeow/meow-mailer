@@ -8,7 +8,7 @@ import { PROVIDER_LABELS } from '@app/providers';
 import VolumeChart from './VolumeChart';
 import { hasActiveFilters } from './FilterBar';
 import { num } from '@app/format';
-import { t } from '@app/i18n';
+import { __ } from '@app/i18n';
 
 /**
  * The four headline numbers, as cards.
@@ -122,18 +122,18 @@ const DashboardScreen = ({ filters, reloadSignal, onBusy = () => {} }) => {
 
   let rateHint;
   if (statusFiltered) {
-    rateHint = t('not meaningful for one status');
+    rateHint = __('not meaningful for one status', 'meow-mailer');
   } else if (attempted > 0) {
-    rateHint = `${num(totals.sent)} ${t('of')} ${num(attempted)} ${t('attempted')}`;
+    rateHint = `${num(totals.sent)} ${__('of', 'meow-mailer')} ${num(attempted)} ${__('attempted', 'meow-mailer')}`;
   } else {
-    rateHint = narrowed ? t('nothing matches') : t('nothing sent yet');
+    rateHint = narrowed ? __('nothing matches', 'meow-mailer') : __('nothing sent yet', 'meow-mailer');
   }
 
   if (!state.options.logs_enabled) {
     return (
       <NekoBlock>
-        <NekoEmpty inline icon="eye-off" title={t('Logging is turned off')}
-          subtitle={t('Statistics are built from the log, so there is nothing to show until logging is back on.')} />
+        <NekoEmpty inline icon="eye-off" title={__('Logging is turned off', 'meow-mailer')}
+          subtitle={__('Statistics are built from the log, so there is nothing to show until logging is back on.', 'meow-mailer')} />
       </NekoBlock>
     );
   }
@@ -153,22 +153,22 @@ const DashboardScreen = ({ filters, reloadSignal, onBusy = () => {} }) => {
                 that, and the difference from the Sent count beside it is clear. */}
             {/* The two derived figures lead, because they are the ones you read to
                 judge the period. The raw counts they are derived from sit under them. */}
-            <Tile label={t('Success Rate')} value={rateValue} tone={rateTone} hint={rateHint} />
-            <Tile label={t('Per Day')} value={num(perDay)} tone="purple" hint={t('on average')} />
-            <Tile label={t('Sent')} value={num(totals.sent)} tone="green" hint={t('left without error')} />
+            <Tile label={__('Success Rate', 'meow-mailer')} value={rateValue} tone={rateTone} hint={rateHint} />
+            <Tile label={__('Per Day', 'meow-mailer')} value={num(perDay)} tone="purple" hint={__('on average', 'meow-mailer')} />
+            <Tile label={__('Sent', 'meow-mailer')} value={num(totals.sent)} tone="green" hint={__('left without error', 'meow-mailer')} />
             {/* The one card that steps back at zero. Elsewhere a colour with nothing
                 behind it is merely quiet; a red one reads as an alarm. */}
-            <Tile label={t('Failed')} value={num(totals.failed)} tone={totals.failed > 0 ? 'red' : 'grey'} />
+            <Tile label={__('Failed', 'meow-mailer')} value={num(totals.failed)} tone={totals.failed > 0 ? 'red' : 'grey'} />
           </div>
 
           <VolumeChart series={stats ? stats.series : []}
-            emptyTitle={narrowed ? t('Nothing matches these filters') : t('No emails in this period')}
-            emptyMessage={narrowed ? t('Try another status, provider, period or search term.') : t('Once WordPress sends something, it will show up here.')} />
+            emptyTitle={narrowed ? __('Nothing matches these filters', 'meow-mailer') : __('No emails in this period', 'meow-mailer')}
+            emptyMessage={narrowed ? __('Try another status, provider, period or search term.', 'meow-mailer') : __('Once WordPress sends something, it will show up here.', 'meow-mailer')} />
         </NekoBlock>
 
         {errors.length > 0 && (
-          <NekoBlock title={t('Why emails failed')} busy={busy}
-            subtitle={t('The most common errors among the emails shown. Fixing the top one usually fixes most of them.')}>
+          <NekoBlock title={__('Why emails failed', 'meow-mailer')} busy={busy}
+            subtitle={__('The most common errors among the emails shown. Fixing the top one usually fixes most of them.', 'meow-mailer')}>
             {errors.map((row, i) => (
               <ErrorRow key={i} error={row.error} total={row.total} share={Math.round((row.total / worst) * 100)} />
             ))}
@@ -176,8 +176,8 @@ const DashboardScreen = ({ filters, reloadSignal, onBusy = () => {} }) => {
         )}
 
         {providers.length > 1 && (
-          <NekoBlock title={t('Providers')} busy={busy}
-            subtitle={t('Which services carried the emails shown.')}>
+          <NekoBlock title={__('Providers', 'meow-mailer')} busy={busy}
+            subtitle={__('Which services carried the emails shown.', 'meow-mailer')}>
             {providers.map((row) => (
               <div key={row.provider} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--neko-gray-90)' }}>
                 <span>{PROVIDER_LABELS[row.provider] || row.provider}</span>

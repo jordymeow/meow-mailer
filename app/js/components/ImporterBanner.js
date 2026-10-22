@@ -6,7 +6,7 @@ import { useCoreContext } from '@app/contexts/core';
 import { importer, network } from '@app/settings';
 import { importFromPlugin } from '@app/requests';
 import { PROVIDER_LABELS } from '@app/providers';
-import { t } from '@app/i18n';
+import { __ } from '@app/i18n';
 
 // On a network where the provider is shared, this site cannot take one over.
 const canImport = (network.can_edit || {}).provider !== false;
@@ -55,11 +55,11 @@ const ImporterBanner = ({ onImported = () => {} }) => {
       <NekoMessage variant="success">
         <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <span>
-            {t('The settings of %s were imported. Review them below, then send yourself a test email to confirm everything works.').replace('%s', done.source.name)}
+            {__('The settings of %s were imported. Review them below, then send yourself a test email to confirm everything works.', 'meow-mailer').replace('%s', done.source.name)}
             {done.warnings.map((w, i) => <span key={i}> {w}</span>)}
-            {done.source.active && <> {t('Once the test arrives, you can deactivate %s: Meow Mailer is handling your email now.').replace('%s', done.source.name)}</>}
+            {done.source.active && <> {__('Once the test arrives, you can deactivate %s: Meow Mailer is handling your email now.', 'meow-mailer').replace('%s', done.source.name)}</>}
           </span>
-          <a href="#" onClick={(e) => { e.preventDefault(); setDone(null); }} style={{ whiteSpace: 'nowrap' }}>{t('Dismiss')}</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); setDone(null); }} style={{ whiteSpace: 'nowrap' }}>{__('Dismiss', 'meow-mailer')}</a>
         </span>
       </NekoMessage>
       <NekoSpacer />
@@ -78,18 +78,18 @@ const ImporterBanner = ({ onImported = () => {} }) => {
       <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <span>
           {importer.length === 1
-            ? t('%1$s is already set up on this site, using %2$s. Meow Mailer can copy its settings so you do not have to enter them again.')
+            ? __('%1$s is already set up on this site, using %2$s. Meow Mailer can copy its settings so you do not have to enter them again.', 'meow-mailer')
               .replace('%1$s', importer[0].name)
-              .replace('%2$s', t(PROVIDER_LABELS[importer[0].provider] || importer[0].provider))
-            : t('Another mail plugin is already set up on this site. Meow Mailer can copy its settings so you do not have to enter them again.')}
+              .replace('%2$s', (PROVIDER_LABELS[importer[0].provider] || importer[0].provider))
+            : __('Another mail plugin is already set up on this site. Meow Mailer can copy its settings so you do not have to enter them again.', 'meow-mailer')}
         </span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}>
           {importer.map((source) => (
             <NekoButton key={source.source} className="primary" icon="download" disabled={busy} onClick={() => runImport(source)}>
-              {t('Import from %s').replace('%s', source.name)}
+              {__('Import from %s', 'meow-mailer').replace('%s', source.name)}
             </NekoButton>
           ))}
-          <a href="#" onClick={(e) => { e.preventDefault(); dismiss(); }}>{t('Dismiss')}</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); dismiss(); }}>{__('Dismiss', 'meow-mailer')}</a>
         </span>
       </span>
     </NekoMessage>

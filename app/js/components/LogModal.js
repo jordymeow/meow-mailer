@@ -5,7 +5,7 @@ import { NekoModal, NekoButton, NekoSpinner, NekoStatus } from '@neko-ui';
 import { fetchLog, resendLog } from '@app/requests';
 import { PROVIDER_LABELS } from '@app/providers';
 import { statusOf } from './LogsScreen';
-import { t } from '@app/i18n';
+import { __ } from '@app/i18n';
 
 const Row = ({ label, value }) => (
   <div style={{ display: 'flex', padding: '4px 0', borderBottom: '1px solid var(--neko-gray-90)' }}>
@@ -51,42 +51,42 @@ const LogModal = ({ id, onClose, onResent }) => {
 
   const content = busy || !log ? <div style={{ padding: 40, textAlign: 'center' }}><NekoSpinner /></div> : (
     <div>
-      <Row label={t('Date')} value={log.created} />
-      <Row label={t('Status')} value={<NekoStatus status={st.type}>{st.label}</NekoStatus>} />
-      <Row label={t('Provider')} value={PROVIDER_LABELS[log.provider] || log.provider || '-'} />
-      <Row label={t('From')} value={log.email_from || '-'} />
-      <Row label={t('To')} value={log.email_to} />
-      {log.cc ? <Row label={t('Cc')} value={log.cc} /> : null}
-      {log.bcc ? <Row label={t('Bcc')} value={log.bcc} /> : null}
-      {log.reply_to ? <Row label={t('Reply-To')} value={log.reply_to} /> : null}
-      <Row label={t('Subject')} value={log.subject} />
-      {log.attachments ? <Row label={t('Attachments')} value={<>{log.attachments}
+      <Row label={__('Date', 'meow-mailer')} value={log.created} />
+      <Row label={__('Status', 'meow-mailer')} value={<NekoStatus status={st.type}>{st.label}</NekoStatus>} />
+      <Row label={__('Provider', 'meow-mailer')} value={PROVIDER_LABELS[log.provider] || log.provider || '-'} />
+      <Row label={__('From', 'meow-mailer')} value={log.email_from || '-'} />
+      <Row label={__('To', 'meow-mailer')} value={log.email_to} />
+      {log.cc ? <Row label={__('Cc', 'meow-mailer')} value={log.cc} /> : null}
+      {log.bcc ? <Row label={__('Bcc', 'meow-mailer')} value={log.bcc} /> : null}
+      {log.reply_to ? <Row label={__('Reply-To', 'meow-mailer')} value={log.reply_to} /> : null}
+      <Row label={__('Subject', 'meow-mailer')} value={log.subject} />
+      {log.attachments ? <Row label={__('Attachments', 'meow-mailer')} value={<>{log.attachments}
         <em style={{ color: 'var(--neko-gray-50)' }}> ({log.has_files
-          ? t('kept, so a resend includes them')
-          : t('not included in a resend')})</em></>} /> : null}
+          ? __('kept, so a resend includes them', 'meow-mailer')
+          : __('not included in a resend', 'meow-mailer')})</em></>} /> : null}
       {/* An error on a delivered email is not a failure: it is what the main provider
           said before the fallback stepped in. Shown as such, or it reads as a bug. */}
       {log.error ? (rescued
-        ? <Row label={t('Fallback')} value={<span style={{ color: 'var(--neko-orange)' }}>
-            {t('Sent by the fallback because the main provider failed:')} {log.error}
+        ? <Row label={__('Fallback', 'meow-mailer')} value={<span style={{ color: 'var(--neko-orange)' }}>
+            {__('Sent by the fallback because the main provider failed:', 'meow-mailer')} {log.error}
           </span>} />
-        : <Row label={t('Error')} value={<span style={{ color: 'var(--neko-red)' }}>{log.error}</span>} />) : null}
+        : <Row label={__('Error', 'meow-mailer')} value={<span style={{ color: 'var(--neko-red)' }}>{log.error}</span>} />) : null}
 
       <div style={{ marginTop: 15 }}>
-        <div style={{ fontWeight: 600, color: 'var(--neko-gray-50)', marginBottom: 6 }}>{t('Content')}</div>
+        <div style={{ fontWeight: 600, color: 'var(--neko-gray-50)', marginBottom: 6 }}>{__('Content', 'meow-mailer')}</div>
         {log.body
           ? <iframe title="email-preview" sandbox="" srcDoc={isHtml ? log.body : `<pre style="white-space:pre-wrap;font-family:sans-serif;margin:0">${log.body.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</pre>`}
               style={{ width: '100%', height: 340, border: '1px solid var(--neko-gray-90)', borderRadius: 6, background: 'white' }} />
-          : <em>{t('Body was not stored for this email.')}</em>}
+          : <em>{__('Body was not stored for this email.', 'meow-mailer')}</em>}
       </div>
     </div>
   );
 
   return (
-    <NekoModal isOpen={!!id} title={t('Email Details')} onRequestClose={onClose} content={content} size="large"
+    <NekoModal isOpen={!!id} title={__('Email Details', 'meow-mailer')} onRequestClose={onClose} content={content} size="large"
       // Secondary, so Resend is the one primary action and Close reads as the way out.
-      okButton={{ label: t('Close'), onClick: onClose, className: 'secondary' }}
-      customButtons={canResend ? <NekoButton className="primary" icon="refresh" busy={resending} onClick={doResend}>{t('Resend')}</NekoButton> : null}
+      okButton={{ label: __('Close', 'meow-mailer'), onClick: onClose, className: 'secondary' }}
+      customButtons={canResend ? <NekoButton className="primary" icon="refresh" busy={resending} onClick={doResend}>{__('Resend', 'meow-mailer')}</NekoButton> : null}
       customButtonsPosition="left" />
   );
 };

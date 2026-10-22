@@ -1,11 +1,11 @@
 import { nekoFetch } from "@neko-ui";
+import { __ } from '@app/i18n';
 import { apiUrl, restNonce } from "@app/settings";
-import { t } from "@app/i18n";
 
 const post = async (path, json) => {
   const res = await nekoFetch(`${apiUrl}${path}`, { method: 'POST', nonce: restNonce, json });
   if (res && res.success === false) {
-    throw new Error(res.message || t('Request failed.'));
+    throw new Error(res.message || __('Request failed.', 'meow-mailer'));
   }
   return res;
 };
@@ -13,7 +13,7 @@ const post = async (path, json) => {
 const get = async (path) => {
   const res = await nekoFetch(`${apiUrl}${path}`, { method: 'GET', nonce: restNonce });
   if (res && res.success === false) {
-    throw new Error(res.message || t('Request failed.'));
+    throw new Error(res.message || __('Request failed.', 'meow-mailer'));
   }
   return res;
 };

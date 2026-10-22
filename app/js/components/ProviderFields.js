@@ -6,7 +6,7 @@ import { useCoreContext } from '@app/contexts/core';
 import { getProvider, constantFields, constantName } from '@app/providers';
 import { getOAuthUrl, disconnectOAuth, revealSecret } from '@app/requests';
 import { secretMask as SECRET_MASK } from '@app/settings';
-import { t } from '@app/i18n';
+import { __ } from '@app/i18n';
 
 const Field = ({ field, value, providerKey, onChange }) => {
   const { actions } = useCoreContext();
@@ -29,14 +29,14 @@ const Field = ({ field, value, providerKey, onChange }) => {
     // Set in wp-config.php, which wins over anything typed here, so the field only
     // says where its value comes from.
     if (constantFields(providerKey).includes(field.name)) {
-      return <NekoInput name={field.name} value="" readOnly placeholder={t('Set in wp-config.php')}
-        description={t('Set by %s in wp-config.php, which takes priority over this field.').replace('%s', constantName(providerKey, field.name))} />;
+      return <NekoInput name={field.name} value="" readOnly placeholder={__('Set in wp-config.php', 'meow-mailer')}
+        description={__('Set by %s in wp-config.php, which takes priority over this field.', 'meow-mailer').replace('%s', constantName(providerKey, field.name))} />;
     }
     switch (field.type) {
       case 'select':
         return (
           <NekoSelect scrolldown name={field.name} value={value ?? ''} onChange={onChange}>
-            {field.options.map((o) => <NekoOption key={o.value} value={o.value} label={t(o.label)} />)}
+            {field.options.map((o) => <NekoOption key={o.value} value={o.value} label={o.label} />)}
           </NekoSelect>
         );
       case 'switch':
@@ -53,13 +53,13 @@ const Field = ({ field, value, providerKey, onChange }) => {
           return <NekoInput type="password" name={field.name} value={value ?? ''} placeholder={field.placeholder}
             onBlur={onChange} onEnter={onChange}
             iconFilled="eye" onFilledIconClick={reveal}
-            description={t('Saved and hidden. Click the eye to see it, or type a new one to replace it.')} />;
+            description={__('Saved and hidden. Click the eye to see it, or type a new one to replace it.', 'meow-mailer')} />;
         }
         if (revealed !== null) {
           return <NekoInput type="text" name={field.name} value={revealed} placeholder={field.placeholder}
             onBlur={(v) => { setRevealed(v); onChange(v); }} onEnter={onChange}
             iconFilled="eye-off" onFilledIconClick={() => setRevealed(null)}
-            description={t('Showing the saved value. Click the eye to hide it again.')} />;
+            description={__('Showing the saved value. Click the eye to hide it again.', 'meow-mailer')} />;
         }
         // Nothing saved yet: an ordinary password field, whose own toggle works
         // because whatever is in it is what the user just typed.
@@ -72,21 +72,21 @@ const Field = ({ field, value, providerKey, onChange }) => {
         if (value === SECRET_MASK && !replacing) {
           return (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <NekoStatus status="ok">{t('Saved')}</NekoStatus>
-              <NekoButton className="secondary" onClick={() => setReplacing(true)}>{t('Replace')}</NekoButton>
+              <NekoStatus status="ok">{__('Saved', 'meow-mailer')}</NekoStatus>
+              <NekoButton className="secondary" onClick={() => setReplacing(true)}>{__('Replace', 'meow-mailer')}</NekoButton>
             </div>
           );
         }
         // Leaving the box empty must not wipe the certificate that is already saved.
         return <NekoTextArea name={field.name} rows={6} value={value === SECRET_MASK ? '' : (value ?? '')}
-          placeholder={field.placeholder} description={field.description && t(field.description)}
+          placeholder={field.placeholder} description={field.description && field.description}
           onBlur={(v) => { if (v.trim()) { setReplacing(false); onChange(v.trim()); } }} />;
       }
       default:
         return <NekoInput name={field.name} value={value ?? ''} placeholder={field.placeholder} onBlur={onChange} onEnter={onChange} />;
     }
   };
-  return <NekoSettings title={t(field.label)}>{control()}</NekoSettings>;
+  return <NekoSettings title={field.label}>{control()}</NekoSettings>;
 };
 
 const OAuthConnect = ({ provider }) => {
@@ -103,7 +103,7 @@ const OAuthConnect = ({ provider }) => {
       if (res.success && res.url) {
         window.location.href = res.url;
       } else {
-        setError(res.message || t('Could not start authorization.'));
+        setError(res.message || __('Could not start authorization.', 'meow-mailer'));
       }
     } catch (err) {
       setError(err.message);
@@ -127,18 +127,18 @@ const OAuthConnect = ({ provider }) => {
     <>
       <NekoSpacer />
       <NekoMessage variant="info">
-        {t(provider.oauthHelp)}
+        {provider.oauthHelp}
         {provider.oauthConsole && <>
-          {' '}<a href={provider.oauthConsole(creds)} target="_blank" rel="noopener noreferrer">{t('Open the console')}</a>
+          {' '}<a href={provider.oauthConsole(creds)} target="_blank" rel="noopener noreferrer">{__('Open the console', 'meow-mailer')}</a>
         </>}
         <br /><code>{window.mwmail.oauth_redirect_uri}</code>
       </NekoMessage>
       <NekoSpacer />
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         {connected
-          ? <><NekoStatus status="ok">{t('Connected')}</NekoStatus>
-              <NekoButton className="danger" disabled={busy} onClick={disconnect}>{t('Disconnect')}</NekoButton></>
-          : <NekoButton className="primary" icon="key" disabled={busy} onClick={connect}>{t(provider.oauthLabel)}</NekoButton>}
+          ? <><NekoStatus status="ok">{__('Connected', 'meow-mailer')}</NekoStatus>
+              <NekoButton className="danger" disabled={busy} onClick={disconnect}>{__('Disconnect', 'meow-mailer')}</NekoButton></>
+          : <NekoButton className="primary" icon="key" disabled={busy} onClick={connect}>{provider.oauthLabel}</NekoButton>}
       </div>
     </>
   );
@@ -169,7 +169,7 @@ const ProviderFields = ({ providerKey }) => {
           onChange={(value) => actions.updateProviderOption(value, field.name, providerKey)}
         />
       ))}
-      {provider.help && <><NekoSpacer /><NekoMessage variant="info">{t(provider.help)}</NekoMessage></>}
+      {provider.help && <><NekoSpacer /><NekoMessage variant="info">{provider.help}</NekoMessage></>}
       {provider.oauth && <OAuthConnect provider={provider} />}
     </>
   );

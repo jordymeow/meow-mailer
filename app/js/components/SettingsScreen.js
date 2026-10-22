@@ -15,7 +15,7 @@ import SecurityBlock from './SecurityBlock';
 import { sendTestEmail, setNetworkMode, testWebhook } from '@app/requests';
 import { network, wpMailOwner, siteDomain } from '@app/settings';
 import { wrapperBody } from '@app/layout';
-import { t } from '@app/i18n';
+import { __ } from '@app/i18n';
 
 // A group is read-only when it is shared network-wide and we are not a network
 // admin. The REST routes enforce this too, so this only keeps the UI honest.
@@ -43,13 +43,13 @@ const sameDomain = (email, site) => {
 // are not this site's business anyway. Just the title and where it is managed.
 const LockedBlock = ({ title }) => (
   <NekoBlock title={title}>
-    <NekoEmpty icon="lock" title={t('Network setting')}
+    <NekoEmpty icon="lock" title={__('Network setting', 'meow-mailer')}
       subtitle={network.is_main_site
-        ? t('This is managed by the network administrator.')
-        : t('This is managed on the main site of the network.')}
+        ? __('This is managed by the network administrator.', 'meow-mailer')
+        : __('This is managed on the main site of the network.', 'meow-mailer')}
       action={!network.is_main_site && !!network.is_super_admin && !!network.config_url
         ? <NekoButton className="secondary" onClick={() => { window.location.href = network.config_url; }}>
-            {t('Open the main site')}
+            {__('Open the main site', 'meow-mailer')}
           </NekoButton>
         : null} />
   </NekoBlock>
@@ -61,22 +61,22 @@ const showNetworkBlock = !!network.is_multisite && !!network.is_super_admin && !
 // The core emails that can be switched off. The keys must match
 // Meow_MWMAIL_Modules_Notifications::FILTERS, which maps each one to its core filter.
 const WP_NOTIFICATIONS = [
-  { key: 'new_user_admin', label: 'New User (to you)',
-    description: 'WordPress tells the site admin whenever someone registers.' },
-  { key: 'new_user', label: 'New User (to them)',
-    description: 'The welcome email a new user receives, with the link to set their password.' },
-  { key: 'password_changed', label: 'Password Changed',
-    description: 'Confirmation sent to a user after they change their password. This is not the password reset email, which is never affected.' },
-  { key: 'email_changed', label: 'Email Changed',
-    description: 'Confirmation sent to a user after they change their email address.' },
-  { key: 'admin_email_changed', label: 'Admin Email Changed',
-    description: 'Notice sent when the site administration email address is changed.' },
-  { key: 'comment_moderation', label: 'Comment Awaiting Moderation',
-    description: 'WordPress emails the moderator each time a comment needs approval.' },
-  { key: 'comment_published', label: 'New Comment',
-    description: 'WordPress emails the post author each time a comment is published.' },
-  { key: 'core_update', label: 'Automatic Updates',
-    description: 'The report WordPress sends after it updates itself in the background.' },
+  { key: 'new_user_admin', label: __('New User (to you)', 'meow-mailer'),
+    description: __('WordPress tells the site admin whenever someone registers.', 'meow-mailer') },
+  { key: 'new_user', label: __('New User (to them)', 'meow-mailer'),
+    description: __('The welcome email a new user receives, with the link to set their password.', 'meow-mailer') },
+  { key: 'password_changed', label: __('Password Changed', 'meow-mailer'),
+    description: __('Confirmation sent to a user after they change their password. This is not the password reset email, which is never affected.', 'meow-mailer') },
+  { key: 'email_changed', label: __('Email Changed', 'meow-mailer'),
+    description: __('Confirmation sent to a user after they change their email address.', 'meow-mailer') },
+  { key: 'admin_email_changed', label: __('Admin Email Changed', 'meow-mailer'),
+    description: __('Notice sent when the site administration email address is changed.', 'meow-mailer') },
+  { key: 'comment_moderation', label: __('Comment Awaiting Moderation', 'meow-mailer'),
+    description: __('WordPress emails the moderator each time a comment needs approval.', 'meow-mailer') },
+  { key: 'comment_published', label: __('New Comment', 'meow-mailer'),
+    description: __('WordPress emails the post author each time a comment is published.', 'meow-mailer') },
+  { key: 'core_update', label: __('Automatic Updates', 'meow-mailer'),
+    description: __('The report WordPress sends after it updates itself in the background.', 'meow-mailer') },
 ];
 
 const SettingsScreen = ({ onChanged = () => {} }) => {
@@ -101,10 +101,10 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
     const params = new URLSearchParams(window.location.search);
     const result = params.get('mwmail_oauth');
     if (result === 'connected') {
-      setNotice({ variant: 'success', text: t('Account connected successfully.') });
+      setNotice({ variant: 'success', text: __('Account connected successfully.', 'meow-mailer') });
       actions.refreshOptions();
     } else if (result === 'error') {
-      setNotice({ variant: 'danger', text: t('Connection failed. Check your Client ID, Secret and redirect URI.') });
+      setNotice({ variant: 'danger', text: __('Connection failed. Check your Client ID, Secret and redirect URI.', 'meow-mailer') });
     }
   }, []);
 
@@ -128,7 +128,7 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
       // lands; testing before it arrives tests the previous one.
       await actions.settled();
       const res = await sendTestEmail(testTo, testFormat, target);
-      setNotice({ variant: 'success', text: `${res.message} ${t('Open the Logs to see the result.')}` });
+      setNotice({ variant: 'success', text: `${res.message} ${__('Open the Logs to see the result.', 'meow-mailer')}` });
       onChanged();
     } catch (err) {
       setNotice({ variant: 'danger', text: err.message });
@@ -201,17 +201,17 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
   // field collapses to nothing in a narrow column. Let the row wrap instead.
   const testEmailBar = (
     <NekoToolbar style={{ flexWrap: 'wrap' }}>
-      <NekoInput name="test_to" value={testTo} placeholder={t('Send a test email to…')} onChange={setTestTo} onEnter={() => sendTest('provider')} style={{ flex: 1, minWidth: 170 }} />
+      <NekoInput name="test_to" value={testTo} placeholder={__('Send a test email to…', 'meow-mailer')} onChange={setTestTo} onEnter={() => sendTest('provider')} style={{ flex: 1, minWidth: 170 }} />
       <NekoSelect scrolldown name="test_format" value={testFormat} onChange={setTestFormat} style={{ width: 100 }}>
-        <NekoOption value="html" label={t('HTML')} />
-        <NekoOption value="plain" label={t('Plain')} />
+        <NekoOption value="html" label={__('HTML', 'meow-mailer')} />
+        <NekoOption value="plain" label={__('Plain', 'meow-mailer')} />
       </NekoSelect>
-      <NekoButton className="secondary" icon="mail" disabled={testBusy || busy || !testTo || provider === 'none'} onClick={() => sendTest('provider')}>{t('Send Test')}</NekoButton>
+      <NekoButton className="secondary" icon="mail" disabled={testBusy || busy || !testTo || provider === 'none'} onClick={() => sendTest('provider')}>{__('Send Test', 'meow-mailer')}</NekoButton>
       {/* The fallback is only ever used when things are already going wrong, which is
           the worst moment to discover its credentials expired months ago. */}
       {hasFallback && (
         <NekoButton className="secondary" icon="mail" disabled={testBusy || busy || !testTo} onClick={() => sendTest('fallback')}>
-          {t('Test Fallback')}
+          {__('Test Fallback', 'meow-mailer')}
         </NekoButton>
       )}
     </NekoToolbar>
@@ -232,32 +232,32 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
         {wpMailOwner && (
           <>
             <NekoMessage variant="danger">
-              <b>{t('Another plugin is sending your email.')}</b>{' '}
-              {t('%s has replaced WordPress\'s own wp_mail function, so Meow Mailer is never called: neither the provider below nor the fallback is used, and the Logs tab stays empty. Deactivate that plugin (or turn off its email feature) for these settings to take effect.').replace('%s', wpMailOwner)}
+              <b>{__('Another plugin is sending your email.', 'meow-mailer')}</b>{' '}
+              {__('%s has replaced WordPress\'s own wp_mail function, so Meow Mailer is never called: neither the provider below nor the fallback is used, and the Logs tab stays empty. Deactivate that plugin (or turn off its email feature) for these settings to take effect.', 'meow-mailer').replace('%s', wpMailOwner)}
             </NekoMessage>
             <NekoSpacer />
           </>
         )}
 
-        {lockedProvider ? <LockedBlock title={t('Email Provider')} /> : (
-          <NekoBlock title={t('Email Provider')} busy={busy}
-            subtitle={t('The service that sends your emails, and the one that takes over if it refuses one.')}>
+        {lockedProvider ? <LockedBlock title={__('Email Provider', 'meow-mailer')} /> : (
+          <NekoBlock title={__('Email Provider', 'meow-mailer')} busy={busy}
+            subtitle={__('The service that sends your emails, and the one that takes over if it refuses one.', 'meow-mailer')}>
             {firstRun ? <ProviderPicker onPick={(v) => updateOption(v, 'provider')} /> : <>
-              <NekoSettings title={t('Provider')}>
+              <NekoSettings title={__('Provider', 'meow-mailer')}>
                 <NekoSelect scrolldown name="provider" value={provider} onChange={(v) => updateOption(v, 'provider')}
-                  description={t('Pick one provider. Set it up once and Meow Mailer routes all WordPress email through it.')}>
-                  {MAIN_PROVIDERS.map((p) => <NekoOption key={p.key} value={p.key} label={t(p.label)} />)}
+                  description={__('Pick one provider. Set it up once and Meow Mailer routes all WordPress email through it.', 'meow-mailer')}>
+                  {MAIN_PROVIDERS.map((p) => <NekoOption key={p.key} value={p.key} label={p.label} />)}
                 </NekoSelect>
               </NekoSettings>
               <ProviderFields providerKey={provider} />
 
               <NekoSpacer />
-              <NekoSettings title={t('Fallback')}>
+              <NekoSettings title={__('Fallback', 'meow-mailer')}>
                 <NekoSelect scrolldown name="fallback_provider" value={fallback} onChange={(v) => updateOption(v, 'fallback_provider')}
                   description={fallbackInline
-                    ? t('Used only when the provider above refuses an email, so nothing is lost to a bad moment.')
-                    : t('Used only when the provider above refuses an email, so nothing is lost to a bad moment. Set it up like any other provider by selecting it above first. WordPress needs no setup at all: it hands the email to your server, which is imperfect but always there.')}>
-                  {fallbackChoices(provider).map((f) => <NekoOption key={f.key} value={f.key} label={t(f.label)} />)}
+                    ? __('Used only when the provider above refuses an email, so nothing is lost to a bad moment.', 'meow-mailer')
+                    : __('Used only when the provider above refuses an email, so nothing is lost to a bad moment. Set it up like any other provider by selecting it above first. WordPress needs no setup at all: it hands the email to your server, which is imperfect but always there.', 'meow-mailer')}>
+                  {fallbackChoices(provider).map((f) => <NekoOption key={f.key} value={f.key} label={f.label} />)}
                 </NekoSelect>
               </NekoSettings>
               {/* Not in the Provider list above, so it cannot be set up the usual way:
@@ -268,8 +268,8 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
                 <>
                   <NekoMessage variant="danger">
                     {fallbackInline
-                      ? t('This fallback has no server yet, so it cannot rescue anything. Fill it in just above.')
-                      : t('This fallback has no credentials yet, so it cannot rescue anything. Select it in Provider above, fill it in, then switch back.')}
+                      ? __('This fallback has no server yet, so it cannot rescue anything. Fill it in just above.', 'meow-mailer')
+                      : __('This fallback has no credentials yet, so it cannot rescue anything. Select it in Provider above, fill it in, then switch back.', 'meow-mailer')}
                   </NekoMessage>
                   <NekoSpacer />
                 </>
@@ -281,7 +281,7 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
               {hasFallback && fallback !== 'wordpress' && !fallbackUnconfigured && (
                 <>
                   <NekoMessage variant="warning">
-                    {t('Your fallback needs its own SPF and DKIM records for your domain, exactly like your main provider. Without them, rescued email is delivered but usually lands in spam.')}
+                    {__('Your fallback needs its own SPF and DKIM records for your domain, exactly like your main provider. Without them, rescued email is delivered but usually lands in spam.', 'meow-mailer')}
                   </NekoMessage>
                   <NekoSpacer />
                 </>
@@ -294,29 +294,29 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
           </NekoBlock>
         )}
 
-        {lockedSender ? <LockedBlock title={t('Sender')} /> : (
-          <NekoBlock title={t('Sender')} busy={busy}
-            subtitle={t('Who your emails come from, and where replies and bounces go.')}>
-            <NekoSettings title={t('From Email')}>
+        {lockedSender ? <LockedBlock title={__('Sender', 'meow-mailer')} /> : (
+          <NekoBlock title={__('Sender', 'meow-mailer')} busy={busy}
+            subtitle={__('Who your emails come from, and where replies and bounces go.', 'meow-mailer')}>
+            <NekoSettings title={__('From Email', 'meow-mailer')}>
               <NekoInput name="from_email" value={options.from_email} placeholder="you@example.com" onBlur={updateOption} onEnter={updateOption}
                 description={senderAddresses.length
-                  ? `${t('Your provider will only send from one of its own addresses:')} ${senderAddresses.join(', ')}`
-                  : t('The address your emails are sent from. Use one at your own domain for the best deliverability. Leave empty to keep what WordPress uses.')} />
+                  ? `${__('Your provider will only send from one of its own addresses:', 'meow-mailer')} ${senderAddresses.join(', ')}`
+                  : __('The address your emails are sent from. Use one at your own domain for the best deliverability. Leave empty to keep what WordPress uses.', 'meow-mailer')} />
             </NekoSettings>
-            <NekoSettings title={t('From Name')}>
+            <NekoSettings title={__('From Name', 'meow-mailer')}>
               <NekoInput name="from_name" value={options.from_name} placeholder="My Website" onBlur={updateOption} onEnter={updateOption}
-                description={t('The sender name recipients see in their inbox (usually your site name). {site_name} is replaced by the name of this site.')} />
+                description={__('The sender name recipients see in their inbox (usually your site name). {site_name} is replaced by the name of this site.', 'meow-mailer')} />
             </NekoSettings>
-            <SwitchSetting title={t('Force From')} name="force_from" checked={options.force_from}
+            <SwitchSetting title={__('Force From', 'meow-mailer')} name="force_from" checked={options.force_from}
               onChange={(v) => updateOption(v, 'force_from')}
-              description={t('Use the address above for every email, even when another plugin sets its own. Recommended, because providers reject mail sent from addresses you do not own.')} />
+              description={__('Use the address above for every email, even when another plugin sets its own. Recommended, because providers reject mail sent from addresses you do not own.', 'meow-mailer')} />
             {/* Contact form plugins (Contact Form 7, WPForms…) set their own From header,
                 which silently wins over the address above. It is the usual reason mail is
                 rejected or lands in spam, and nothing else in the UI would show it. */}
             {!options.force_from && options.from_email ? (
               <>
                 <NekoMessage variant="warning">
-                  {t('Contact form plugins usually set their own sender, which overrides the address above. If your forms are not delivered, or land in spam, turn Force From on.')}
+                  {__('Contact form plugins usually set their own sender, which overrides the address above. If your forms are not delivered, or land in spam, turn Force From on.', 'meow-mailer')}
                 </NekoMessage>
                 <NekoSpacer />
               </>
@@ -329,18 +329,18 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
               && !sameDomain(options.from_email, providerDomain) ? (
               <>
                 <NekoMessage variant="warning">
-                  {t('This address is not on %s. Providers often refuse to send from a domain you do not own, and mail that does get through usually lands in spam because it matches no SPF or DKIM record. Use an address at your own domain unless you manage that one too.').replace('%s', siteDomain)}
+                  {__('This address is not on %s. Providers often refuse to send from a domain you do not own, and mail that does get through usually lands in spam because it matches no SPF or DKIM record. Use an address at your own domain unless you manage that one too.', 'meow-mailer').replace('%s', siteDomain)}
                 </NekoMessage>
                 <NekoSpacer />
               </>
             ) : null}
-            <NekoSettings title={t('Reply-To')}>
-              <NekoInput name="reply_to" value={options.reply_to} placeholder={t('(optional)')} onBlur={updateOption} onEnter={updateOption}
-                description={t('Where replies should go, if different from the From address. {admin_email} is replaced by the admin email of this site.')} />
+            <NekoSettings title={__('Reply-To', 'meow-mailer')}>
+              <NekoInput name="reply_to" value={options.reply_to} placeholder={__('(optional)', 'meow-mailer')} onBlur={updateOption} onEnter={updateOption}
+                description={__('Where replies should go, if different from the From address. {admin_email} is replaced by the admin email of this site.', 'meow-mailer')} />
             </NekoSettings>
-            <NekoSettings title={t('Return Path')}>
-              <NekoInput name="return_path" value={options.return_path} placeholder={t('(same as From)')} onBlur={updateOption} onEnter={updateOption}
-                description={t('Where bounces and non-delivery reports go, if you keep a mailbox for them. Left empty they follow the From address, which is what happens today. Generic SMTP only: the API providers handle bounces on their own side. {admin_email} works here too.')} />
+            <NekoSettings title={__('Return Path', 'meow-mailer')}>
+              <NekoInput name="return_path" value={options.return_path} placeholder={__('(same as From)', 'meow-mailer')} onBlur={updateOption} onEnter={updateOption}
+                description={__('Where bounces and non-delivery reports go, if you keep a mailbox for them. Left empty they follow the From address, which is what happens today. Generic SMTP only: the API providers handle bounces on their own side. {admin_email} works here too.', 'meow-mailer')} />
             </NekoSettings>
           </NekoBlock>
         )}
@@ -351,7 +351,7 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
 
         {/* Encryption rewrites the credentials, so on a network it belongs to whoever
             owns the provider group. */}
-        {lockedProvider ? <LockedBlock title={t('Security')} /> : <SecurityBlock />}
+        {lockedProvider ? <LockedBlock title={__('Security', 'meow-mailer')} /> : <SecurityBlock />}
 
       </NekoColumn>
 
@@ -359,76 +359,76 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
       <NekoColumn minimal size="1/2">
 
         {testInSidebar && (
-          <NekoBlock title={t('Test Email')} busy={busy}>
+          <NekoBlock title={__('Test Email', 'meow-mailer')} busy={busy}>
             {testEmailBar}
           </NekoBlock>
         )}
 
-        {lockedDelivery ? <LockedBlock title={t('Delivery & Logs')} /> : (
-          <NekoBlock title={t('Delivery & Logs')} busy={busy}
-            subtitle={t('What happens once WordPress hands an email over to Meow Mailer.')}>
-            <SwitchSetting title={t('Background Send')} name="send_in_background" checked={options.send_in_background}
+        {lockedDelivery ? <LockedBlock title={__('Delivery & Logs', 'meow-mailer')} /> : (
+          <NekoBlock title={__('Delivery & Logs', 'meow-mailer')} busy={busy}
+            subtitle={__('What happens once WordPress hands an email over to Meow Mailer.', 'meow-mailer')}>
+            <SwitchSetting title={__('Background Send', 'meow-mailer')} name="send_in_background" checked={options.send_in_background}
               onChange={(v) => updateOption(v, 'send_in_background')}
-              description={t('Deliver the email after the page has finished loading instead of during it. Whoever triggered it, such as a customer checking out or a user resetting a password, no longer waits for the mail server to answer. Recommended.')} />
-            <SwitchSetting title={t('Enable Logging')} name="logs_enabled" checked={options.logs_enabled}
+              description={__('Deliver the email after the page has finished loading instead of during it. Whoever triggered it, such as a customer checking out or a user resetting a password, no longer waits for the mail server to answer. Recommended.', 'meow-mailer')} />
+            <SwitchSetting title={__('Enable Logging', 'meow-mailer')} name="logs_enabled" checked={options.logs_enabled}
               onChange={(v) => updateOption(v, 'logs_enabled')}
-              description={t('Keep a record of every email in the Logs, with whether it was delivered or failed. This is how you find out an email never arrived.')} />
-            <SwitchSetting title={t('Store Body')} name="log_body" checked={options.log_body}
+              description={__('Keep a record of every email in the Logs, with whether it was delivered or failed. This is how you find out an email never arrived.', 'meow-mailer')} />
+            <SwitchSetting title={__('Store Body', 'meow-mailer')} name="log_body" checked={options.log_body}
               onChange={(v) => updateOption(v, 'log_body')}
-              description={t('Also keep the message itself, so you can read it back and resend it. Turn off if you would rather not keep email content in your database.')} />
+              description={__('Also keep the message itself, so you can read it back and resend it. Turn off if you would rather not keep email content in your database.', 'meow-mailer')} />
             {options.log_body && (
-              <SwitchSetting title={t('Keep Attachments')} name="store_attachments" checked={options.store_attachments}
+              <SwitchSetting title={__('Keep Attachments', 'meow-mailer')} name="store_attachments" checked={options.store_attachments}
                 onChange={(v) => updateOption(v, 'store_attachments')}
-                description={t('Also keep the attached files, so Resend sends the email complete. Useful when another plugin builds a document on the fly, like an invoice PDF, since that file cannot be rebuilt later. It does mean those documents sit in your database, so they are kept for 30 days only, and emails over 2 MB of attachments are skipped.')} />
+                description={__('Also keep the attached files, so Resend sends the email complete. Useful when another plugin builds a document on the fly, like an invoice PDF, since that file cannot be rebuilt later. It does mean those documents sit in your database, so they are kept for 30 days only, and emails over 2 MB of attachments are skipped.', 'meow-mailer')} />
             )}
-            <NekoSettings title={t('Keep Logs For')}>
+            <NekoSettings title={__('Keep Logs For', 'meow-mailer')}>
               <NekoSelect scrolldown name="log_retention_days" value={String(options.log_retention_days)} onChange={(v) => updateOption(parseInt(v, 10), 'log_retention_days')}
-                description={t('Older entries are deleted automatically once a day.')}>
-                <NekoOption value="0" label={t('Forever')} />
-                <NekoOption value="7" label={t('7 days')} />
-                <NekoOption value="30" label={t('30 days')} />
-                <NekoOption value="90" label={t('90 days')} />
+                description={__('Older entries are deleted automatically once a day.', 'meow-mailer')}>
+                <NekoOption value="0" label={__('Forever', 'meow-mailer')} />
+                <NekoOption value="7" label={__('7 days', 'meow-mailer')} />
+                <NekoOption value="30" label={__('30 days', 'meow-mailer')} />
+                <NekoOption value="90" label={__('90 days', 'meow-mailer')} />
               </NekoSelect>
             </NekoSettings>
           </NekoBlock>
         )}
 
-        <NekoBlock title={t('Alerts')} busy={busy}
-          subtitle={t('How you find out something went wrong, without having to log in and look.')}>
-          <SwitchSetting title={t('Failure Alerts')} name="alerts_enabled" checked={options.alerts_enabled}
+        <NekoBlock title={__('Alerts', 'meow-mailer')} busy={busy}
+          subtitle={__('How you find out something went wrong, without having to log in and look.', 'meow-mailer')}>
+          <SwitchSetting title={__('Failure Alerts', 'meow-mailer')} name="alerts_enabled" checked={options.alerts_enabled}
             onChange={(v) => updateOption(v, 'alerts_enabled')}
-            description={t('Email you when your site stops being able to send. At most one alert per hour, however many emails fail. It is sent by WordPress itself rather than your provider, so it still reaches you when the provider is the problem.')} />
+            description={__('Email you when your site stops being able to send. At most one alert per hour, however many emails fail. It is sent by WordPress itself rather than your provider, so it still reaches you when the provider is the problem.', 'meow-mailer')} />
           {options.alerts_enabled && (
-            <NekoSettings title={t('Alert To')}>
-              <NekoInput name="alerts_email" value={options.alerts_email} placeholder={t('(site admin address)')}
+            <NekoSettings title={__('Alert To', 'meow-mailer')}>
+              <NekoInput name="alerts_email" value={options.alerts_email} placeholder={__('(site admin address)', 'meow-mailer')}
                 onBlur={updateOption} onEnter={updateOption}
-                description={t('Where alerts go. Leave empty to use the site admin address. An address at another provider is safer, since it is reachable when yours is down.')} />
+                description={__('Where alerts go. Leave empty to use the site admin address. An address at another provider is safer, since it is reachable when yours is down.', 'meow-mailer')} />
             </NekoSettings>
           )}
-          <SwitchSetting title={t('Weekly Summary')} name="summary_enabled" checked={options.summary_enabled}
+          <SwitchSetting title={__('Weekly Summary', 'meow-mailer')} name="summary_enabled" checked={options.summary_enabled}
             onChange={(v) => updateOption(v, 'summary_enabled')}
-            description={t('A short weekly email with how much was sent, how much failed, and the most common errors. Skipped entirely on weeks where nothing was sent.')} />
+            description={__('A short weekly email with how much was sent, how much failed, and the most common errors. Skipped entirely on weeks where nothing was sent.', 'meow-mailer')} />
           {options.summary_enabled && (
-            <NekoSettings title={t('Summary To')}>
-              <NekoInput name="summary_email" value={options.summary_email} placeholder={t('(site admin address)')}
+            <NekoSettings title={__('Summary To', 'meow-mailer')}>
+              <NekoInput name="summary_email" value={options.summary_email} placeholder={__('(site admin address)', 'meow-mailer')}
                 onBlur={updateOption} onEnter={updateOption}
-                description={t('Where the summary goes. Leave empty to use the site admin address.')} />
+                description={__('Where the summary goes. Leave empty to use the site admin address.', 'meow-mailer')} />
             </NekoSettings>
           )}
           {/* Last in the block, because it carries whichever of the two above are on,
               and nothing else. Individual emails are never posted anywhere. */}
           {(options.alerts_enabled || options.summary_enabled) && (
-            <NekoSettings title={t('Also Post To')}>
-              <NekoInput name="alerts_webhook" value={options.alerts_webhook} placeholder={t('https://hooks.slack.com/services/…')}
+            <NekoSettings title={__('Also Post To', 'meow-mailer')}>
+              <NekoInput name="alerts_webhook" value={options.alerts_webhook} placeholder={__('https://hooks.slack.com/services/…', 'meow-mailer')}
                 onBlur={updateOption} onEnter={updateOption}
-                description={t('Optional. Send the same alerts and summary to a chat service as well, so the news does not travel by email at all. Paste the webhook URL your service gives you: Slack and Discord are recognised from the URL and get the message they expect, everything else receives plain JSON. Microsoft Teams retired its old incoming webhooks, so there it means a Power Automate workflow with the "When a Teams webhook request is received" trigger.')} />
+                description={__('Optional. Send the same alerts and summary to a chat service as well, so the news does not travel by email at all. Paste the webhook URL your service gives you: Slack and Discord are recognised from the URL and get the message they expect, everything else receives plain JSON. Microsoft Teams retired its old incoming webhooks, so there it means a Power Automate workflow with the "When a Teams webhook request is received" trigger.', 'meow-mailer')} />
             </NekoSettings>
           )}
           {(options.alerts_enabled || options.summary_enabled) && !!options.alerts_webhook && (
             <>
               <NekoToolbar style={{ justifyContent: 'flex-end' }}>
                 <NekoButton className="secondary" icon="bell" disabled={webhookBusy} onClick={sendWebhookTest}>
-                  {t('Test Webhook')}
+                  {__('Test Webhook', 'meow-mailer')}
                 </NekoButton>
               </NekoToolbar>
               {/* Posted without waiting for a reply, so this is the only moment a
@@ -438,31 +438,31 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
           )}
         </NekoBlock>
 
-        <NekoBlock title={t('WordPress Notifications')} busy={busy}
-          subtitle={t('Emails WordPress sends by itself. Turn off the ones you do not want anyone to receive.')}>
+        <NekoBlock title={__('WordPress Notifications', 'meow-mailer')} busy={busy}
+          subtitle={__('Emails WordPress sends by itself. Turn off the ones you do not want anyone to receive.', 'meow-mailer')}>
           {WP_NOTIFICATIONS.map((n) => (
-            <SwitchSetting key={n.key} title={t(n.label)} name={`notify_${n.key}`}
+            <SwitchSetting key={n.key} title={n.label} name={`notify_${n.key}`}
               checked={!(options.blocked_notifications || []).includes(n.key)}
               onChange={(v) => toggleNotification(n.key, v)}
-              description={t(n.description)} />
+              description={n.description} />
           ))}
           <NekoMessage variant="info">
-            {t('Password reset emails are never affected. Turning those off would lock people out of the site.')}
+            {__('Password reset emails are never affected. Turning those off would lock people out of the site.', 'meow-mailer')}
           </NekoMessage>
         </NekoBlock>
 
         {showNetworkBlock && (
-          <NekoBlock title={t('Multisite')} busy={sharedBusy}
-            subtitle={t('This network has %d sites. Choose what they configure themselves, and what they inherit from here.').replace('%d', String(network.site_count || 1))}>
-            <SwitchSetting title={t('Shared Settings')} name="network_mode" checked={shared} onChange={toggleShared}
-              description={t('Set the email provider up once, here on the main site, and every site of the network sends through it. Their own Email Provider section becomes read-only. Email logs are never shared, so each site only ever sees its own.')} />
+          <NekoBlock title={__('Multisite', 'meow-mailer')} busy={sharedBusy}
+            subtitle={__('This network has %d sites. Choose what they configure themselves, and what they inherit from here.', 'meow-mailer').replace('%d', String(network.site_count || 1))}>
+            <SwitchSetting title={__('Shared Settings', 'meow-mailer')} name="network_mode" checked={shared} onChange={toggleShared}
+              description={__('Set the email provider up once, here on the main site, and every site of the network sends through it. Their own Email Provider section becomes read-only. Email logs are never shared, so each site only ever sees its own.', 'meow-mailer')} />
             {shared && <>
-              <SwitchSetting title={t('Also Share Sender')} name="share_sender" checked={sharedGroups.sender}
+              <SwitchSetting title={__('Also Share Sender', 'meow-mailer')} name="share_sender" checked={sharedGroups.sender}
                 onChange={(v) => toggleGroup('sender', v)}
-                description={t('Share the From address, name and Reply-To as well. Usually best left off: each site has its own domain, and mail is more trusted when it comes from that domain.')} />
-              <SwitchSetting title={t('Also Share Delivery')} name="share_delivery" checked={sharedGroups.delivery}
+                description={__('Share the From address, name and Reply-To as well. Usually best left off: each site has its own domain, and mail is more trusted when it comes from that domain.', 'meow-mailer')} />
+              <SwitchSetting title={__('Also Share Delivery', 'meow-mailer')} name="share_delivery" checked={sharedGroups.delivery}
                 onChange={(v) => toggleGroup('delivery', v)}
-                description={t('Share the logging, body-storage and retention options as well, so every site keeps records the same way.')} />
+                description={__('Share the logging, body-storage and retention options as well, so every site keeps records the same way.', 'meow-mailer')} />
             </>}
           </NekoBlock>
         )}

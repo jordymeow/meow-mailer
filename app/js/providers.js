@@ -1,214 +1,216 @@
 // Declarative description of every supported provider and its credential fields.
 // `one active at a time`: the user picks one in Settings.
 
+import { __ } from '@app/i18n';
+
 const SMTP_FIELDS = [
-  { name: 'host', label: 'Host', type: 'text', placeholder: 'smtp.example.com' },
-  { name: 'port', label: 'Port', type: 'number', placeholder: '587' },
-  { name: 'encryption', label: 'Encryption', type: 'select', options: [
-    { value: 'tls', label: 'TLS (STARTTLS)' },
-    { value: 'ssl', label: 'SSL' },
-    { value: 'none', label: 'None' },
+  { name: 'host', label: __('Host', 'meow-mailer'), type: 'text', placeholder: 'smtp.example.com' },
+  { name: 'port', label: __('Port', 'meow-mailer'), type: 'number', placeholder: '587' },
+  { name: 'encryption', label: __('Encryption', 'meow-mailer'), type: 'select', options: [
+    { value: 'tls', label: __('TLS (STARTTLS)', 'meow-mailer') },
+    { value: 'ssl', label: __('SSL', 'meow-mailer') },
+    { value: 'none', label: __('None', 'meow-mailer') },
   ] },
-  { name: 'auth', label: 'Authentication', type: 'switch' },
-  { name: 'username', label: 'Username', type: 'text' },
-  { name: 'password', label: 'Password', type: 'password' },
+  { name: 'auth', label: __('Authentication', 'meow-mailer'), type: 'switch' },
+  { name: 'username', label: __('Username', 'meow-mailer'), type: 'text' },
+  { name: 'password', label: __('Password', 'meow-mailer'), type: 'password' },
 ];
 
 export const PROVIDERS = [
   {
     key: 'none',
-    label: 'None',
-    description: 'Meow Mailer stays out of the way. WordPress sends email as usual, and each email is still logged. Pick a provider below to take over.',
+    label: __('None', 'meow-mailer'),
+    description: __('Meow Mailer stays out of the way. WordPress sends email as usual, and each email is still logged. Pick a provider below to take over.', 'meow-mailer'),
     fields: [],
   },
   {
     key: 'offline',
-    label: 'Offline',
-    description: 'Every email is captured in the log but never actually sent. Ideal for staging and development sites.',
+    label: __('Offline', 'meow-mailer'),
+    description: __('Every email is captured in the log but never actually sent. Ideal for staging and development sites.', 'meow-mailer'),
     fields: [],
   },
   {
     key: 'smtp',
-    label: 'Generic SMTP',
+    label: __('Generic SMTP', 'meow-mailer'),
     // Named on purpose: people look for their own mail host in this list, and read
     // its absence as "not supported" even though Generic SMTP covers all of them.
-    description: 'Any SMTP server: Zoho Mail, Fastmail, Infomaniak, OVH, or the one your host gave you. Works everywhere.',
+    description: __('Any SMTP server: Zoho Mail, Fastmail, Infomaniak, OVH, or the one your host gave you. Works everywhere.', 'meow-mailer'),
     fields: SMTP_FIELDS,
   },
   {
     key: 'smtp_secondary',
-    label: 'Generic SMTP (Second Server)',
+    label: __('Generic SMTP (Second Server)', 'meow-mailer'),
     // Only ever a fallback: it is never offered as the main provider, so the picker
     // stays as it was for everyone who has one SMTP server.
     fallbackOnly: true,
-    description: 'A second SMTP server, used only as the fallback.',
+    description: __('A second SMTP server, used only as the fallback.', 'meow-mailer'),
     fields: SMTP_FIELDS,
   },
   {
     key: 'mailgun',
-    label: 'Mailgun',
-    description: 'High-volume API mailer. Needs an API key and a sending domain.',
+    label: __('Mailgun', 'meow-mailer'),
+    description: __('High-volume API mailer. Needs an API key and a sending domain.', 'meow-mailer'),
     fields: [
-      { name: 'api_key', label: 'API Key', type: 'password' },
-      { name: 'domain', label: 'Domain', type: 'text', placeholder: 'mg.example.com' },
-      { name: 'region', label: 'Region', type: 'select', options: [
-        { value: 'us', label: 'US' },
-        { value: 'eu', label: 'EU' },
+      { name: 'api_key', label: __('API Key', 'meow-mailer'), type: 'password' },
+      { name: 'domain', label: __('Domain', 'meow-mailer'), type: 'text', placeholder: 'mg.example.com' },
+      { name: 'region', label: __('Region', 'meow-mailer'), type: 'select', options: [
+        { value: 'us', label: __('US', 'meow-mailer') },
+        { value: 'eu', label: __('EU', 'meow-mailer') },
       ] },
     ],
   },
   {
     key: 'brevo',
-    label: 'Brevo',
-    description: 'Generous free tier (300 emails/day). Just an API key.',
-    fields: [ { name: 'api_key', label: 'API Key', type: 'password' } ],
+    label: __('Brevo', 'meow-mailer'),
+    description: __('Generous free tier (300 emails/day). Just an API key.', 'meow-mailer'),
+    fields: [ { name: 'api_key', label: __('API Key', 'meow-mailer'), type: 'password' } ],
   },
   {
     key: 'sendgrid',
-    label: 'SendGrid',
-    description: 'Popular API mailer by Twilio.',
-    fields: [ { name: 'api_key', label: 'API Key', type: 'password' } ],
+    label: __('SendGrid', 'meow-mailer'),
+    description: __('Popular API mailer by Twilio.', 'meow-mailer'),
+    fields: [ { name: 'api_key', label: __('API Key', 'meow-mailer'), type: 'password' } ],
   },
   {
     key: 'ses',
-    label: 'Amazon SES',
-    description: 'Cheapest at scale. Needs IAM access key, secret and region.',
+    label: __('Amazon SES', 'meow-mailer'),
+    description: __('Cheapest at scale. Needs IAM access key, secret and region.', 'meow-mailer'),
     fields: [
-      { name: 'access_key', label: 'Access Key ID', type: 'text' },
-      { name: 'secret_key', label: 'Secret Access Key', type: 'password' },
-      { name: 'region', label: 'Region', type: 'text', placeholder: 'us-east-1' },
+      { name: 'access_key', label: __('Access Key ID', 'meow-mailer'), type: 'text' },
+      { name: 'secret_key', label: __('Secret Access Key', 'meow-mailer'), type: 'password' },
+      { name: 'region', label: __('Region', 'meow-mailer'), type: 'text', placeholder: 'us-east-1' },
     ],
   },
   {
     key: 'postmark',
-    label: 'Postmark',
-    description: 'Excellent deliverability for transactional email.',
+    label: __('Postmark', 'meow-mailer'),
+    description: __('Excellent deliverability for transactional email.', 'meow-mailer'),
     fields: [
-      { name: 'server_token', label: 'Server Token', type: 'password' },
-      { name: 'message_stream', label: 'Message Stream', type: 'text', placeholder: 'outbound' },
+      { name: 'server_token', label: __('Server Token', 'meow-mailer'), type: 'password' },
+      { name: 'message_stream', label: __('Message Stream', 'meow-mailer'), type: 'text', placeholder: 'outbound' },
     ],
   },
   {
     key: 'smtp2go',
-    label: 'SMTP2GO',
-    description: 'Reliable API mailer with a free tier.',
-    fields: [ { name: 'api_key', label: 'API Key', type: 'password' } ],
+    label: __('SMTP2GO', 'meow-mailer'),
+    description: __('Reliable API mailer with a free tier.', 'meow-mailer'),
+    fields: [ { name: 'api_key', label: __('API Key', 'meow-mailer'), type: 'password' } ],
   },
   {
     key: 'mailjet',
-    label: 'Mailjet',
-    description: 'API key and secret key from your Mailjet account.',
+    label: __('Mailjet', 'meow-mailer'),
+    description: __('API key and secret key from your Mailjet account.', 'meow-mailer'),
     fields: [
-      { name: 'api_key', label: 'API Key', type: 'text' },
-      { name: 'secret_key', label: 'Secret Key', type: 'password' },
+      { name: 'api_key', label: __('API Key', 'meow-mailer'), type: 'text' },
+      { name: 'secret_key', label: __('Secret Key', 'meow-mailer'), type: 'password' },
     ],
   },
   {
     key: 'resend',
-    label: 'Resend',
-    description: 'Developer-friendly modern API mailer.',
-    fields: [ { name: 'api_key', label: 'API Key', type: 'password' } ],
+    label: __('Resend', 'meow-mailer'),
+    description: __('Developer-friendly modern API mailer.', 'meow-mailer'),
+    fields: [ { name: 'api_key', label: __('API Key', 'meow-mailer'), type: 'password' } ],
   },
   {
     key: 'mailersend',
-    label: 'MailerSend',
-    description: 'Modern API mailer with a free tier.',
-    fields: [ { name: 'api_key', label: 'API Key', type: 'password' } ],
+    label: __('MailerSend', 'meow-mailer'),
+    description: __('Modern API mailer with a free tier.', 'meow-mailer'),
+    fields: [ { name: 'api_key', label: __('API Key', 'meow-mailer'), type: 'password' } ],
   },
   {
     key: 'maileroo',
-    label: 'Maileroo',
-    description: 'European (GDPR) API mailer with a free tier. Create a Sending Key for your domain in the Maileroo dashboard.',
-    fields: [ { name: 'api_key', label: 'Sending Key', type: 'password' } ],
+    label: __('Maileroo', 'meow-mailer'),
+    description: __('European (GDPR) API mailer with a free tier. Create a Sending Key for your domain in the Maileroo dashboard.', 'meow-mailer'),
+    fields: [ { name: 'api_key', label: __('Sending Key', 'meow-mailer'), type: 'password' } ],
   },
   {
     key: 'gmail',
-    label: 'Gmail / Google Workspace',
-    description: 'Send via your Google account using OAuth 2.0 (no password stored).',
+    label: __('Gmail / Google Workspace', 'meow-mailer'),
+    description: __('Send via your Google account using OAuth 2.0 (no password stored).', 'meow-mailer'),
     oauth: 'gmail',
-    oauthLabel: 'Connect with Google',
-    oauthHelp: 'Create an OAuth Client (Web application) in Google Cloud Console, add the redirect URI below, then paste the Client ID and Secret above and Save before connecting:',
+    oauthLabel: __('Connect with Google', 'meow-mailer'),
+    oauthHelp: __('Create an OAuth Client (Web application) in Google Cloud Console, add the redirect URI below, then paste the Client ID and Secret above and Save before connecting:', 'meow-mailer'),
     fields: [
-      { name: 'client_id', label: 'Client ID', type: 'text' },
-      { name: 'client_secret', label: 'Client Secret', type: 'password' },
+      { name: 'client_id', label: __('Client ID', 'meow-mailer'), type: 'text' },
+      { name: 'client_secret', label: __('Client Secret', 'meow-mailer'), type: 'password' },
     ],
   },
   {
     key: 'outlook',
-    label: 'Microsoft 365 / Outlook',
-    description: 'Send via your Microsoft 365 or Outlook account using OAuth 2.0 (no password stored). Emails are sent from the connected mailbox.',
+    label: __('Microsoft 365 / Outlook', 'meow-mailer'),
+    description: __('Send via your Microsoft 365 or Outlook account using OAuth 2.0 (no password stored). Emails are sent from the connected mailbox.', 'meow-mailer'),
     oauth: 'outlook',
-    oauthLabel: 'Connect with Microsoft',
-    oauthHelp: 'Register an app in Azure Portal → App registrations, add the redirect URI below, grant the Microsoft Graph "Mail.Send" delegated permission, create a client secret, then paste the Client ID and Secret above and Save before connecting:',
+    oauthLabel: __('Connect with Microsoft', 'meow-mailer'),
+    oauthHelp: __('Register an app in Azure Portal → App registrations, add the redirect URI below, grant the Microsoft Graph "Mail.Send" delegated permission, create a client secret, then paste the Client ID and Secret above and Save before connecting:', 'meow-mailer'),
     fields: [
-      { name: 'client_id', label: 'Client ID', type: 'text' },
-      { name: 'client_secret', label: 'Client Secret', type: 'password' },
-      { name: 'tenant', label: 'Tenant', type: 'text', placeholder: 'common' },
+      { name: 'client_id', label: __('Client ID', 'meow-mailer'), type: 'text' },
+      { name: 'client_secret', label: __('Client Secret', 'meow-mailer'), type: 'password' },
+      { name: 'tenant', label: __('Tenant', 'meow-mailer'), type: 'text', placeholder: 'common' },
     ],
   },
   {
     // The same Graph API as above, but the app authenticates as itself (client
     // credentials), so agencies can set it up without the client ever signing in.
     key: 'microsoft',
-    label: 'Microsoft 365 (App-only)',
-    description: 'Send through Microsoft 365 with an Entra app registration and application permissions. Nobody signs in: the app authenticates with a certificate or a client secret.',
-    help: 'In Entra ID → App registrations, add the Microsoft Graph "Mail.Send" application permission and grant admin consent, then upload a certificate or create a client secret. The mailbox can be a shared mailbox, which needs no license. Mail.Send lets the app send as any mailbox in your tenant, so limit it to this one with an Application Access Policy.',
+    label: __('Microsoft 365 (App-only)', 'meow-mailer'),
+    description: __('Send through Microsoft 365 with an Entra app registration and application permissions. Nobody signs in: the app authenticates with a certificate or a client secret.', 'meow-mailer'),
+    help: __('In Entra ID → App registrations, add the Microsoft Graph "Mail.Send" application permission and grant admin consent, then upload a certificate or create a client secret. The mailbox can be a shared mailbox, which needs no license. Mail.Send lets the app send as any mailbox in your tenant, so limit it to this one with an Application Access Policy.', 'meow-mailer'),
     fields: [
-      { name: 'tenant', label: 'Tenant ID', type: 'text', placeholder: 'Directory ID or contoso.onmicrosoft.com' },
-      { name: 'client_id', label: 'Client ID', type: 'text' },
-      { name: 'auth', label: 'Authentication', type: 'select', options: [
-        { value: 'certificate', label: 'Certificate' },
-        { value: 'secret', label: 'Client Secret' },
+      { name: 'tenant', label: __('Tenant ID', 'meow-mailer'), type: 'text', placeholder: 'Directory ID or contoso.onmicrosoft.com' },
+      { name: 'client_id', label: __('Client ID', 'meow-mailer'), type: 'text' },
+      { name: 'auth', label: __('Authentication', 'meow-mailer'), type: 'select', options: [
+        { value: 'certificate', label: __('Certificate', 'meow-mailer') },
+        { value: 'secret', label: __('Client Secret', 'meow-mailer') },
       ] },
-      { name: 'certificate', label: 'Certificate', type: 'pem', placeholder: '-----BEGIN CERTIFICATE-----',
-        description: 'The certificate and its private key, both in PEM format, pasted together. From a .pfx file: openssl pkcs12 -in cert.pfx -out cert.pem -nodes',
+      { name: 'certificate', label: __('Certificate', 'meow-mailer'), type: 'pem', placeholder: '-----BEGIN CERTIFICATE-----',
+        description: __('The certificate and its private key, both in PEM format, pasted together. From a .pfx file: openssl pkcs12 -in cert.pfx -out cert.pem -nodes', 'meow-mailer'),
         showIf: (creds) => creds.auth !== 'secret' },
-      { name: 'client_secret', label: 'Client Secret', type: 'password', showIf: (creds) => creds.auth === 'secret' },
-      { name: 'mailbox', label: 'Send From', type: 'text', placeholder: 'website@example.com' },
+      { name: 'client_secret', label: __('Client Secret', 'meow-mailer'), type: 'password', showIf: (creds) => creds.auth === 'secret' },
+      { name: 'mailbox', label: __('Send From', 'meow-mailer'), type: 'text', placeholder: 'website@example.com' },
     ],
   },
   {
     key: 'zoho',
-    label: 'Zoho Mail',
-    description: 'Send via your Zoho Mail account using OAuth 2.0 (no password stored). Emails are sent from the connected mailbox.',
+    label: __('Zoho Mail', 'meow-mailer'),
+    description: __('Send via your Zoho Mail account using OAuth 2.0 (no password stored). Emails are sent from the connected mailbox.', 'meow-mailer'),
     oauth: 'zoho',
-    oauthLabel: 'Connect with Zoho',
-    oauthHelp: 'Create a Server-based Application in the Zoho API Console, add the redirect URI below, then paste the Client ID and Secret above, pick your data center and Save before connecting:',
+    oauthLabel: __('Connect with Zoho', 'meow-mailer'),
+    oauthHelp: __('Create a Server-based Application in the Zoho API Console, add the redirect URI below, then paste the Client ID and Secret above, pick your data center and Save before connecting:', 'meow-mailer'),
     // The console lives on the account's own data center, so the link has to follow
     // the choice made above or it lands EU and Indian accounts in the wrong place.
     oauthConsole: (creds) => `https://api-console.${(creds || {}).datacenter || 'zoho.com'}/`,
     fields: [
-      { name: 'client_id', label: 'Client ID', type: 'text' },
-      { name: 'client_secret', label: 'Client Secret', type: 'password' },
+      { name: 'client_id', label: __('Client ID', 'meow-mailer'), type: 'text' },
+      { name: 'client_secret', label: __('Client Secret', 'meow-mailer'), type: 'password' },
       // Zoho regions hold their data separately, so the wrong one fails to connect
       // rather than falling back. It has to match where the account was created.
-      { name: 'datacenter', label: 'Data Center', type: 'select', options: [
-        { value: 'zoho.com', label: 'zoho.com (US)' },
-        { value: 'zoho.eu', label: 'zoho.eu (Europe)' },
-        { value: 'zoho.in', label: 'zoho.in (India)' },
-        { value: 'zoho.com.au', label: 'zoho.com.au (Australia)' },
-        { value: 'zoho.jp', label: 'zoho.jp (Japan)' },
-        { value: 'zoho.com.cn', label: 'zoho.com.cn (China)' },
-        { value: 'zohocloud.ca', label: 'zohocloud.ca (Canada)' },
+      { name: 'datacenter', label: __('Data Center', 'meow-mailer'), type: 'select', options: [
+        { value: 'zoho.com', label: __('zoho.com (US)', 'meow-mailer') },
+        { value: 'zoho.eu', label: __('zoho.eu (Europe)', 'meow-mailer') },
+        { value: 'zoho.in', label: __('zoho.in (India)', 'meow-mailer') },
+        { value: 'zoho.com.au', label: __('zoho.com.au (Australia)', 'meow-mailer') },
+        { value: 'zoho.jp', label: __('zoho.jp (Japan)', 'meow-mailer') },
+        { value: 'zoho.com.cn', label: __('zoho.com.cn (China)', 'meow-mailer') },
+        { value: 'zohocloud.ca', label: __('zohocloud.ca (Canada)', 'meow-mailer') },
       ] },
     ],
   },
   {
     key: 'zeptomail',
-    label: 'ZeptoMail (Zoho CPaaS)',
+    label: __('ZeptoMail (Zoho CPaaS)', 'meow-mailer'),
     // Not Zoho Mail: people with a Zoho account look for "Zoho" and pick the mailbox
     // one, then hit its Reply-To limits. Saying which is which saves that detour.
-    description: 'Zoho\'s transactional email service, now part of Zoho CPaaS. Connects with a Send Mail token, no OAuth. For a regular Zoho mailbox, pick Zoho Mail instead.',
+    description: __('Zoho\'s transactional email service, now part of Zoho CPaaS. Connects with a Send Mail token, no OAuth. For a regular Zoho mailbox, pick Zoho Mail instead.', 'meow-mailer'),
     fields: [
-      { name: 'api_key', label: 'Send Mail Token', type: 'password' },
-      { name: 'region', label: 'Data Center', type: 'select', options: [
-        { value: 'com', label: 'zeptomail.com (US)' },
-        { value: 'eu', label: 'zeptomail.eu (Europe)' },
-        { value: 'in', label: 'zeptomail.in (India)' },
-        { value: 'com.au', label: 'zeptomail.com.au (Australia)' },
-        { value: 'jp', label: 'zeptomail.jp (Japan)' },
-        { value: 'com.cn', label: 'zeptomail.com.cn (China)' },
-        { value: 'ca', label: 'zeptomail.ca (Canada)' },
+      { name: 'api_key', label: __('Send Mail Token', 'meow-mailer'), type: 'password' },
+      { name: 'region', label: __('Data Center', 'meow-mailer'), type: 'select', options: [
+        { value: 'com', label: __('zeptomail.com (US)', 'meow-mailer') },
+        { value: 'eu', label: __('zeptomail.eu (Europe)', 'meow-mailer') },
+        { value: 'in', label: __('zeptomail.in (India)', 'meow-mailer') },
+        { value: 'com.au', label: __('zeptomail.com.au (Australia)', 'meow-mailer') },
+        { value: 'jp', label: __('zeptomail.jp (Japan)', 'meow-mailer') },
+        { value: 'com.cn', label: __('zeptomail.com.cn (China)', 'meow-mailer') },
+        { value: 'ca', label: __('zeptomail.ca (Canada)', 'meow-mailer') },
       ] },
     ],
   },
@@ -232,8 +234,8 @@ export const MAIN_PROVIDERS = PROVIDERS.filter((p) => !p.fallbackOnly);
 // send), and so is whichever provider is already active: retrying the one that just
 // refused only costs another round trip. 'wordpress' is the zero-setup choice.
 export const fallbackChoices = (activeKey) => [
-  { key: 'none', label: 'No fallback' },
-  { key: 'wordpress', label: 'WordPress (server mail)' },
+  { key: 'none', label: __('No fallback', 'meow-mailer') },
+  { key: 'wordpress', label: __('WordPress (server mail)', 'meow-mailer') },
   ...PROVIDERS.filter((p) => !['none', 'offline', activeKey].includes(p.key))
     .map((p) => ({ key: p.key, label: p.label })),
 ];

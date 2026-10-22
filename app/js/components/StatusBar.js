@@ -4,7 +4,7 @@ import { useCoreContext } from '@app/contexts/core';
 import { PROVIDER_LABELS, isProviderConfigured } from '@app/providers';
 import { fetchLogs } from '@app/requests';
 import { num } from '@app/format';
-import { t } from '@app/i18n';
+import { __ } from '@app/i18n';
 import HeaderStrip from './HeaderStrip';
 
 const Name = ({ children }) => (
@@ -34,29 +34,29 @@ export const deliveryState = (options) => {
   const providerName = PROVIDER_LABELS[provider] || provider;
 
   if (provider === 'none') {
-    return { status: 'paused', label: t('Inactive'),
-      sentence: [t('WordPress is sending email on its own. Pick a provider to route and log it.')] };
+    return { status: 'paused', label: __('Inactive', 'meow-mailer'),
+      sentence: [__('WordPress is sending email on its own. Pick a provider to route and log it.', 'meow-mailer')] };
   }
   if (provider === 'offline') {
-    return { status: 'paused', label: t('Offline mode'),
-      sentence: [t('Every email is written to the log and none of them are delivered.')] };
+    return { status: 'paused', label: __('Offline mode', 'meow-mailer'),
+      sentence: [__('Every email is written to the log and none of them are delivered.', 'meow-mailer')] };
   }
   if (!isProviderConfigured(provider, options.providers[provider])) {
-    return { status: 'warning', label: t('Not configured'),
-      sentence: [fill(t('Finish setting %s up before sending.'), <Name>{providerName}</Name>)] };
+    return { status: 'warning', label: __('Not configured', 'meow-mailer'),
+      sentence: [fill(__('Finish setting %s up before sending.', 'meow-mailer'), <Name>{providerName}</Name>)] };
   }
 
   const fallback = options.fallback_provider;
-  const sentence = [fill(t('All WordPress email goes through %s.'), <Name>{providerName}</Name>)];
+  const sentence = [fill(__('All WordPress email goes through %s.', 'meow-mailer'), <Name>{providerName}</Name>)];
 
   if (fallback && fallback !== 'none' && fallback !== provider) {
-    sentence.push(fill(t('If it refuses one, %s takes over.'), <Name>{PROVIDER_LABELS[fallback] || fallback}</Name>));
+    sentence.push(fill(__('If it refuses one, %s takes over.', 'meow-mailer'), <Name>{PROVIDER_LABELS[fallback] || fallback}</Name>));
   } else {
-    sentence.push(t('There is no fallback if it fails.'));
+    sentence.push(__('There is no fallback if it fails.', 'meow-mailer'));
   }
-  sentence.push(options.logs_enabled ? t('Everything is logged.') : t('Nothing is being logged.'));
+  sentence.push(options.logs_enabled ? __('Everything is logged.', 'meow-mailer') : __('Nothing is being logged.', 'meow-mailer'));
 
-  return { status: 'ok', label: t('Active'), sentence };
+  return { status: 'ok', label: __('Active', 'meow-mailer'), sentence };
 };
 
 const StatusBar = ({ pulse }) => {
@@ -77,17 +77,17 @@ const StatusBar = ({ pulse }) => {
   // one screen reads as a bug unless it says which is which.
   return (
     <HeaderStrip status={status} label={label} right={<>
-      <HeaderStrip.Stat icon="database" label={t('All time')}
-        hint={t('Counted over the whole log, whatever the dashboard is filtered to.')} />
-      <HeaderStrip.Stat label={t('Sent')} value={num(stats.sent)} tone="success"
-        hint={t('Handed to the provider without an error.')} />
-      <HeaderStrip.Stat label={t('Failed')} value={num(stats.failed)} tone="danger"
-        hint={t('The provider refused them, or could not be reached.')} />
+      <HeaderStrip.Stat icon="database" label={__('All time', 'meow-mailer')}
+        hint={__('Counted over the whole log, whatever the dashboard is filtered to.', 'meow-mailer')} />
+      <HeaderStrip.Stat label={__('Sent', 'meow-mailer')} value={num(stats.sent)} tone="success"
+        hint={__('Handed to the provider without an error.', 'meow-mailer')} />
+      <HeaderStrip.Stat label={__('Failed', 'meow-mailer')} value={num(stats.failed)} tone="danger"
+        hint={__('The provider refused them, or could not be reached.', 'meow-mailer')} />
       {/* Only once it means something. Most sites never turn Offline mode on, and a
           permanent "0 OFFLINE" is a word to puzzle over for no reason. */}
       {stats.offline > 0 && (
-        <HeaderStrip.Stat label={t('Offline')} value={num(stats.offline)}
-          hint={t('Captured by Offline mode and deliberately never delivered.')} />
+        <HeaderStrip.Stat label={__('Offline', 'meow-mailer')} value={num(stats.offline)}
+          hint={__('Captured by Offline mode and deliberately never delivered.', 'meow-mailer')} />
       )}
     </>}>
       {sentence.map((part, i) => <span key={i}>{part}{i < sentence.length - 1 ? ' ' : ''}</span>)}

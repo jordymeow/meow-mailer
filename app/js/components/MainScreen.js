@@ -11,11 +11,11 @@ import StatusBar from './StatusBar';
 import ImporterBanner from './ImporterBanner';
 import FilterBar, { DEFAULT_FILTERS } from './FilterBar';
 import { wrapperTop, wrapperBody } from '@app/layout';
-import { t } from '@app/i18n';
+import { __ } from '@app/i18n';
 
 const PAGES = {
-  dashboard: { label: t('Dashboard'), icon: 'dashboard' },
-  settings:  { label: t('Settings'),  icon: 'cog' },
+  dashboard: { label: __('Dashboard', 'meow-mailer'), icon: 'dashboard' },
+  settings:  { label: __('Settings', 'meow-mailer'),  icon: 'cog' },
 };
 
 // The screen is chosen in the header, but the URL still carries it so links from
@@ -80,7 +80,7 @@ const MainScreen = () => {
 
   return (
     <NekoPage>
-      <NekoHeader title="Meow Mailer" section={PAGES[page].label} subtitle={t('By Meow Apps')}>
+      <NekoHeader title="Meow Mailer" section={PAGES[page].label} subtitle={__('By Meow Apps', 'meow-mailer')}>
         <HeaderActions page={page} onNavigate={navigate} />
       </NekoHeader>
 
@@ -94,11 +94,11 @@ const MainScreen = () => {
             <NekoMessage variant="success">
               <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
                 <span>
-                  {t('Meow Mailer is brand new, and your feedback shapes it. Tell us what is missing and what you wish it did on the')}{' '}
-                  <a href="https://wordpress.org/support/plugin/meow-mailer/" target="_blank" rel="noopener noreferrer">{t('WordPress support forum')}</a>
-                  {t('. We will make it perfect for you. 💕')}
+                  {__('Meow Mailer is brand new, and your feedback shapes it. Tell us what is missing and what you wish it did on the', 'meow-mailer')}{' '}
+                  <a href="https://wordpress.org/support/plugin/meow-mailer/" target="_blank" rel="noopener noreferrer">{__('WordPress support forum', 'meow-mailer')}</a>
+                  {__('. We will make it perfect for you. 💕', 'meow-mailer')}
                 </span>
-                <a href="#" onClick={(e) => { e.preventDefault(); dismissFeedback(); }} style={{ whiteSpace: 'nowrap' }}>{t('Dismiss')}</a>
+                <a href="#" onClick={(e) => { e.preventDefault(); dismissFeedback(); }} style={{ whiteSpace: 'nowrap' }}>{__('Dismiss', 'meow-mailer')}</a>
               </span>
             </NekoMessage>
             <NekoSpacer />

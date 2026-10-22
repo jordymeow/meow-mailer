@@ -3,7 +3,7 @@ const { useContext, createContext, useState, useCallback, useRef } = wp.element;
 import { NekoModal } from '@neko-ui';
 import { options as defaultOptions } from '@app/settings';
 import { refreshSettings, updateSettings, resetSettings } from '@app/requests';
-import { t } from '@app/i18n';
+import { __ } from '@app/i18n';
 
 const CoreContext = createContext();
 
@@ -77,7 +77,7 @@ export const CoreContextProvider = ({ children }) => {
   }, [options, saveOptions]);
 
   const resetOptions = useCallback(async () => {
-    if (!window.confirm(t('Reset all Meow Mailer settings to defaults?'))) {
+    if (!window.confirm(__('Reset all Meow Mailer settings to defaults?', 'meow-mailer'))) {
       return;
     }
     setBusy(true);
@@ -100,9 +100,9 @@ export const CoreContextProvider = ({ children }) => {
   return (
     <CoreContext.Provider value={value}>
       {children}
-      <NekoModal isOpen={!!error} title={t('Error')} content={error}
+      <NekoModal isOpen={!!error} title={__('Error', 'meow-mailer')} content={error}
         onRequestClose={() => setError(null)}
-        okButton={{ label: t('Close'), onClick: () => setError(null) }} />
+        okButton={{ label: __('Close', 'meow-mailer'), onClick: () => setError(null) }} />
     </CoreContext.Provider>
   );
 };
