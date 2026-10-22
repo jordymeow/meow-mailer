@@ -118,7 +118,8 @@ const VolumeChart = ({ series, emptyTitle, emptyMessage }) => {
     return <EmptyChart days={days} title={emptyTitle} message={emptyMessage} />;
   }
 
-  const max = niceMax(Math.max(...totals, 1));
+  const peak = Math.max(...totals);
+  const max = niceMax(Math.max(peak, 1));
 
   const active = hover !== null ? days[hover] : null;
   const activeTotal = hover !== null ? totals[hover] : 0;
@@ -185,7 +186,9 @@ const VolumeChart = ({ series, emptyTitle, emptyMessage }) => {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--neko-gray-60)', marginTop: 6 }}>
         <span>{dayLabel(days[0].day)}</span>
-        <span>{t('peak')} {max}</span>
+        {/* The real busiest day, not the rounded top of the scale: that one made a
+            month of single emails read as "peak 5". */}
+        <span>{t('busiest day')}: {peak}</span>
         <span>{dayLabel(days[days.length - 1].day)}</span>
       </div>
     </div>
