@@ -84,7 +84,8 @@ const LogModal = ({ id, onClose, onResent }) => {
 
   return (
     <NekoModal isOpen={!!id} title={t('Email Details')} onRequestClose={onClose} content={content} size="large"
-      okButton={{ label: t('Close'), onClick: onClose }}
+      // Secondary, so Resend is the one primary action and Close reads as the way out.
+      okButton={{ label: t('Close'), onClick: onClose, className: 'secondary' }}
       customButtons={canResend ? <NekoButton className="primary" icon="refresh" busy={resending} onClick={doResend}>{t('Resend')}</NekoButton> : null}
       customButtonsPosition="left" />
   );
