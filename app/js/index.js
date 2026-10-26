@@ -6,6 +6,7 @@ import { NekoUI } from '@neko-ui';
 import MainScreen from '@app/components/MainScreen';
 import { CoreContextProvider } from '@app/contexts/core';
 import { Dashboard } from '@common/dashboard/Dashboard';
+import { mountCommonDashboard } from '@common/dashboard/mount';
 
 document.addEventListener('DOMContentLoaded', function () {
   const container = document.getElementById('mwmail-admin-settings');
@@ -26,13 +27,14 @@ document.addEventListener('DOMContentLoaded', function () {
   // otherwise that page is simply blank.
   const dashboard = document.getElementById('meow-common-dashboard');
   if (dashboard) {
-    render(
+    // Only the newest copy of the shared dashboard renders (see common/js/dashboard/mount.js).
+    mountCommonDashboard(() => render(
       <NekoUI>
         <QueryClientProvider client={new QueryClient()}>
           <Dashboard />
         </QueryClientProvider>
       </NekoUI>,
       dashboard
-    );
+    ));
   }
 });
