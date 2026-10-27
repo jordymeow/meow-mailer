@@ -34,6 +34,13 @@ class Meow_MWMAIL_Mailers_Wordpress extends Meow_MWMAIL_Mailers_Base {
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- core WordPress hook
         do_action_ref_array( 'phpmailer_init', [ &$mail ] );
       }
+      // It did run, earlier and on another object: take back where it pointed the
+      // mail, so a host relay still carries it, as it would carry WordPress's own.
+      else {
+        foreach ( (array) ( $email['phpmailer_transport'] ?? [] ) as $field => $value ) {
+          $mail->$field = $value;
+        }
+      }
 
       $mail->send();
       return true;

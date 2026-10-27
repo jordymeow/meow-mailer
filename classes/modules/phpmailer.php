@@ -30,6 +30,9 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
  */
 class Meow_MWMAIL_Modules_Phpmailer {
 
+  const TRANSPORT_FIELDS = [ 'Mailer', 'Host', 'Port', 'SMTPAuth', 'Username', 'Password', 'SMTPSecure',
+    'SMTPAutoTLS', 'AuthType', 'Sendmail', 'Helo', 'Hostname', 'Timeout', 'SMTPOptions' ];
+
   private $core = null;
 
   // A plugin calling wp_mail() from inside its own phpmailer_init hook would come
@@ -74,6 +77,7 @@ class Meow_MWMAIL_Modules_Phpmailer {
       do_action_ref_array( 'phpmailer_init', [ &$mail ] );
 
       $email = $this->import( $email, $mail, $before );
+      $email['phpmailer_transport'] = $this->transport_changes( $mail, $before['transport'] );
     } catch ( Throwable $e ) {
       $this->core->log( 'phpmailer_init compatibility skipped: ' . $e->getMessage() );
     } finally {
@@ -95,7 +99,33 @@ class Meow_MWMAIL_Modules_Phpmailer {
       'body'         => $mail->Body,
       'content_type' => $mail->ContentType,
       'sender'       => $mail->Sender,
+      'transport'    => self::transport( $mail ),
     ];
+  }
+
+  /** Where PHPMailer will send through, as opposed to what it sends. */
+  private static function transport( $mail ) {
+    $out = [];
+    foreach ( self::TRANSPORT_FIELDS as $field ) {
+      $out[ $field ] = $mail->$field;
+    }
+    return $out;
+  }
+
+  /**
+   * The transport settings the hook changed. The providers never use them (they own
+   * delivery), but the WordPress route does: it promises to send the way WordPress
+   * would, and a host relay set up through `phpmailer_init` is part of that. Without
+   * this, the hook having already run meant that relay was silently skipped.
+   */
+  private function transport_changes( $mail, $before ) {
+    $changes = [];
+    foreach ( self::transport( $mail ) as $field => $value ) {
+      if ( $value !== $before[ $field ] ) {
+        $changes[ $field ] = $value;
+      }
+    }
+    return $changes;
   }
 
   private function import( $email, $mail, $before ) {
