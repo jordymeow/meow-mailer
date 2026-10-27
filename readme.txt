@@ -5,7 +5,7 @@ Donate link: https://www.patreon.com/meowapps
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.3.2
+Stable tag: 0.3.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,6 +134,19 @@ If you would rather nobody signs in, for example when you build a site for a cli
 Meow Mailer is open source. The full source, including the React code used to build the admin interface, lives [on GitHub](https://github.com/jordymeow/meow-mailer).
 
 == Changelog ==
+
+= 0.3.3 (2026/10/27) =
+* Add: WordPress (Server Mail) as a provider, which sends like WordPress but uses your Sender settings, the log, the fallback and test emails.
+* Add: Short subtitles under the Email Provider and Sender settings blocks.
+* Update: New Meow Apps dashboard in the shared common code.
+* Update: Clearer License tab that explains Pro to free users and invites Pro buyers to activate.
+* Update: All admin screen texts are now translatable on translate.wordpress.org.
+* Update: The empty chart and success rate on the dashboard now say that nothing matches the filters, instead of that nothing was ever sent.
+* Update: Close is now a secondary button in the email details, so Resend is the single main action.
+* Fix: A host's own mail relay keeps working when an email goes out through the WordPress route.
+* Fix: The log pager is hidden when there are no results.
+* Fix: The busiest day shown under the chart is the real one, instead of the top of its scale.
+* Fix: The None provider card no longer says nothing is logged, since WordPress's own emails are still logged.
 
 = 0.3.2 (2026/10/13) =
 * Update: Meow Mailer now works alongside WordPress Mail Queue, keeping its sending pace while each email still goes out through your provider.
