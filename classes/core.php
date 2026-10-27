@@ -278,7 +278,7 @@ class Meow_MWMAIL_Core {
   /** The name a provider goes by in the UI (the same list as PROVIDERS in app/js/providers.js). */
   public static function provider_label( $key ) {
     $labels = [
-      'wordpress'  => 'WordPress',
+      'wordpress'  => 'WordPress (Server Mail)',
       'smtp'       => 'Generic SMTP',
       'smtp_secondary' => 'Generic SMTP (Second Server)',
       'mailgun'    => 'Mailgun',

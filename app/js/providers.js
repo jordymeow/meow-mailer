@@ -30,6 +30,15 @@ export const PROVIDERS = [
     fields: [],
   },
   {
+    key: 'wordpress',
+    label: __('WordPress (Server Mail)', 'meow-mailer'),
+    // Unlike None, Meow Mailer is in charge here: the email still goes out through the
+    // server like WordPress sends it, but the Sender settings, the log, the fallback
+    // and test emails all apply. For people who only want to change the sender.
+    description: __('Sends through your own server, the way WordPress does, but with your Sender settings, the log, a fallback and test emails. Deliverability is whatever your host offers.', 'meow-mailer'),
+    fields: [],
+  },
+  {
     key: 'smtp',
     label: __('Generic SMTP', 'meow-mailer'),
     // Named on purpose: people look for their own mail host in this list, and read
@@ -220,7 +229,7 @@ export const PROVIDER_LABELS = PROVIDERS.reduce((acc, p) => {
   acc[p.key] = p.label;
   return acc;
 }, {
-  // Not a provider you can pick: it is what the log records when no provider is
+  // Overridden by the provider entry: also what the log records when no provider is
   // set and WordPress sent the email on its own.
   wordpress: 'WordPress',
 });
@@ -235,8 +244,8 @@ export const MAIN_PROVIDERS = PROVIDERS.filter((p) => !p.fallbackOnly);
 // refused only costs another round trip. 'wordpress' is the zero-setup choice.
 export const fallbackChoices = (activeKey) => [
   { key: 'none', label: __('No fallback', 'meow-mailer') },
-  { key: 'wordpress', label: __('WordPress (server mail)', 'meow-mailer') },
-  ...PROVIDERS.filter((p) => !['none', 'offline', activeKey].includes(p.key))
+  ...(activeKey !== 'wordpress' ? [{ key: 'wordpress', label: __('WordPress (Server Mail)', 'meow-mailer') }] : []),
+  ...PROVIDERS.filter((p) => !['none', 'offline', 'wordpress', activeKey].includes(p.key))
     .map((p) => ({ key: p.key, label: p.label })),
 ];
 
@@ -249,7 +258,7 @@ export const constantName = (key, field) => `MWMAIL_${key.toUpperCase()}_${field
 
 // Whether the active provider has the credentials it needs to send.
 export const isProviderConfigured = (key, creds = {}) => {
-  if (key === 'none' || key === 'offline') {
+  if (key === 'none' || key === 'offline' || key === 'wordpress') {
     return true; // no credentials needed
   }
   const fromConfig = constantFields(key);
