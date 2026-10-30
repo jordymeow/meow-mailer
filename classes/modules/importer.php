@@ -16,8 +16,8 @@ class Meow_MWMAIL_Modules_Importer {
   // settings in the same shape, so one mapper covers both. Mailgun's official
   // plugin has a shape of its own, hence its own mapper.
   const SOURCES = [
-    'wp-mail-smtp' => [ 'name' => 'WP Mail SMTP', 'option' => 'wp_mail_smtp', 'mapper' => 'map_wpms' ],
-    'easy-wp-smtp' => [ 'name' => 'Easy WP SMTP', 'option' => 'easy_wp_smtp', 'mapper' => 'map_wpms' ],
+    'wp-mail-smtp' => [ 'name' => 'WP Mail SMTP', 'option' => 'wp_mail_smtp', 'mapper' => 'map_wpms', 'key_constant' => 'WPMS_CRYPTO_KEY' ],
+    'easy-wp-smtp' => [ 'name' => 'Easy WP SMTP', 'option' => 'easy_wp_smtp', 'mapper' => 'map_wpms', 'key_constant' => 'EASY_WP_SMTP_CRYPTO_KEY' ],
     'mailgun'      => [ 'name' => 'Mailgun',      'option' => 'mailgun',      'mapper' => 'map_mailgun' ],
   ];
 
@@ -108,7 +108,40 @@ class Meow_MWMAIL_Modules_Importer {
       return null;
     }
     $mapper = $source['mapper'];
-    return $this->$mapper( $data );
+    return $this->$mapper( $data, $source );
+  }
+
+  /**
+   * WP Mail SMTP and Easy WP SMTP encrypt the SMTP password (sodium secretbox, the
+   * nonce in front, all base64), with a key from a wp-config constant or their
+   * "<option>_mail_key" option. Copying it as-is imported a password that could
+   * never log in. Read it the way they do: anything that does not decrypt is
+   * returned unchanged, which also covers passwords saved before they encrypted.
+   */
+  private static function wpms_password( $stored, $source ) {
+    if ( $stored === '' || ! function_exists( 'sodium_crypto_secretbox_open' ) ) {
+      return $stored;
+    }
+    if ( defined( $source['key_constant'] ) ) {
+      $key = constant( $source['key_constant'] );
+    } else {
+      $option = get_option( $source['option'] . '_mail_key' );
+      $key = $option === false ? '' : base64_decode( $option );
+    }
+    $decoded = base64_decode( $stored, true );
+    if ( ! $key || $decoded === false || strlen( $decoded ) < SODIUM_CRYPTO_SECRETBOX_NONCEBYTES + SODIUM_CRYPTO_SECRETBOX_MACBYTES ) {
+      return $stored;
+    }
+    try {
+      $plain = sodium_crypto_secretbox_open(
+        substr( $decoded, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES ),
+        substr( $decoded, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES ),
+        $key
+      );
+    } catch ( \Throwable $e ) {
+      return $stored;
+    }
+    return $plain === false ? $stored : $plain;
   }
 
   /** Their 'yes'/'no' of older versions and the booleans of newer ones, as one bool. */
@@ -179,7 +212,7 @@ class Meow_MWMAIL_Modules_Importer {
   }
 
   /** The WP Mail SMTP option shape (shared by Easy WP SMTP). */
-  private function map_wpms( $data ) {
+  private function map_wpms( $data, $source ) {
     if ( empty( $data['mail']['mailer'] ) ) {
       return null;
     }
@@ -215,7 +248,7 @@ class Meow_MWMAIL_Modules_Importer {
           'autotls'    => self::truthy( $src['autotls'] ?? true ),
           'auth'       => self::truthy( $src['auth'] ?? true ),
           'username'   => (string) ( $src['user'] ?? '' ),
-          'password'   => (string) ( $src['pass'] ?? '' ),
+          'password'   => self::wpms_password( (string) ( $src['pass'] ?? '' ), $source ),
         ];
         break;
       case 'mailgun':
