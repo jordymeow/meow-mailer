@@ -17,6 +17,11 @@ import { NekoNoticeModal, useNekoNotice } from './NoticeModal';
 
 const CommonApiUrl = `${restUrl}/meow-licenser/${prefix}/v1`;
 
+// The thank-you after activation asks for a review (Jordy, 10-31). Never tied to a gift: wp.org
+// forbids rewarding reviews. AI Engine add-ons aren't on wp.org, so they get the thanks only.
+const reviewSlug = (domain || '').trim();
+const reviewUrl = reviewSlug && !reviewSlug.startsWith('mwai-') ? `https://wordpress.org/support/plugin/${reviewSlug}/reviews/#new-post` : null;
+
 const AccountLink = () => <a target='_blank' rel="noreferrer" href='https://meowapps.com'>Meow Apps</a>;
 const ContactLink = () => <a target='_blank' rel="noreferrer" href='https://meowapps.com/contact/'>contact us</a>;
 
@@ -494,8 +499,18 @@ const LicenseBlock = () => {
 
       <NekoModal
         isOpen={currentModal === 'licenseAdded'}
-        title="Thank you :)"
-        content="The Pro features have been enabled. This page should be now reloaded."
+        title="Thank you so much 💛"
+        content={reviewUrl ? <>
+          Pro is on: reload the page to see everything.<br /><br />
+          You're supporting an independent developer, and that's what keeps these plugins going.
+          If it helps you, a short review on WordPress.org would mean a lot. And if you write one,
+          please <ContactLink /> so we can thank you personally.
+        </> : 'Pro is on: reload the page to see everything. You\'re supporting an independent developer, and that\'s what keeps these plugins going.'}
+        {...(reviewUrl && { cancelButton: {
+          label: 'Write a review',
+          className: 'secondary',
+          onClick: () => { window.open(reviewUrl, '_blank', 'noopener,noreferrer'); location.reload(); }
+        } })}
         okButton={{
           label: "Reload",
           onClick: () => location.reload()

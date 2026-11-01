@@ -5,7 +5,7 @@ Donate link: https://www.patreon.com/meowapps
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 0.3.3
+Stable tag: 0.3.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -134,6 +134,13 @@ If you would rather nobody signs in, for example when you build a site for a cli
 Meow Mailer is open source. The full source, including the React code used to build the admin interface, lives [on GitHub](https://github.com/jordymeow/meow-mailer).
 
 == Changelog ==
+
+= 0.3.4 (2026/11/01) =
+* Add: Optional Backup From address so the fallback mailer can send from its own authenticated address and keep the original sender as Reply-To.
+* Fix: Importing settings from WP Mail SMTP and Easy WP SMTP copied the encrypted SMTP password instead of the actual password.
+* 🎵 Discuss with others about Meow Mailer on [the Discord](https://discord.gg/bHDGh38).
+* 🌴 Keep us motivated with [a little review here](https://wordpress.org/support/plugin/meow-mailer/reviews/). Thank you!
+* 🥰 If you want to help us, check our [Patreon](https://www.patreon.com/meowapps). Thank you!
 
 = 0.3.3 (2026/10/27) =
 * Add: WordPress (Server Mail) as a provider, which sends like WordPress but uses your Sender settings, the log, the fallback and test emails.
