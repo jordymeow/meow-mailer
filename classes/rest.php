@@ -389,6 +389,12 @@ class Meow_MWMAIL_Rest {
       'test'     => true,
     ] );
 
+    // Testing the fallback means testing it as a rescue would send it, Backup From
+    // included: that sender is exactly what a backup account tends to refuse.
+    if ( $target === 'fallback' ) {
+      $email = $this->core->mailer->email_for_fallback( $email, $route_to );
+    }
+
     $result = $this->core->mailer->dispatch( $email );
     if ( is_wp_error( $result ) ) {
       return new WP_REST_Response( [ 'success' => false, 'message' => $result->get_error_message() ], 200 );

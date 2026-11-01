@@ -98,7 +98,7 @@ class Meow_MWMAIL_Core {
    * own emails.
    */
   const NETWORK_GROUPS = [
-    'provider' => [ 'provider', 'fallback_provider', 'providers', 'encrypt_secrets' ],
+    'provider' => [ 'provider', 'fallback_provider', 'fallback_from_email', 'fallback_from_name', 'providers', 'encrypt_secrets' ],
     'sender'   => [ 'from_email', 'from_name', 'force_from', 'reply_to', 'return_path' ],
     'delivery' => [ 'logs_enabled', 'log_body', 'store_attachments', 'log_retention_days', 'send_in_background' ],
   ];
@@ -220,6 +220,10 @@ class Meow_MWMAIL_Core {
       // Only ever used when the provider above fails on a given email. 'none' = no
       // fallback, 'wordpress' = let WordPress send it the way it would without us.
       'fallback_provider'  => 'none',
+      // Optional: the sender the fallback uses, for a backup account authenticated on
+      // another domain (one shared domain across an agency's sites, say).
+      'fallback_from_email' => '',
+      'fallback_from_name'  => '',
       'from_email'         => '',
       'from_name'          => '',
       'force_from'         => false,

@@ -185,9 +185,10 @@ class Meow_MWMAIL_Modules_Mailer {
         // The row was written as Pending against the primary; if the fallback is the
         // one that got it out, the log has to say so or it names the wrong sender.
         $this->core->logs->update( $item['log_id'], [
-          'status'   => $status,
-          'error'    => $error,
-          'provider' => $attempt['provider'],
+          'status'     => $status,
+          'error'      => $error,
+          'provider'   => $attempt['provider'],
+          'email_from' => $this->format_from( $attempt['email'] ?? $item['email'] ),
         ] );
       }
       $this->fire_mail_action( $result, $item['email'] );
@@ -227,6 +228,8 @@ class Meow_MWMAIL_Modules_Mailer {
 
     $attempt = $this->send_with_fallback( $provider_key, $email );
     $result  = $attempt['result'];
+    // A rescue may have changed the sender (Backup From): log what really went out.
+    $email   = $attempt['email'] ?? $email;
     $this->last_provider = $attempt['provider'];
     $this->last_error    = $attempt['primary_error'];
 
@@ -297,6 +300,7 @@ class Meow_MWMAIL_Modules_Mailer {
     }
 
     $primary_error = $result->get_error_message();
+    $email         = $this->email_for_fallback( $email, $fallback );
     $result        = $this->send_with_provider( $fallback, $email );
 
     if ( is_wp_error( $result ) ) {
@@ -318,7 +322,36 @@ class Meow_MWMAIL_Modules_Mailer {
       $this->core->alerts->on_rescued( $primary_error );
     }
 
-    return [ 'result' => true, 'provider' => $fallback, 'primary_error' => $primary_error ];
+    return [ 'result' => true, 'provider' => $fallback, 'primary_error' => $primary_error, 'email' => $email ];
+  }
+
+  /**
+   * The email as the fallback should send it. A backup account is often authenticated
+   * on another domain than the main one (an agency's one shared domain, typically), and
+   * sending from the original address would fail SPF and DKIM there. So when a Backup
+   * From is set, the fallback sends from it, and the original From becomes the Reply-To
+   * so replies still reach the right place (unless the email already had one).
+   */
+  public function email_for_fallback( $email, $fallback ) {
+    $from = trim( (string) $this->core->get_option( 'fallback_from_email', '' ) );
+    if ( $from !== '' && is_email( $from ) ) {
+      if ( empty( $email['reply_to'] ) && ! empty( $email['from_email'] ) ) {
+        $email['reply_to'] = [ $this->format_from( $email ) ];
+      }
+      $email['from_email'] = $from;
+      $name = trim( (string) $this->core->get_option( 'fallback_from_name', '' ) );
+      if ( $name !== '' ) {
+        $email['from_name'] = self::fill_placeholders( $name );
+      }
+    }
+
+    /**
+     * The email exactly as the fallback provider will receive it.
+     *
+     * @param array  $email     the normalized email
+     * @param string $fallback  the fallback provider key
+     */
+    return apply_filters( 'mwmail_fallback_email', $email, $fallback );
   }
 
   /**

@@ -2,14 +2,14 @@
 # This file is distributed under the GPLv2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Meow Mailer 0.3.2\n"
+"Project-Id-Version: Meow Mailer 0.3.3\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/meow-mailer\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-27T13:14:51+00:00\n"
+"POT-Creation-Date: 2026-11-01T05:00:34+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: meow-mailer\n"
@@ -54,15 +54,15 @@ msgstr ""
 msgid "Open the settings"
 msgstr ""
 
-#: classes/core.php:613
+#: classes/core.php:617
 msgid "PHP on this server was built without the Sodium extension, which does the encrypting."
 msgstr ""
 
-#: classes/core.php:616
+#: classes/core.php:620
 msgid "AUTH_KEY and SECURE_AUTH_KEY in wp-config.php are missing or still set to their placeholder, so there is nothing safe to derive an encryption key from."
 msgstr ""
 
-#: classes/core.php:759
+#: classes/core.php:763
 msgid "Encryption did not pass its self-test on this server, so nothing was changed."
 msgstr ""
 
@@ -361,7 +361,7 @@ msgstr ""
 msgid "Nothing importable was found for this plugin."
 msgstr ""
 
-#: classes/modules/importer.php:259
+#: classes/modules/importer.php:292
 msgid "The account connection itself cannot be copied. Add the Meow Mailer redirect URI to your OAuth app, then connect your account again."
 msgstr ""
 
@@ -371,19 +371,19 @@ msgid "Could not access the database."
 msgstr ""
 
 #. translators: 1: error from the main provider, 2: error from the fallback provider.
-#: classes/modules/mailer.php:308
+#: classes/modules/mailer.php:312
 #, php-format
 msgid "%1$s (the fallback failed too: %2$s)"
 msgstr ""
 
 #. translators: %s: the provider key/slug that was not recognised.
-#: classes/modules/mailer.php:383
+#: classes/modules/mailer.php:416
 #, php-format
 msgid "Unknown email provider: %s"
 msgstr ""
 
 #. translators: %s: the provider key/slug.
-#: classes/modules/mailer.php:390
+#: classes/modules/mailer.php:423
 #, php-format
 msgid "The stored credentials for %s cannot be read: they were encrypted with security keys this site no longer has. Enter them again in the settings, or turn credential encryption off."
 msgstr ""
@@ -454,49 +454,49 @@ msgid "This is an HTML test email from Meow Mailer. If you can read this with fo
 msgstr ""
 
 #. translators: %s: the error returned by the main email provider.
-#: classes/rest.php:403
+#: classes/rest.php:409
 #, php-format
 msgid "Your provider refused it: %s. The fallback delivered this test in its place, so it may still arrive, but the provider itself is not working."
 msgstr ""
 
-#: classes/rest.php:414
+#: classes/rest.php:420
 msgid "Handed to your server. That means it was accepted for sending, not that it was delivered, so check that it actually arrives."
 msgstr ""
 
-#: classes/rest.php:421
+#: classes/rest.php:427
 msgid "Test email sent through the fallback."
 msgstr ""
 
-#: classes/rest.php:422
+#: classes/rest.php:428
 msgid "Test email sent."
 msgstr ""
 
-#: classes/rest.php:438
+#: classes/rest.php:444
 msgid "Please provide a webhook URL."
 msgstr ""
 
-#: classes/rest.php:445
+#: classes/rest.php:451
 msgid "Test sent. Check that it arrived."
 msgstr ""
 
-#: classes/rest.php:467
+#: classes/rest.php:473
 msgid "That field cannot be revealed."
 msgstr ""
 
-#: classes/rest.php:473
+#: classes/rest.php:479
 msgid "Nothing is saved in that field."
 msgstr ""
 
-#: classes/rest.php:478
+#: classes/rest.php:484
 msgid "This value was encrypted with security keys this site no longer has, so it cannot be shown. Type a new one to replace it."
 msgstr ""
 
-#: classes/rest.php:506
-#: classes/rest.php:530
+#: classes/rest.php:512
+#: classes/rest.php:536
 msgid "Unknown OAuth provider."
 msgstr ""
 
-#: classes/rest.php:511
+#: classes/rest.php:517
 msgid "Enter your Client ID and Secret first, and Save."
 msgstr ""
 
@@ -1455,11 +1455,40 @@ msgid "No fallback"
 msgstr ""
 
 #: app/index.js:2
+msgid "Backup From"
+msgstr ""
+
+#: app/index.js:2
+msgid "(same as From)"
+msgstr ""
+
+#: app/index.js:2
+msgid "Optional. The address the fallback sends from, when it is authenticated on another domain than your main provider. Replies still go to your usual From address."
+msgstr ""
+
+#: app/index.js:2
+msgid "Backup Name"
+msgstr ""
+
+#: app/index.js:2
+msgid "(same as From Name)"
+msgstr ""
+
+#: app/index.js:2
+msgid "Optional. {site_name} is replaced by the name of this site."
+msgstr ""
+
+#: app/index.js:2
 msgid "This fallback has no server yet, so it cannot rescue anything. Fill it in just above."
 msgstr ""
 
 #: app/index.js:2
 msgid "This fallback has no credentials yet, so it cannot rescue anything. Select it in Provider above, fill it in, then switch back."
+msgstr ""
+
+#: app/index.js:2
+#, js-format
+msgid "Rescued emails are sent from %s, so that domain needs its SPF and DKIM records set up with your fallback. Without them, they are delivered but usually land in spam."
 msgstr ""
 
 #: app/index.js:2
@@ -1525,10 +1554,6 @@ msgstr ""
 
 #: app/index.js:2
 msgid "Return Path"
-msgstr ""
-
-#: app/index.js:2
-msgid "(same as From)"
 msgstr ""
 
 #: app/index.js:2

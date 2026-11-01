@@ -264,6 +264,25 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
                   its fields live right here instead. */}
               {fallbackInline && <ProviderFields providerKey={fallback} />}
 
+              {/* A backup account is often authenticated on another domain than the main
+                  one (an agency's shared domain), so it can send from its own address. */}
+              {hasFallback && (
+                <>
+                  <NekoSettings title={__('Backup From', 'meow-mailer')}>
+                    <NekoInput name="fallback_from_email" value={options.fallback_from_email} placeholder={__('(same as From)', 'meow-mailer')}
+                      onBlur={updateOption} onEnter={updateOption}
+                      description={__('Optional. The address the fallback sends from, when it is authenticated on another domain than your main provider. Replies still go to your usual From address.', 'meow-mailer')} />
+                  </NekoSettings>
+                  {options.fallback_from_email && (
+                    <NekoSettings title={__('Backup Name', 'meow-mailer')}>
+                      <NekoInput name="fallback_from_name" value={options.fallback_from_name} placeholder={__('(same as From Name)', 'meow-mailer')}
+                        onBlur={updateOption} onEnter={updateOption}
+                        description={__('Optional. {site_name} is replaced by the name of this site.', 'meow-mailer')} />
+                    </NekoSettings>
+                  )}
+                </>
+              )}
+
               {fallbackUnconfigured && (
                 <>
                   <NekoMessage variant="danger">
@@ -281,7 +300,9 @@ const SettingsScreen = ({ onChanged = () => {} }) => {
               {hasFallback && fallback !== 'wordpress' && !fallbackUnconfigured && (
                 <>
                   <NekoMessage variant="warning">
-                    {__('Your fallback needs its own SPF and DKIM records for your domain, exactly like your main provider. Without them, rescued email is delivered but usually lands in spam.', 'meow-mailer')}
+                    {options.fallback_from_email
+                      ? __('Rescued emails are sent from %s, so that domain needs its SPF and DKIM records set up with your fallback. Without them, they are delivered but usually land in spam.', 'meow-mailer').replace('%s', options.fallback_from_email)
+                      : __('Your fallback needs its own SPF and DKIM records for your domain, exactly like your main provider. Without them, rescued email is delivered but usually lands in spam.', 'meow-mailer')}
                   </NekoMessage>
                   <NekoSpacer />
                 </>
